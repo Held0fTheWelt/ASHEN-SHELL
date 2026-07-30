@@ -13,6 +13,9 @@ permissions:
 jobs:
   architecture-assurance:
     runs-on: ubuntu-latest
+    env:
+      PLANTUML_VERSION: "1.2024.8"
+      PLANTUML_SHA256: "b88519d2f37c089a470ee7044ec011a72d130e70a61f7fcaa424179f1c1f4641"
     steps:
       - name: Check out Better Tomorrow
         uses: actions/checkout@v4
@@ -33,6 +36,12 @@ jobs:
             pyproject.toml
             .external/ArchitecturalKnowledgeDB/pyproject.toml
 
+      - name: Set up Java for UML previews
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Install architecture assurance dependencies
         run: |
           python -m pip install --upgrade pip
@@ -51,6 +60,44 @@ jobs:
             --junit reports/architecture/architecture.junit.xml \
             --sarif reports/architecture/architecture.sarif
 
+      - name: Render source-bound UML previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          plantuml_dir="${RUNNER_TEMP}/plantuml"
+          plantuml_jar="${plantuml_dir}/plantuml.jar"
+          preview_root="${GITHUB_WORKSPACE}/reports/architecture/uml-previews"
+          mkdir -p "${plantuml_dir}" "${preview_root}"
+          curl --fail --silent --show-error --location \
+            "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" \
+            --output "${plantuml_jar}"
+          echo "${PLANTUML_SHA256}  ${plantuml_jar}" | sha256sum --check --strict
+
+          mapfile -d '' diagrams < <(
+            find UML -type f -name '*.puml' -print0 | sort --zero-terminated
+          )
+          for source in "${diagrams[@]}"; do
+            relative="${source#UML/}"
+            target_dir="${preview_root}/$(dirname "${relative}")"
+            mkdir -p "${target_dir}"
+            java -Djava.awt.headless=true -jar "${plantuml_jar}" \
+              -failfast2 -tsvg -o "${target_dir}" "${source}"
+          done
+
+          source_count="${#diagrams[@]}"
+          preview_count="$(find "${preview_root}" -type f -name '*.svg' | wc -l)"
+          test "${source_count}" -gt 0
+          test "${source_count}" -eq "${preview_count}"
+          (
+            cd "${preview_root}"
+            find . -type f -name '*.svg' -print0 \
+              | sort --zero-terminated \
+              | xargs --null sha256sum
+          ) > "${preview_root}/SHA256SUMS"
+          printf 'plantuml_version=%s\nformat=svg\nsource_count=%s\n' \
+            "${PLANTUML_VERSION}" "${source_count}" \
+            > "${preview_root}/RENDERER.txt"
+
       - name: Run Better Tomorrow architecture test set
         env:
           AKDB_SOURCE_ROOT: ${{ github.workspace }}/.external/ArchitecturalKnowledgeDB
@@ -62,7 +109,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: better-tomorrow-architecture-evidence
-          path: reports/architecture/
+          path: |
+            reports/architecture/architecture.json
+            reports/architecture/architecture.junit.xml
+            reports/architecture/architecture.sarif
+
+      - name: Upload UML previews
+        if: always() && hashFiles('reports/architecture/uml-previews/**/*.svg') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: better-tomorrow-uml-previews
+          path: reports/architecture/uml-previews/
+          if-no-files-found: error
 
       - name: Upload architecture SARIF
         if: always() && hashFiles('reports/architecture/architecture.sarif') != ''

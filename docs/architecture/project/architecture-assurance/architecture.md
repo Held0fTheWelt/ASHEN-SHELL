@@ -100,6 +100,10 @@ The ordered sequence/activity relationships and state transitions are validated 
 
 The package runs from the repository in local quality gates and CI. CI checks
 the locked AKDB revision into a separate directory only for disposable tests.
+The same workflow downloads a version- and SHA-256-pinned PlantUML renderer,
+renders every checked-in diagram to SVG outside the source tree, verifies
+one preview per source, and publishes the checksum-indexed result as the
+`better-tomorrow-uml-previews` artifact.
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:7 -->
 ### Deployment and operational boundary evidence

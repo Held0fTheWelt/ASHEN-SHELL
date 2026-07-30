@@ -38,3 +38,9 @@ Run the dedicated semantic architecture gate:
 python -m tools.architecture_assurance generate --dry-run
 python -m tools.architecture_assurance audit --dry-run
 ```
+
+The architecture-assurance workflow renders every checked-in `.puml` file as
+SVG with checksum-pinned PlantUML `1.2024.8`. It preserves the `UML/` directory
+structure, verifies that source and preview counts match, writes `SHA256SUMS`
+and `RENDERER.txt`, and uploads the result as the
+`better-tomorrow-uml-previews` CI artifact.

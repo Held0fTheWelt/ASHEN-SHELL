@@ -1,9 +1,9 @@
 {
   "files": [
     {
-      "bytes": 2313,
+      "bytes": 4766,
       "path": ".github/workflows/architecture-assurance.yml",
-      "sha256": "ab2fb996cb66c9b2cbe27f0992350293ed16aba41c2dbe7e5e2808c53e25467e"
+      "sha256": "845de45af12c5181755a28177c5a1c57f0f098f81ac8eb931a8f764255ad876e"
     },
     {
       "bytes": 2514,
@@ -1066,9 +1066,9 @@
       "sha256": "2a84c3f5e3a05e0a51b805dab102c9a8cdded226fa69e7daea2183b39eeadb30"
     },
     {
-      "bytes": 1623,
+      "bytes": 1953,
       "path": "UML/README.md",
-      "sha256": "e17aa034526a89af0b37fed5b032acff9928e94917659c428703b889cf72aeb9"
+      "sha256": "a2142e244959ee698c658f39d0fc3d4b89c3dee33ba25cee5715505b0abfe9bc"
     },
     {
       "bytes": 3316,
@@ -1206,9 +1206,9 @@
       "sha256": "093f3969f53d8c0350aee33e54601bd5b181059644bb3b2ffdc3156d127eae0b"
     },
     {
-      "bytes": 19698,
+      "bytes": 19963,
       "path": "docs/architecture/project/architecture-assurance/architecture.md",
-      "sha256": "9d1a9bb4070706c659585baccf1032d6c1b14312312c47e58c378447b416623c"
+      "sha256": "15fc5aa1a4f724f39dc04c5e463eacacd79952e6ef7284519a166cc4580a886f"
     },
     {
       "bytes": 12350,
@@ -1284,6 +1284,11 @@
       "bytes": 1902,
       "path": "tests/architecture_assurance/test_canon.py",
       "sha256": "b3c7663a6192dbd41a1a99e0d607ea26431b1cb4f9b667236ed0010aa85ee09d"
+    },
+    {
+      "bytes": 1154,
+      "path": "tests/architecture_assurance/test_ci_uml_previews.py",
+      "sha256": "5c9f26d6ddbd93969b7ff379051db1266c29737167d87ad50e2c93baaa651799"
     },
     {
       "bytes": 5651,
