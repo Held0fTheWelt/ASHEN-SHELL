@@ -16,6 +16,9 @@ runtime behavior.
 The Better Tomorrow audit rejects accepted claims without anchors, undisclosed
 discovered units, shallow required views, file drift and canon drift. JSON, JUnit
 and SARIF are equivalent renderings of the same audit result.
+Source anchors are restricted to files visible to Git (tracked or non-ignored
+new files), so local secrets, databases, caches and nested worktrees cannot
+become architectural evidence.
 
 ## External AKDB contract
 

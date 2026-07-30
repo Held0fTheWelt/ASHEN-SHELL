@@ -5,10 +5,12 @@ from __future__ import annotations
 import ast
 from collections.abc import Iterable, Mapping
 import fnmatch
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
 import re
+import subprocess
 from typing import Any
 
 from .schemas import ANCHOR_SCHEMA_VERSION, validate_anchor
@@ -65,6 +67,74 @@ def _is_transient(path: Path) -> bool:
 
 def repo_relative(path: Path, repo_root: Path) -> str:
     return Path(os.path.relpath(path.resolve(), repo_root.resolve())).as_posix()
+
+
+@lru_cache(maxsize=8)
+def _repository_visible_files(repo_root: str) -> frozenset[str] | None:
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                repo_root,
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+    return frozenset(
+        item.decode("utf-8", errors="surrogateescape").replace("\\", "/")
+        for item in result.stdout.split(b"\0")
+        if item
+    )
+
+
+def _is_repository_visible(path: Path, repo_root: Path) -> bool:
+    relative = repo_relative(path, repo_root)
+    if relative == ".." or relative.startswith("../"):
+        return False
+    visible = _repository_visible_files(str(repo_root.resolve()))
+    return visible is None or relative in visible
+
+
+def _repository_glob(repo_root: Path, pattern: str) -> list[Path]:
+    visible = _repository_visible_files(str(repo_root.resolve()))
+    if visible is None:
+        return sorted(path for path in repo_root.glob(pattern) if path.is_file())
+    return sorted(
+        (repo_root / relative).resolve()
+        for relative in visible
+        if fnmatch.fnmatch(relative, pattern)
+    )
+
+
+def _repository_files_under(directory: Path, repo_root: Path) -> list[Path]:
+    visible = _repository_visible_files(str(repo_root.resolve()))
+    if visible is None:
+        return sorted(
+            path
+            for path in directory.rglob("*")
+            if not _is_transient(path)
+            and path.is_file()
+            and path.suffix.lower() in _SUPPORTED_FILES
+        )
+    prefix = repo_relative(directory, repo_root).rstrip("/")
+    prefix = f"{prefix}/" if prefix not in {"", "."} else ""
+    return sorted(
+        (repo_root / relative).resolve()
+        for relative in visible
+        if relative.startswith(prefix)
+        and not _is_transient(Path(relative))
+        and Path(relative).suffix.lower() in _SUPPORTED_FILES
+    )
 
 
 def _anchor(kind: str, file: str, line: int, **extra: Any) -> dict[str, Any]:
@@ -411,29 +481,27 @@ def resolve_declared_path(
         for candidate in candidates:
             text = candidate.as_posix()
             if any(token in text for token in "*?["):
-                matches = sorted(repo_root.glob(repo_relative(candidate, repo_root)))
+                matches = _repository_glob(
+                    repo_root, repo_relative(candidate, repo_root)
+                )
                 if matches:
                     candidate = matches[0]
                 else:
                     continue
             if candidate.is_dir():
                 preferred = candidate / "__init__.py"
-                if preferred.is_file():
+                if preferred.is_file() and _is_repository_visible(
+                    preferred, repo_root
+                ):
                     candidate = preferred
                 else:
-                    files = sorted(
-                        path
-                        for path in candidate.rglob("*")
-                        if (
-                            not _is_transient(path)
-                            and path.is_file()
-                            and path.suffix.lower() in _SUPPORTED_FILES
-                        )
-                    )
+                    files = _repository_files_under(candidate, repo_root)
                     if not files:
                         continue
                     candidate = files[0]
-            if candidate.is_file():
+            if candidate.is_file() and _is_repository_visible(
+                candidate, repo_root
+            ):
                 return candidate.resolve(), value
     return None, None
 

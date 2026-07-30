@@ -478,7 +478,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 441,
+        "line": 509,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "anchor_for_declared_path"
@@ -490,7 +490,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 349,
+        "line": 419,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "discover_subsystem"
@@ -502,7 +502,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 473,
+        "line": 541,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "path_matches_declared"
@@ -514,7 +514,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 66,
+        "line": 68,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "repo_relative"
@@ -526,7 +526,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 397,
+        "line": 467,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_declared_path"
@@ -538,7 +538,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 215,
+        "line": 285,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "scan_content"
@@ -550,7 +550,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 301,
+        "line": 371,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "scan_deployment"
@@ -562,7 +562,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 91,
+        "line": 161,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "scan_python"
@@ -574,7 +574,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 163,
+        "line": 233,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "scan_schema"
@@ -586,7 +586,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/discovery.py",
         "kind": "python",
-        "line": 276,
+        "line": 346,
         "module": "tools.architecture_assurance.discovery",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "scan_web"

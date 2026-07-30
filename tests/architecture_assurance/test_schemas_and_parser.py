@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -86,3 +87,41 @@ def test_directory_anchor_ignores_test_runner_state(tmp_path: Path) -> None:
 
     assert path == (source / "__init__.py").resolve()
     assert declared == "service/"
+
+
+def test_declared_path_resolution_excludes_git_ignored_evidence(
+    tmp_path: Path,
+) -> None:
+    subprocess.run(
+        ["git", "init", "--quiet"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    (tmp_path / ".gitignore").write_text(
+        ".env\n.claude/\nbackend/instance/\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".env").write_text("SECRET=local\n", encoding="utf-8")
+    (tmp_path / ".env.example").write_text("SECRET=\n", encoding="utf-8")
+    real_gate = tmp_path / "tests" / "test_real_gate.py"
+    real_gate.parent.mkdir()
+    real_gate.write_text("def test_real(): pass\n", encoding="utf-8")
+    shadow_gate = (
+        tmp_path
+        / ".claude"
+        / "worktrees"
+        / "coverage"
+        / "tests"
+        / "test_shadow_gate.py"
+    )
+    shadow_gate.parent.mkdir(parents=True)
+    shadow_gate.write_text("def test_shadow(): pass\n", encoding="utf-8")
+
+    ignored_path, _ = resolve_declared_path(".env", tmp_path, [])
+    example_path, _ = resolve_declared_path(".env.example", tmp_path, [])
+    wildcard_path, _ = resolve_declared_path("**/test_*gate.py", tmp_path, [])
+
+    assert ignored_path is None
+    assert example_path == (tmp_path / ".env.example").resolve()
+    assert wildcard_path == real_gate.resolve()

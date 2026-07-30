@@ -336,9 +336,9 @@
       "sha256": "33bc815ba9b014e6633f9de6dfb4f694b1ad58c3f7c5a3c49bb79893f19a937d"
     },
     {
-      "bytes": 2052,
+      "bytes": 2237,
       "path": "docs/architecture/AKDB-AUTHORITY.md",
-      "sha256": "8129f49db0d46e5e949ec9b940315cf090e9d7b98e7e375f280aef95d763f599"
+      "sha256": "d8b504b71e133de084208818b3ad33cd1c22ad626444d2e44e3f3ea1a54d72a7"
     },
     {
       "bytes": 1964,
@@ -436,9 +436,9 @@
       "sha256": "707c78a8c56fa659518d6b79a3439a03896eff44a27139b860adb9c2385eca6a"
     },
     {
-      "bytes": 35040,
+      "bytes": 35041,
       "path": "docs/architecture/project/architecture-assurance/architecture.bindings.json",
-      "sha256": "866dcfb213a3c0aedc257aa64ff2bc4ea2fddfe417df71cc5acfca44d12057f4"
+      "sha256": "79aac90481154298a4b5a740dead986af26db246efe9003c8ed32001ece1941f"
     },
     {
       "bytes": 6895,
@@ -496,9 +496,9 @@
       "sha256": "46b7e8ced3c0131af452a984fad6bb6f5bea0ba82b5d70de0ba0fd21aa7a97a0"
     },
     {
-      "bytes": 36441,
+      "bytes": 36442,
       "path": "docs/architecture/project/quality-gates/architecture.bindings.json",
-      "sha256": "a5e24cdc3e42dcf7aab4d2bc421bc25cb251bfef504b55b613d357dd95062887"
+      "sha256": "bd86cfdb6270361f2aa78818b1c773c2e0ec2fa0842bd79cb46b38d3f2c09ccf"
     },
     {
       "bytes": 18052,
@@ -536,9 +536,9 @@
       "sha256": "bcfc8b3027cbfb91bfe6206b77718c8625b798165bdd3c6184ef5f0e613deb33"
     },
     {
-      "bytes": 2826,
+      "bytes": 4136,
       "path": "tests/architecture_assurance/test_schemas_and_parser.py",
-      "sha256": "964f4c68a78d6ef551748c776f4c1fad8c6185b215e8de6fb557d92bdf256934"
+      "sha256": "5d399bb10b05d5489479a04154539e50996d3645b1fe6e385d360dab207855e6"
     },
     {
       "bytes": 459,
@@ -581,9 +581,9 @@
       "sha256": "a5d267cf5f537e00b7a6c1ce7061cb6c01f40b74659a029a482199e4cfc86ade"
     },
     {
-      "bytes": 16272,
+      "bytes": 18389,
       "path": "tools/architecture_assurance/discovery.py",
-      "sha256": "2d50ebc41d921e04c44b8eef94ae880fda82134375a3582c7b1e47b67d137c02"
+      "sha256": "a6a22e641cb8c6e814197e7a1c82da78de77cd2c44d83e425b01991905df89c1"
     },
     {
       "bytes": 8299,
