@@ -138,3 +138,30 @@ def test_bind_ledger_context_records_without_explicit_ledger_ctor() -> None:
             adapters["probe"].generate("hello")
     assert ledger.call_count == 1
     assert ledger.records[0].phase == PHASE_MODEL_GENERATION
+
+def test_translation_cache_single_call_per_identical_text() -> None:
+    from story_runtime_core.model_call_accounting import (
+        PHASE_OUTPUT_TRANSLATION,
+        CountingModelAdapter,
+        TurnCallLedger,
+        bind_turn_call_ledger,
+        model_call_phase,
+    )
+
+    inner = _CountingProbeAdapter()
+    adapter = CountingModelAdapter(inner)
+    ledger = TurnCallLedger()
+    with bind_turn_call_ledger(ledger):
+        with model_call_phase(PHASE_OUTPUT_TRANSLATION):
+            adapter.generate("same-text")
+            adapter.generate("same-text")
+            adapter.generate("other-text")
+    assert inner.calls == 2
+    assert ledger.call_count == 2
+
+
+def test_routing_policy_prefers_slm_for_translation() -> None:
+    from story_runtime_core.model_registry import RoutingPolicy, build_default_registry
+
+    decision = RoutingPolicy(build_default_registry()).choose(task_type="translation")
+    assert decision.selected_provider == "ollama"

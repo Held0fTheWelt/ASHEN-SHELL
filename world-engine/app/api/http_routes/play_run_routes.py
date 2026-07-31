@@ -90,9 +90,7 @@ def create_run(payload: CreateRunRequest, manager: RuntimeManager = Depends(get_
             "selected_player_role": selected_role,
             **actor_ownership,
         }
-        instance.metadata["runtime_profile_handoff"] = runtime_profile_handoff
-        instance.updated_at = datetime.now(timezone.utc)
-        manager.store.save(instance)
+        instance = manager.attach_runtime_profile_handoff(instance, runtime_profile_handoff)
         response.update(runtime_profile_handoff)
 
     return response

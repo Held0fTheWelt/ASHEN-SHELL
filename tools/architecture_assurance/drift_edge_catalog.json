@@ -390,6 +390,102 @@
         "attempt_index",
         "call_count"
       ]
+    },
+    {
+      "id": "runtime-manager-live-run-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "world-engine:runtime",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "live_run_instance",
+      "label": "persists lobby/run instance state",
+      "contract": "Only RuntimeManager writes live_run_instance through RunStore.",
+      "anchor": "world-engine/app/runtime/manager.py",
+      "carries": [
+        "runtime_profile_handoff"
+      ]
+    },
+    {
+      "id": "manager-branching-tree-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "world-engine:manager",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "branching_tree",
+      "label": "persists branching tree records",
+      "contract": "Exactly one manager sink owns branching_tree persistence.",
+      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "carries": [
+        "tree_id"
+      ]
+    },
+    {
+      "id": "manager-branch-timeline-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "world-engine:manager",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "branch_timeline",
+      "label": "persists branch timeline records",
+      "contract": "Exactly one manager sink owns branch_timeline persistence.",
+      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "carries": [
+        "timeline_id"
+      ]
+    },
+    {
+      "id": "manager-callback-web-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "world-engine:manager",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "callback_web",
+      "label": "persists callback web records",
+      "contract": "Exactly one manager sink owns callback_web persistence.",
+      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "carries": [
+        "callback_web_id"
+      ]
+    },
+    {
+      "id": "manager-consequence-cascade-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "world-engine:manager",
+      "to": "world-engine:store",
+      "effect": "authoritative_write",
+      "write_resource": "consequence_cascade",
+      "label": "persists consequence cascade records",
+      "contract": "Exactly one manager sink owns consequence_cascade persistence.",
+      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "carries": [
+        "cascade_id"
+      ]
+    },
+    {
+      "id": "backend-runtime-session-sql-write",
+      "claim_ids": [
+        "DRIFT-001"
+      ],
+      "from": "backend:compat",
+      "to": "backend:database",
+      "effect": "authoritative_write",
+      "write_resource": "backend_runtime_session",
+      "label": "persists backend runtime_sessions rows",
+      "contract": "Backend session store owns runtime_sessions SQL writes; Wave 6 may retire this resource.",
+      "anchor": "backend/app/runtime/session/session_store.py",
+      "carries": [
+        "session_id"
+      ]
     }
   ],
   "authority_invariants": [
@@ -403,6 +499,61 @@
         "ai-stack:executor",
         "backend:compat"
       ]
+    },
+    {
+      "id": "single-live-run-instance-writer",
+      "resource": "live_run_instance",
+      "expected_writer": "world-engine:runtime",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "ai-stack:executor",
+        "backend:compat"
+      ]
+    },
+    {
+      "id": "single-branching-tree-writer",
+      "resource": "branching_tree",
+      "expected_writer": "world-engine:manager",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "world-engine:runtime"
+      ]
+    },
+    {
+      "id": "single-branch-timeline-writer",
+      "resource": "branch_timeline",
+      "expected_writer": "world-engine:manager",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "world-engine:runtime"
+      ]
+    },
+    {
+      "id": "single-callback-web-writer",
+      "resource": "callback_web",
+      "expected_writer": "world-engine:manager",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "world-engine:runtime"
+      ]
+    },
+    {
+      "id": "single-consequence-cascade-writer",
+      "resource": "consequence_cascade",
+      "expected_writer": "world-engine:manager",
+      "expected_sink": "world-engine:store",
+      "forbidden_writers": [
+        "world-engine:runtime"
+      ]
+    },
+    {
+      "id": "single-backend-runtime-session-writer",
+      "resource": "backend_runtime_session",
+      "expected_writer": "backend:compat",
+      "expected_sink": "backend:database",
+      "forbidden_writers": [
+        "world-engine:runtime"
+      ]
     }
   ],
   "write_surfaces": [
@@ -411,6 +562,9 @@
       "resource": "live_story_session",
       "language": "python",
       "call": "self._session_store.save",
+      "store_attrs": [
+        "_session_store"
+      ],
       "scan_roots": [
         "world-engine/app",
         "ai_stack",
@@ -420,6 +574,148 @@
         {
           "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_session"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    },
+    {
+      "id": "live-run-instance-store-save-callsite",
+      "resource": "live_run_instance",
+      "language": "python",
+      "call": "self.store.save",
+      "store_attrs": [
+        "store"
+      ],
+      "scan_roots": [
+        "world-engine/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "attach_runtime_profile_handoff"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "bind_story_session"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "_bootstrap_instance"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "find_or_join_run"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "connect"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "disconnect"
+        },
+        {
+          "path": "world-engine/app/runtime/manager.py",
+          "symbol": "process_command"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 20
+    },
+    {
+      "id": "branching-tree-store-save-callsite",
+      "resource": "branching_tree",
+      "language": "python",
+      "call": "self._branching_tree_store.save",
+      "store_attrs": [
+        "_branching_tree_store"
+      ],
+      "scan_roots": [
+        "world-engine/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "symbol": "_persist_branching_tree_record"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    },
+    {
+      "id": "branch-timeline-store-save-callsite",
+      "resource": "branch_timeline",
+      "language": "python",
+      "call": "self._branch_timeline_store.save",
+      "store_attrs": [
+        "_branch_timeline_store"
+      ],
+      "scan_roots": [
+        "world-engine/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "symbol": "_persist_branch_timeline_record"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    },
+    {
+      "id": "callback-web-store-save-callsite",
+      "resource": "callback_web",
+      "language": "python",
+      "call": "self._callback_web_store.save",
+      "store_attrs": [
+        "_callback_web_store"
+      ],
+      "scan_roots": [
+        "world-engine/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "symbol": "_persist_callback_web_record"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    },
+    {
+      "id": "consequence-cascade-store-save-callsite",
+      "resource": "consequence_cascade",
+      "language": "python",
+      "call": "self._consequence_cascade_store.save",
+      "store_attrs": [
+        "_consequence_cascade_store"
+      ],
+      "scan_roots": [
+        "world-engine/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "symbol": "_persist_consequence_cascade_record"
+        }
+      ],
+      "minimum_calls": 1,
+      "maximum_calls": 1
+    },
+    {
+      "id": "backend-runtime-session-sql-persist-callsite",
+      "resource": "backend_runtime_session",
+      "language": "python",
+      "call": "_persist_session_to_database",
+      "store_attrs": [],
+      "scan_roots": [
+        "backend/app"
+      ],
+      "allowed_callsites": [
+        {
+          "path": "backend/app/runtime/session/session_store.py",
+          "symbol": "create_session"
         }
       ],
       "minimum_calls": 1,
@@ -668,6 +964,36 @@
             {
               "path": "world-engine/app/story_runtime/manager/session/session_loop_governance.py",
               "token": "commit_contract_version"
+            }
+          ]
+        },
+        {
+          "name": "session_revision",
+          "introduced_at": "world-validation-authoritative-write",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/session/session_payloads.py",
+              "token": "revision"
+            },
+            {
+              "path": "world-engine/app/story_runtime/persist_outcome.py",
+              "token": "Persisted"
+            }
+          ]
+        },
+        {
+          "name": "rejection_reason",
+          "introduced_at": "world-bridge-to-commit-validation",
+          "required_through": "committed-state-to-delivery",
+          "source_proofs": [
+            {
+              "path": "world-engine/app/story_runtime/manager/session/recoverable_rejection_and_sessions.py",
+              "token": "recoverable_rejection"
+            },
+            {
+              "path": "world-engine/app/story_runtime/commit_models.py",
+              "token": "commit_reason_code"
             }
           ]
         }

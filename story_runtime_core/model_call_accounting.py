@@ -29,6 +29,11 @@ PHASE_OUTPUT_TRANSLATION = "output_translation"
 PHASE_SELF_CORRECTION = "self_correction"
 PHASE_FALLBACK = "fallback"
 
+# Hard per-turn cap for translation-phase model spend (E6). Generous until measured (A10).
+DEFAULT_TRANSLATION_CALL_HARD_CAP = 4
+
+_TRANSLATION_PHASES = frozenset({PHASE_INPUT_TRANSLATION, PHASE_OUTPUT_TRANSLATION})
+
 # Frame names (exec'd shard methods) → phase when context var is unset.
 _FRAME_PHASE_HINTS: tuple[tuple[str, str], ...] = (
     ("_translate_input", PHASE_INPUT_TRANSLATION),
@@ -57,6 +62,14 @@ _active_ledger: ContextVar["TurnCallLedger | None"] = ContextVar(
     "model_call_active_ledger",
     default=None,
 )
+_translation_cache: ContextVar[dict[str, ModelCallResult] | None] = ContextVar(
+    "model_call_translation_cache",
+    default=None,
+)
+_translation_call_count: ContextVar[int] = ContextVar(
+    "model_call_translation_count",
+    default=0,
+)
 
 
 @contextmanager
@@ -84,10 +97,14 @@ def model_call_phase(
 def bind_turn_call_ledger(ledger: "TurnCallLedger") -> Iterator["TurnCallLedger"]:
     """Bind a ledger for the current turn (tests and production turn entry)."""
     token = _active_ledger.set(ledger)
+    cache_token = _translation_cache.set({})
+    count_token = _translation_call_count.set(0)
     try:
         yield ledger
     finally:
         _active_ledger.reset(token)
+        _translation_cache.reset(cache_token)
+        _translation_call_count.reset(count_token)
 
 
 def current_model_call_phase() -> ModelCallPhaseContext:
@@ -259,6 +276,13 @@ class CountingModelAdapter(BaseModelAdapter):
         ledger = self._resolve_ledger()
         phase_ctx = resolve_model_call_phase()
         budget_warning = False
+        cache = _translation_cache.get()
+        is_translation = phase_ctx.phase in _TRANSLATION_PHASES
+
+        # Identical translation prompts reuse the in-turn cache (E6) before budgets.
+        if is_translation and isinstance(cache, dict) and prompt in cache:
+            return cache[prompt]
+
         if ledger is not None:
             if ledger.would_exceed_hard_budget():
                 aborted = TurnCallRecord(
@@ -279,6 +303,11 @@ class CountingModelAdapter(BaseModelAdapter):
             if ledger.call_count + 1 > ledger.soft_budget:
                 budget_warning = True
 
+        if is_translation:
+            used = int(_translation_call_count.get() or 0)
+            if used >= DEFAULT_TRANSLATION_CALL_HARD_CAP:
+                raise HardBudgetExceeded(ledger or TurnCallLedger(soft_budget=1, hard_budget=1))
+
         started = time.perf_counter()
         result = self._inner.generate(
             prompt,
@@ -287,6 +316,9 @@ class CountingModelAdapter(BaseModelAdapter):
             model_name=model_name,
         )
         duration_ms = int((time.perf_counter() - started) * 1000)
+        if is_translation and isinstance(cache, dict):
+            cache[prompt] = result
+            _translation_call_count.set(int(_translation_call_count.get() or 0) + 1)
         if ledger is None:
             return result
 

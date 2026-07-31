@@ -74,6 +74,21 @@ class RuntimeManager:
     def attach_story_manager(self, story_manager: Any | None) -> None:
         self.story_manager = story_manager
 
+    def attach_runtime_profile_handoff(
+        self,
+        instance: RuntimeInstance,
+        handoff: dict[str, Any],
+    ) -> RuntimeInstance:
+        """Persist runtime-profile handoff metadata via the run-store sink.
+
+        Routes must not call ``manager.store.save`` directly (Wave 2 write topology).
+        """
+        payload = dict(handoff or {})
+        instance.metadata["runtime_profile_handoff"] = payload
+        instance.updated_at = datetime.now(timezone.utc)
+        self.store.save(instance)
+        return instance
+
     def bind_story_session(self, run_id: str, story_session_id: str) -> dict[str, Any]:
         instance = self.instances[run_id]
         clean_session_id = str(story_session_id or "").strip()

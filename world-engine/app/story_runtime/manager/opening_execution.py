@@ -311,7 +311,7 @@ class _OpeningExecutionMixin:
         self.sessions[session_id] = session
         with self._session_locks_guard:
             self._session_turn_locks.setdefault(session_id, threading.Lock())
-        self._persist_session(session)
+        self._persist_session(session, reason="session_opened")
         return session
 
 

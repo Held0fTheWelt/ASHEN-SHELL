@@ -14,6 +14,8 @@ _SLM_FIRST_TASKS = frozenset(
         "repetition_consistency_check",
         "ranking",
         "cheap_preflight",
+        # Wave 2 / E6: dedicated cheap translation route.
+        "translation",
         # Deprecated aliases — normalized internally; do not emit from new code paths.
         "extraction",
         "compression",
@@ -131,7 +133,7 @@ def build_default_registry() -> ModelRegistry:
             structured_output_capable=False,
             cost_class="low",
             latency_class="low",
-            use_cases=("classification", "extraction", "ranking", "compression"),
+            use_cases=("classification", "extraction", "ranking", "compression", "translation"),
         )
     )
     registry.register(

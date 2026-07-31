@@ -88,6 +88,22 @@ Historical MVP and work-order material is classified evidence, not an authority 
 - Expose diagnostics and state over HTTP for backend proxy and operator tooling.
 - Use thin Director realization path for default player turns ([ADR-0062](../../../archive/adr-retired-2026/adr-0062-director-realization-thin-path.md)).
 
+### 4.1 Persistence resources and sinks (Wave 2)
+
+Exactly one declared sink per resource. Routes must not call store sinks directly.
+
+| Resource | Owner / writer | Sink callsite | Revision behavior |
+| --- | --- | --- | --- |
+| `live_story_session` | StoryRuntimeManager | `_persist_session` → `_session_store.save` | `session.revision` increments on real write; `PersistOutcome` returned |
+| `live_run_instance` | RuntimeManager | `self.store.save` (incl. `attach_runtime_profile_handoff`) | Run-instance metadata; not story revision |
+| `branching_tree` | StoryRuntimeManager | `_persist_branching_tree_record` | Tree record replace |
+| `branch_timeline` | StoryRuntimeManager | `_persist_branch_timeline_record` | Timeline record replace |
+| `callback_web` | StoryRuntimeManager | `_persist_callback_web_record` | Callback-web record replace |
+| `consequence_cascade` | StoryRuntimeManager | `_persist_consequence_cascade_record` | Cascade record replace |
+| `backend_runtime_session` | Backend session store | `_persist_session_to_database` | SQL `runtime_sessions` (Wave 6 retirement candidate) |
+
+Gate: `tools/architecture_assurance/drift_edge_catalog.json` `write_surfaces` + `validate_authoritative_write_surfaces` (alias-aware).
+
 ## 5. Building Block View
 
 | Block | Location | Role |
@@ -694,7 +710,7 @@ The engine contains both app/story_runtime and app/runtime generations plus mana
 | `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
 | `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
 | `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
-| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-006` | `open_target` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
 | `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
 | `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
 

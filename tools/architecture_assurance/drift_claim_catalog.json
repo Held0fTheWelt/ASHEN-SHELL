@@ -23,9 +23,9 @@
         "world-engine/app/runtime/manager.py",
         "world-engine/app/story_runtime/manager/commit_finalization.py"
       ],
-      "status": "conflicting",
-      "diagnosis": "Two runtime package generations remain in executable source. Their allowed responsibilities are not yet enforced as one dependency direction.",
-      "target": "Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth.",
+      "status": "confirmed_current",
+      "diagnosis": "Live story session and live run instance are separate persistence resources (Wave 2). Remaining risk is incomplete retirement of overlapping runtime generations.",
+      "target": "Keep live_story_session and live_run_instance as distinct resources with one sink each; retire overlapping commit authority from app/runtime into named adapters only.",
       "acceptance_evidence": [
         "A dependency gate rejects app/story_runtime imports of overlapping app/runtime behavior.",
         "Every player turn enters one manager and one authoritative commit path.",
