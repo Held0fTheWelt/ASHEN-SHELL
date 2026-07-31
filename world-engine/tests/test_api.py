@@ -3,10 +3,10 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.api.http import router as http_router
-from app.api.ws import router as ws_router
-from app.auth.tickets import TicketManager
-from app.runtime.manager import RuntimeManager
+from world_engine.api.http import router as http_router
+from world_engine.api.ws import router as ws_router
+from world_engine.auth.tickets import TicketManager
+from world_engine.runtime.manager import RuntimeManager
 
 
 def build_test_app(tmp_path: Path) -> FastAPI:

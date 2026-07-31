@@ -9,7 +9,7 @@ stable (continuity carries forward) and must advance with a truthful
 
 from __future__ import annotations
 
-from app.story_runtime.commit_models import (
+from world_engine.story_runtime.commit_models import (
     BeatProgression,
     resolve_narrative_commit,
 )
@@ -196,8 +196,8 @@ def test_prior_beat_read_back_from_session_history() -> None:
     """Manager-level proof: _prior_beat_from_session rehydrates the committed
     beat from a prior history entry, so the next turn's commit can carry it
     forward. Without this, beat continuity would stay ephemeral per turn."""
-    from app.story_runtime.manager import _prior_beat_from_session
-    from app.story_runtime.manager import StorySession
+    from world_engine.story_runtime.manager import _prior_beat_from_session
+    from world_engine.story_runtime.manager import StorySession
 
     s = StorySession(
         session_id="sess-beat-test",

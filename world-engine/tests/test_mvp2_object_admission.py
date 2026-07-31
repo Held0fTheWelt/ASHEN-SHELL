@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.models import VALID_SOURCE_KINDS, ObjectAdmissionRecord
-from app.runtime.object_admission import admit_object, validate_object_admission
+from world_engine.runtime.models import VALID_SOURCE_KINDS, ObjectAdmissionRecord
+from world_engine.runtime.object_admission import admit_object, validate_object_admission
 
 
 # ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ def test_validate_object_admission_rejects_similar_allowed_without_reason():
 
 def test_runtime_profile_contains_no_story_truth():
     """RuntimeProfile must not contain forbidden story truth fields."""
-    from app.runtime.profiles import assert_profile_contains_no_story_truth, resolve_runtime_profile
+    from world_engine.runtime.profiles import assert_profile_contains_no_story_truth, resolve_runtime_profile
 
     profile = resolve_runtime_profile("god_of_carnage_solo")
     profile_dict = profile.to_dict()
@@ -247,8 +247,8 @@ def test_runtime_profile_contains_no_story_truth():
 
 def test_runtime_module_contains_no_goc_story_truth():
     """God of Carnage solo builtin template must not own story truth."""
-    from app.runtime.profiles import assert_runtime_module_contains_no_story_truth
-    from app.content.builtins import load_builtin_templates
+    from world_engine.runtime.profiles import assert_runtime_module_contains_no_story_truth
+    from world_engine.content.builtins import load_builtin_templates
 
     templates = load_builtin_templates()
     goc_solo = templates.get("god_of_carnage_solo")
@@ -268,7 +268,7 @@ def test_god_of_carnage_solo_does_not_define_characters_scenes_props_or_plot_tru
     The template is runtime configuration only. All story truth lives in
     content/modules/god_of_carnage/. This is the Wave 2.4 content boundary gate.
     """
-    from app.content.builtins import load_builtin_templates
+    from world_engine.content.builtins import load_builtin_templates
 
     templates = load_builtin_templates()
     goc_solo = templates.get("god_of_carnage_solo")
@@ -294,7 +294,7 @@ def test_god_of_carnage_solo_does_not_define_characters_scenes_props_or_plot_tru
     )
 
     # Only annette and alain are selectable human roles (mode=HUMAN, can_join=True)
-    from app.content.models import ParticipantMode
+    from world_engine.content.models import ParticipantMode
     human_joinable = {r.id for r in goc_solo.roles if r.mode == ParticipantMode.HUMAN and r.can_join}
     assert human_joinable == {"annette", "alain"}, (
         f"Only annette and alain may be selectable human roles, got: {human_joinable!r}"
@@ -305,7 +305,7 @@ def test_god_of_carnage_content_module_owns_story_truth():
     """The canonical content module god_of_carnage must exist and own story truth."""
     import os
     from pathlib import Path
-    from app.repo_root import resolve_wos_repo_root
+    from world_engine.repo_root import resolve_wos_repo_root
 
     repo_root = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
     goc_dir = repo_root / "content" / "modules" / "god_of_carnage"
@@ -320,7 +320,7 @@ def test_goc_solo_not_under_content_modules():
     """god_of_carnage_solo must not be loadable as a content module."""
     import os
     from pathlib import Path
-    from app.repo_root import resolve_wos_repo_root
+    from world_engine.repo_root import resolve_wos_repo_root
 
     repo_root = resolve_wos_repo_root(start=Path(__file__).resolve().parent)
     solo_as_content = repo_root / "content" / "modules" / "god_of_carnage_solo"

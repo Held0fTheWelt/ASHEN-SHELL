@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.observability import trace as trace_mod
+from world_engine.observability import trace as trace_mod
 
 
 @pytest.fixture(autouse=True)

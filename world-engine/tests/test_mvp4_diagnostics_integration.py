@@ -11,8 +11,8 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from story_runtime_core.model_registry import ModelRegistry
-from app.observability.trace import LANGFUSE_TRACE_ID, set_langfuse_trace_id
-from app.story_runtime.manager import StoryRuntimeManager, _build_model_generation_phase_cost
+from world_engine.observability.trace import LANGFUSE_TRACE_ID, set_langfuse_trace_id
+from world_engine.story_runtime.manager import StoryRuntimeManager, _build_model_generation_phase_cost
 
 
 def _mock_graph_state():

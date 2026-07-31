@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.command_resolution import REJECTION_NO_INTERPRETABLE_INTENT, resolve_plan_to_command
-from app.runtime.input_interpreter import InputPrimaryMode, interpret_runtime_input
+from world_engine.runtime.command_resolution import REJECTION_NO_INTERPRETABLE_INTENT, resolve_plan_to_command
+from world_engine.runtime.input_interpreter import InputPrimaryMode, interpret_runtime_input
 
 
 def test_silence_and_dots_no_command():

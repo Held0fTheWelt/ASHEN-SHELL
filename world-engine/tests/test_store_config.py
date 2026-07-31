@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from app.runtime.store import JsonRunStore, SqlAlchemyRunStore, build_run_store
+from world_engine.runtime.store import JsonRunStore, SqlAlchemyRunStore, build_run_store
 
 
 @pytest.mark.persistence

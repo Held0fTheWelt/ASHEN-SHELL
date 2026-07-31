@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.story_runtime_shell_readout import build_story_runtime_shell_readout, frame_story_runtime_visible_output_bundle
+from world_engine.story_runtime_shell_readout import build_story_runtime_shell_readout, frame_story_runtime_visible_output_bundle
 
 
 def _payload() -> dict[str, object]:

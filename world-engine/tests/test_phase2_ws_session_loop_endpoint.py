@@ -118,7 +118,7 @@ def _make_app(
     autonomous_envelope_extras: dict[str, Any] | None = None,
     fail_first_execute: bool = False,
 ) -> FastAPI:
-    from app.api.story_ws import story_ws_router, story_ws_support_router
+    from world_engine.api.story_ws import story_ws_router, story_ws_support_router
 
     app = FastAPI()
     app.include_router(story_ws_router)
@@ -788,8 +788,8 @@ class TestCutInOverWs:
 class TestRestFallbackDiscipline:
     def test_disabling_flag_does_not_touch_rest_endpoint_modules(self, ws_disabled, env_test_mode):
         """When WS is disabled the REST module is still importable and untouched."""
-        from app.api import http as http_module
-        from app.api import story_ws as ws_module
+        from world_engine.api import http as http_module
+        from world_engine.api import story_ws as ws_module
 
         # WS module is importable but reports disabled.
         assert is_ws_session_loop_enabled() is False
@@ -1364,7 +1364,7 @@ class TestRESTAndBundlePreserved:
     """Stage E must not touch the REST/bundle fallback path."""
 
     def test_rest_endpoint_still_registered(self, ws_enabled, autonomous_enabled, env_test_mode):
-        from app.api import http as http_module
+        from world_engine.api import http as http_module
         assert any(
             getattr(r, "path", None) == "/api/story/sessions/{session_id}/turns"
             for r in http_module.router.routes

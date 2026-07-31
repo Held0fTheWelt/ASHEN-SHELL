@@ -5,8 +5,8 @@ from pathlib import Path
 # Add parent directory to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.runtime.session_manager import SessionManager
-from app.runtime.turn_executor import TurnExecutor, TurnResult
+from world_engine.runtime.session_manager import SessionManager
+from world_engine.runtime.turn_executor import TurnExecutor, TurnResult
 
 
 class TestTurnExecution:

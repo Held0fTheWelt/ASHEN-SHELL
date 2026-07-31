@@ -33,7 +33,7 @@ WORLD_ENGINE_ROOT = Path(__file__).resolve().parent.parent
 class TestRuntimeProfileResolver:
 
     def test_runtime_profile_resolver_success(self):
-        from app.runtime.profiles import resolve_runtime_profile
+        from world_engine.runtime.profiles import resolve_runtime_profile
         profile = resolve_runtime_profile("god_of_carnage_solo")
         assert profile.runtime_profile_id == "god_of_carnage_solo"
         assert profile.content_module_id == "god_of_carnage"
@@ -45,19 +45,19 @@ class TestRuntimeProfileResolver:
         assert slugs == {"annette", "alain"}
 
     def test_create_run_missing_runtime_profile_returns_contract_error(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
         with pytest.raises(RuntimeProfileError) as exc_info:
             resolve_runtime_profile("")
         assert exc_info.value.code == "runtime_profile_required"
 
     def test_unknown_runtime_profile_rejected(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
         with pytest.raises(RuntimeProfileError) as exc_info:
             resolve_runtime_profile("god_of_carnage_multiplayer")
         assert exc_info.value.code == "runtime_profile_not_found"
 
     def test_none_runtime_profile_rejected(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile
         with pytest.raises(RuntimeProfileError) as exc_info:
             resolve_runtime_profile(None)
         assert exc_info.value.code == "runtime_profile_required"
@@ -81,13 +81,13 @@ class TestContentAuthority:
         assert "god_of_carnage" in module_dirs, "god_of_carnage canonical content module must exist."
 
     def test_profile_contains_no_story_truth(self):
-        from app.runtime.profiles import assert_profile_contains_no_story_truth, resolve_runtime_profile
+        from world_engine.runtime.profiles import assert_profile_contains_no_story_truth, resolve_runtime_profile
         profile = resolve_runtime_profile("god_of_carnage_solo")
         profile_dict = profile.to_dict()
         assert_profile_contains_no_story_truth(profile_dict)
 
     def test_profile_story_truth_fields_are_forbidden(self):
-        from app.runtime.profiles import RuntimeProfileError, assert_profile_contains_no_story_truth
+        from world_engine.runtime.profiles import RuntimeProfileError, assert_profile_contains_no_story_truth
         contaminated = {
             "runtime_profile_id": "god_of_carnage_solo",
             "characters": [{"id": "annette"}],
@@ -98,7 +98,7 @@ class TestContentAuthority:
 
     def test_runtime_module_contains_no_story_truth(self):
         """The runtime profile dict from resolve_runtime_profile has no story truth fields."""
-        from app.runtime.profiles import resolve_runtime_profile
+        from world_engine.runtime.profiles import resolve_runtime_profile
         profile = resolve_runtime_profile("god_of_carnage_solo")
         profile_dict = profile.to_dict()
         story_truth_fields = ["characters", "roles", "rooms", "props", "beats", "scenes", "relationships", "endings"]
@@ -115,7 +115,7 @@ class TestContentAuthority:
 class TestRoleSelection:
 
     def test_session_creation_without_selected_player_role_fails(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             validate_selected_player_role(None, profile)
@@ -124,21 +124,21 @@ class TestRoleSelection:
         assert "alain" in str(exc_info.value.details.get("allowed_values", []))
 
     def test_session_creation_without_selected_player_role_empty_fails(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             validate_selected_player_role("", profile)
         assert exc_info.value.code == "selected_player_role_required"
 
     def test_session_creation_invalid_role_fails(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             validate_selected_player_role("michel", profile)
         assert exc_info.value.code == "invalid_selected_player_role"
 
     def test_role_slug_must_resolve_to_canonical_actor(self):
-        from app.runtime.profiles import resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         role = validate_selected_player_role("annette", profile)
         canonical_id = profile.role_slug_to_canonical_actor_id(role)
@@ -146,7 +146,7 @@ class TestRoleSelection:
         assert canonical_id == "annette_reille"
 
     def test_alain_role_slug_resolves_to_canonical_actor(self):
-        from app.runtime.profiles import resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         role = validate_selected_player_role("alain", profile)
         canonical_id = profile.role_slug_to_canonical_actor_id(role)
@@ -160,7 +160,7 @@ class TestRoleSelection:
 class TestVisitorRemoval:
 
     def test_visitor_rejected_as_selected_player_role(self):
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             validate_selected_player_role("visitor", profile)
@@ -168,7 +168,7 @@ class TestVisitorRemoval:
 
     def test_visitor_absent_from_prompts_responders_lobby(self):
         """visitor must not appear in the GoC solo template roles."""
-        from app.content.builtins import load_builtin_templates
+        from world_engine.content.builtins import load_builtin_templates
         templates = load_builtin_templates()
         goc_solo = templates.get("god_of_carnage_solo")
         assert goc_solo is not None, "god_of_carnage_solo template must exist"
@@ -179,7 +179,7 @@ class TestVisitorRemoval:
         )
 
     def test_visitor_not_in_npc_actor_ids(self):
-        from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile
+        from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile
         profile = resolve_runtime_profile("god_of_carnage_solo")
         ownership = build_actor_ownership("annette", profile)
         assert "visitor" not in ownership["npc_actor_ids"]
@@ -187,7 +187,7 @@ class TestVisitorRemoval:
         assert ownership["visitor_present"] is False
 
     def test_visitor_rejected_from_build_actor_ownership(self):
-        from app.runtime.profiles import RuntimeProfileError, build_actor_ownership, resolve_runtime_profile
+        from world_engine.runtime.profiles import RuntimeProfileError, build_actor_ownership, resolve_runtime_profile
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             build_actor_ownership("visitor", profile)
@@ -201,7 +201,7 @@ class TestVisitorRemoval:
 class TestValidStart:
 
     def test_valid_annette_start(self):
-        from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         role = validate_selected_player_role("annette", profile)
         ownership = build_actor_ownership(role, profile)
@@ -214,7 +214,7 @@ class TestValidStart:
         assert ownership["visitor_present"] is False
 
     def test_valid_alain_start(self):
-        from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         role = validate_selected_player_role("alain", profile)
         ownership = build_actor_ownership(role, profile)
@@ -228,8 +228,8 @@ class TestValidStart:
 
     def test_annette_human_role_exists_in_template(self):
         """annette must be a HUMAN+can_join role in the god_of_carnage_solo template."""
-        from app.content.builtins import load_builtin_templates
-        from app.content.models import ParticipantMode
+        from world_engine.content.builtins import load_builtin_templates
+        from world_engine.content.models import ParticipantMode
         templates = load_builtin_templates()
         goc_solo = templates["god_of_carnage_solo"]
         annette_role = next((r for r in goc_solo.roles if r.id == "annette"), None)
@@ -239,8 +239,8 @@ class TestValidStart:
 
     def test_alain_human_role_exists_in_template(self):
         """alain must be a HUMAN+can_join role in the god_of_carnage_solo template."""
-        from app.content.builtins import load_builtin_templates
-        from app.content.models import ParticipantMode
+        from world_engine.content.builtins import load_builtin_templates
+        from world_engine.content.models import ParticipantMode
         templates = load_builtin_templates()
         goc_solo = templates["god_of_carnage_solo"]
         alain_role = next((r for r in goc_solo.roles if r.id == "alain"), None)
@@ -291,8 +291,8 @@ class TestStoryTruthBoundary:
     def test_goc_solo_runtime_projection_is_derived_from_canonical_content(self):
         """Role IDs in god_of_carnage_solo template must resolve through canonical character documents (FIX-006)."""
         import yaml
-        from app.content.builtins import load_builtin_templates
-        from app.runtime.profiles import resolve_runtime_profile
+        from world_engine.content.builtins import load_builtin_templates
+        from world_engine.runtime.profiles import resolve_runtime_profile
 
         module_root = REPO_ROOT / "content" / "modules" / "god_of_carnage"
         char_dir = REPO_ROOT / "content" / "modules" / "god_of_carnage" / "characters"
@@ -339,7 +339,7 @@ class TestContentResolvedRoleMapping:
 
     def test_role_slug_map_uses_content_resolved_actor_ids(self):
         """Canonical actors must be resolved from characters/*.yaml, not hardcoded (FIX-007)."""
-        from app.runtime.profiles import _resolve_goc_content, resolve_runtime_profile
+        from world_engine.runtime.profiles import _resolve_goc_content, resolve_runtime_profile
         actor_ids, content_hash = _resolve_goc_content()
         assert "annette_reille" in actor_ids
         assert "alain_reille" in actor_ids
@@ -352,7 +352,7 @@ class TestContentResolvedRoleMapping:
 
     def test_selected_player_role_not_canonical_character(self):
         """A role slug not in characters/*.yaml must be rejected (FIX-007)."""
-        from app.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import RuntimeProfileError, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         with pytest.raises(RuntimeProfileError) as exc_info:
             validate_selected_player_role("ferdinand", profile)
@@ -360,7 +360,7 @@ class TestContentResolvedRoleMapping:
 
     def test_build_actor_ownership_includes_content_hash(self):
         """build_actor_ownership must include content_hash from resolved content (FIX-007)."""
-        from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
+        from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile, validate_selected_player_role
         profile = resolve_runtime_profile("god_of_carnage_solo")
         role = validate_selected_player_role("annette", profile)
         ownership = build_actor_ownership(role, profile)
@@ -638,7 +638,7 @@ class TestRuntimeModuleStoryTruthRemoval:
 
     def test_goc_solo_builtin_template_beats_empty(self):
         """god_of_carnage_solo template beats must be empty (FIX-002)."""
-        from app.content.builtins import load_builtin_templates
+        from world_engine.content.builtins import load_builtin_templates
         templates = load_builtin_templates()
         goc_solo = templates["god_of_carnage_solo"]
         assert goc_solo.beats == [], (
@@ -647,7 +647,7 @@ class TestRuntimeModuleStoryTruthRemoval:
 
     def test_goc_solo_builtin_template_props_empty(self):
         """god_of_carnage_solo template props must be empty (FIX-002)."""
-        from app.content.builtins import load_builtin_templates
+        from world_engine.content.builtins import load_builtin_templates
         templates = load_builtin_templates()
         goc_solo = templates["god_of_carnage_solo"]
         assert goc_solo.props == [], (
@@ -656,7 +656,7 @@ class TestRuntimeModuleStoryTruthRemoval:
 
     def test_goc_solo_builtin_template_actions_empty(self):
         """god_of_carnage_solo template actions must be empty (FIX-002)."""
-        from app.content.builtins import load_builtin_templates
+        from world_engine.content.builtins import load_builtin_templates
         templates = load_builtin_templates()
         goc_solo = templates["god_of_carnage_solo"]
         assert goc_solo.actions == [], (
@@ -665,8 +665,8 @@ class TestRuntimeModuleStoryTruthRemoval:
 
     def test_runtime_module_contains_story_truth_error_code(self):
         """assert_runtime_module_contains_no_story_truth must raise FIX-005 error code (FIX-005)."""
-        from app.runtime.profiles import RuntimeProfileError, assert_runtime_module_contains_no_story_truth
-        from app.content.models import ExperienceTemplate, ExperienceKind, JoinPolicy, BeatTemplate
+        from world_engine.runtime.profiles import RuntimeProfileError, assert_runtime_module_contains_no_story_truth
+        from world_engine.content.models import ExperienceTemplate, ExperienceKind, JoinPolicy, BeatTemplate
         fake_beat = BeatTemplate(
             id="test",
             name="Test Beat",
@@ -766,7 +766,7 @@ class TestContentResolutionFailureInLiveMode:
 
     def test_role_resolution_succeeds_when_canonical_content_present(self):
         """_resolve_goc_content must succeed in live mode when content is available (FIX-004)."""
-        from app.runtime.profiles import _resolve_goc_content
+        from world_engine.runtime.profiles import _resolve_goc_content
         # In a properly deployed environment, this should succeed
         actor_ids, content_hash = _resolve_goc_content(allow_fallback=False)
         assert len(actor_ids) > 0, "Canonical actors must be resolved from content"
@@ -774,7 +774,7 @@ class TestContentResolutionFailureInLiveMode:
 
     def test_role_resolution_fallback_when_allowed_for_testing(self):
         """_resolve_goc_content must allow fallback in test mode (FIX-004)."""
-        from app.runtime.profiles import _resolve_goc_content
+        from world_engine.runtime.profiles import _resolve_goc_content
         # With fallback allowed (test isolation), should return values even if read fails
         try:
             actor_ids, content_hash = _resolve_goc_content(allow_fallback=True)
@@ -869,7 +869,7 @@ class TestSessionOutputLanguage:
 
     def test_story_session_stores_output_language(self):
         """StorySession must store session_output_language from create_session() (ADR-0036)."""
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",
@@ -880,7 +880,7 @@ class TestSessionOutputLanguage:
         assert session.session_input_language == "en"
 
     def test_story_session_stores_input_language(self):
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",
@@ -893,7 +893,7 @@ class TestSessionOutputLanguage:
 
     def test_story_session_default_language_matches_module_language(self):
         """StorySession defaults to module language when language is omitted."""
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",
@@ -905,7 +905,7 @@ class TestSessionOutputLanguage:
 
     def test_opening_prompt_contains_german_directive_for_de(self):
         """_build_opening_prompt must include German language directive when session_output_language=de (ADR-0036)."""
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",
@@ -919,7 +919,7 @@ class TestSessionOutputLanguage:
 
     def test_opening_prompt_contains_english_directive_for_en(self):
         """_build_opening_prompt must include English language directive when session_output_language=en (ADR-0036)."""
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",
@@ -933,7 +933,7 @@ class TestSessionOutputLanguage:
 
     def test_opening_prompt_requests_policy_sized_narration_summary_list(self):
         """Turn-0 GoC opening must steer the model toward policy-sized narration_summary blocks."""
-        from app.story_runtime import StoryRuntimeManager
+        from world_engine.story_runtime import StoryRuntimeManager
         mgr = StoryRuntimeManager(session_store=None, adapters={})
         session = mgr.create_session(
             module_id="god_of_carnage",

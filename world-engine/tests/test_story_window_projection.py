@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.story_runtime.manager import StorySession, _story_window_entries_for_session
+from world_engine.story_runtime.manager import StorySession, _story_window_entries_for_session
 
 
 def test_story_window_projection_uses_committed_opening_and_player_turn() -> None:

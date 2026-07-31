@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from app.content.backend_loader import BackendContentLoadError, load_published_templates
-from app.content.backend_source import RemoteContentError, load_remote_templates
-from app.content.models import BeatTemplate, ExperienceKind, ExperienceTemplate, JoinPolicy
+from world_engine.content.backend_loader import BackendContentLoadError, load_published_templates
+from world_engine.content.backend_source import RemoteContentError, load_remote_templates
+from world_engine.content.models import BeatTemplate, ExperienceKind, ExperienceTemplate, JoinPolicy
 
 
 class _TemplateFeedHandler(BaseHTTPRequestHandler):

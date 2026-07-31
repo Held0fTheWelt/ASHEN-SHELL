@@ -15,7 +15,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from app.api.http import _require_internal_api_key
+from world_engine.api.http import _require_internal_api_key
 from conftest import build_test_app
 
 

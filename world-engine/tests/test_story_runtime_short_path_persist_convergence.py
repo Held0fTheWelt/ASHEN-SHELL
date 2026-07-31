@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.manager import _recoverable_narrator_visible_output_bundle
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.manager import _recoverable_narrator_visible_output_bundle
 
 
 class _FakeTurnGraph:

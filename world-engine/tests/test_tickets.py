@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-import app.auth.tickets as tickets_module
+import world_engine.auth.tickets as tickets_module
 
 
 

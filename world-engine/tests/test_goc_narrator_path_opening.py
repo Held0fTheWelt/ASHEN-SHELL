@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime import StoryRuntimeManager
 from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import ModelRegistry, ModelSpec, RoutingPolicy
 

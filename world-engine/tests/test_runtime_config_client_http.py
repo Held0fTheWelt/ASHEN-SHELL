@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from app.runtime.runtime_config_client import fetch_hf_hub_token_from_backend, fetch_resolved_runtime_config
+from world_engine.runtime.runtime_config_client import fetch_hf_hub_token_from_backend, fetch_resolved_runtime_config
 
 
 class _RuntimeConfigHandler(BaseHTTPRequestHandler):

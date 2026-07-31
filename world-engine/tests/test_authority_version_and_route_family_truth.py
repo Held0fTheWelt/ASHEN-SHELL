@@ -26,13 +26,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.story_runtime.governed_runtime import (
+from world_engine.story_runtime.governed_runtime import (
     GovernedStoryRoutingPolicy,
     LiveStoryRoutingError,
     build_governed_story_runtime_components,
     normalize_provider_model_name,
 )
-from app.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager import StoryRuntimeManager
 from story_runtime_core import ModelRegistry
 from story_runtime_core.model_registry import ModelSpec
 

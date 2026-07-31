@@ -4,12 +4,12 @@ from ai_stack.contracts.environment_state_contracts import (
     build_environment_model,
     initial_environment_state,
 )
-from app.story_runtime.manager import (
+from world_engine.story_runtime.manager import (
     StorySession,
     story_session_from_payload,
     story_session_to_payload,
 )
-from app.story_runtime_shell_readout import build_story_runtime_shell_readout
+from world_engine.story_runtime_shell_readout import build_story_runtime_shell_readout
 
 
 MODULE_ID = "god_of_carnage"

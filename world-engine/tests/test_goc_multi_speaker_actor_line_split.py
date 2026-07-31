@@ -8,7 +8,7 @@ via ``ai_stack.story_runtime.npc_agency.god_of_carnage_npc_transcript_projection
 
 from __future__ import annotations
 
-from app.story_runtime.manager import (
+from world_engine.story_runtime.manager import (
     _dedupe_goc_speaker_colon_stutter,
     _expand_multi_speaker_actor_lines,
     _finalize_visible_blocks_with_goc_actor_split,

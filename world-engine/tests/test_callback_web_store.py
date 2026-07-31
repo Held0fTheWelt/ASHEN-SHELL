@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.story_runtime.callback_web_store import JsonCallbackWebStore
+from world_engine.story_runtime.callback_web_store import JsonCallbackWebStore
 from story_runtime_core.callbacks import CALLBACK_WEB_RECORD_SCHEMA_VERSION
 
 

@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
-from app.story_runtime.manager import (
+from world_engine.story_runtime.manager import (
     StorySession,
     _build_langfuse_path_summary,
     _compact_scene_block_summary,
@@ -23,7 +23,7 @@ from app.story_runtime.manager import (
     _maybe_split_goc_opening_into_two_movements,
     _opening_block_contract_satisfied,
 )
-from app.story_runtime.module_turn_hooks import GOD_OF_CARNAGE_MODULE_ID
+from world_engine.story_runtime.module_turn_hooks import GOD_OF_CARNAGE_MODULE_ID
 from ai_stack.contracts.npc_agency_contracts import NPC_AGENCY_SIMULATION_IMPLEMENTED_STATUS
 from ai_stack.story_runtime.runtime_aspect_ledger import (
     ASPECT_ACTION_RESOLUTION,
@@ -53,7 +53,7 @@ from story_runtime_core.player_input_intent_contract import (
 
 def test_langfuse_add_score_duplicates_at_trace_level_for_adr0033_visibility():
     """ADR-0033: observation span.score() alone does not populate Langfuse trace.scores / UI trace tab."""
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     trace_hex = "a9f119969f6f4dd9b116645221d4f504"
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
@@ -95,7 +95,7 @@ def test_langfuse_add_score_duplicates_at_trace_level_for_adr0033_visibility():
 
 
 def test_langfuse_start_trace_sets_first_class_session_context(monkeypatch):
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
     adapter.is_ready = True
@@ -137,7 +137,7 @@ def test_langfuse_start_trace_sets_first_class_session_context(monkeypatch):
 
 
 def test_langfuse_child_observations_inherit_active_session_metadata():
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
     adapter.is_ready = True
@@ -187,7 +187,7 @@ def test_langfuse_child_observations_inherit_active_session_metadata():
 
 
 def test_langfuse_metadata_policy_marks_local_evidence(monkeypatch):
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     monkeypatch.setenv("WOS_LANGFUSE_LOCAL_EVIDENCE", "1")
     monkeypatch.setenv("LANGFUSE_ENVIRONMENT", "local")
@@ -751,7 +751,7 @@ def test_story_session_create_opening_live_projection_skips_ldss_fallback_span(
     live blocks from ``_live_scene_blocks_from_visible_bundle`` so ``_finalize_committed_turn``
     takes the live envelope branch (still ``mock_only`` — contract gate scores unchanged).
     """
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
 
     adapter = MagicMock()
     adapter.is_ready = True
@@ -1367,7 +1367,7 @@ def test_ldss_opening_fallback_state_captures_primary_attempt_and_final_adapter(
       - the final committed adapter is ldss_fallback after live opening failure,
       - the precise fallback_reason that triggered the policy.
     """
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
     from story_runtime_core.model_registry import ModelRegistry
 
     mgr = StoryRuntimeManager(registry=ModelRegistry(), adapters={})
@@ -1412,7 +1412,7 @@ def test_ldss_opening_fallback_state_does_not_invent_primary_when_already_fallba
     Prevents synthetic ``primary_attempt_adapter=ldss_fallback`` self-references
     on retry loops where the prior state was already a fallback shell.
     """
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
     from story_runtime_core.model_registry import ModelRegistry
 
     mgr = StoryRuntimeManager(registry=ModelRegistry(), adapters={})
@@ -1431,7 +1431,7 @@ def test_ldss_opening_fallback_state_does_not_invent_primary_when_already_fallba
 
 def test_ldss_opening_fallback_state_resets_failed_primary_aspect_ledger():
     """LDSS fallback is a new approved opening path, not a commit of the failed primary ledger."""
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
     from story_runtime_core.model_registry import ModelRegistry
 
     primary_ledger = initialize_runtime_aspect_ledger(
@@ -1799,7 +1799,7 @@ def test_action_context_diagnostics_are_present_on_degraded_turn_payload(monkeyp
     fell back / authoritative action surface is absent, action-context diagnostics must
     be present on path_summary + scores with status='evaluated_degraded' (or not_applicable)
     and numeric values."""
-    from app.story_runtime.manager import _compute_action_consequence_diagnostics
+    from world_engine.story_runtime.manager import _compute_action_consequence_diagnostics
 
     # Action turn without authoritative surface (LDSS fallback) → evaluated_degraded with real values.
     diag = _compute_action_consequence_diagnostics({
@@ -1876,7 +1876,7 @@ def test_action_context_diagnostics_reflect_real_perception_failure(monkeypatch)
     """P4: a perception turn that produced no narrator consequence_text must produce
     narrator_consequence_present=0, perception_result_present=0,
     action_consequence_contract_pass=0."""
-    from app.story_runtime.manager import _compute_action_consequence_diagnostics
+    from world_engine.story_runtime.manager import _compute_action_consequence_diagnostics
 
     diag = _compute_action_consequence_diagnostics({
         "turn_number": 3,
@@ -3333,7 +3333,7 @@ def test_S4_ldss_fallback_without_primary_attempt_evidence_does_not_crash():
     The adapter-not-registered path in _invoke_model skips writing primary_attempt_evidence.
     _ldss_opening_fallback_state must gracefully handle its absence (guard for gap A2).
     """
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
     from story_runtime_core.model_registry import ModelRegistry
 
     mgr = StoryRuntimeManager(registry=ModelRegistry(), adapters={})
@@ -4106,7 +4106,7 @@ def test_langfuse_scores_reject_guarded_action_probe_alignment(monkeypatch):
 
 def test_langfuse_child_span_log_placeholder_when_sdk_ids_absent(caplog):
     """SDK handles often lack public ids before flush; logs must not read as span creation failure."""
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
@@ -4160,7 +4160,7 @@ def test_langfuse_child_span_log_placeholder_when_sdk_ids_absent(caplog):
 
 
 def test_langfuse_set_active_span_clear_logs_without_imploding(caplog):
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)

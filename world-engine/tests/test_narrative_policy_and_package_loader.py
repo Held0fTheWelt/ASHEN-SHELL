@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from app.narrative.package_loader import NarrativePackageLoader
-from app.narrative.package_models import NarrativePackage, NarrativePackageManifest
-from app.narrative.policy_resolver import resolve_effective_policy
+from world_engine.narrative.package_loader import NarrativePackageLoader
+from world_engine.narrative.package_models import NarrativePackage, NarrativePackageManifest
+from world_engine.narrative.policy_resolver import resolve_effective_policy
 
 
 @pytest.mark.contract

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import app.api.http as http_module
+import world_engine.api.http as http_module
 
 
 def _internal_headers() -> dict[str, str]:

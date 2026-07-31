@@ -12,13 +12,13 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import (
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import (
     ParticipantState,
     RunStatus,
     RuntimeInstance,
 )
-from app.runtime.store import JsonRunStore
+from world_engine.runtime.store import JsonRunStore
 
 
 @pytest.mark.persistence
@@ -247,7 +247,7 @@ def test_recovery_lobby_seats_preserved(tmp_path):
 @pytest.mark.contract
 def test_recovery_status_field_preserved(tmp_path):
     """Verify run status is preserved through recovery."""
-    from app.runtime.models import RunStatus
+    from world_engine.runtime.models import RunStatus
 
     manager1 = RuntimeManager(store_root=tmp_path)
     run1 = manager1.create_run("god_of_carnage_solo", account_id="acct:alice", display_name="Alice")

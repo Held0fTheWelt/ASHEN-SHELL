@@ -19,7 +19,7 @@ if loaded_app is not None and not loaded_app_file.startswith(str(WORLD_ENGINE_RO
     for name in [key for key in sys.modules if key == "app" or key.startswith("app.")]:
         sys.modules.pop(name, None)
 
-from app.story_runtime.manager import StorySession, _build_langfuse_path_summary
+from world_engine.story_runtime.manager import StorySession, _build_langfuse_path_summary
 
 
 def test_path_summary_exposes_opening_and_forbidden_gate_scores() -> None:

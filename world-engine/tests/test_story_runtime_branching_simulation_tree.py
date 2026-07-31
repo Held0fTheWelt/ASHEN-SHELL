@@ -14,9 +14,9 @@ from story_runtime_core.branching import (
     BRANCHING_TREE_RECORD_SCHEMA_VERSION,
 )
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.branch_timeline_store import JsonBranchTimelineStore
-from app.story_runtime.branching_tree_store import JsonBranchingTreeStore
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.branch_timeline_store import JsonBranchTimelineStore
+from world_engine.story_runtime.branching_tree_store import JsonBranchingTreeStore
 
 
 def _disable_langfuse(monkeypatch: Any) -> None:

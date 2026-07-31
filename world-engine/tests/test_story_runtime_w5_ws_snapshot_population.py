@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.story_runtime.manager import StorySession
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.story_runtime.manager import StorySession
 
 
 def _fact(

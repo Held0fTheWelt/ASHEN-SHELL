@@ -19,7 +19,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-COPY world-engine/app ./app
+COPY world-engine/world_engine ./world_engine
 
 # Shared runtime packages used by world-engine imports
 COPY story_runtime_core ./story_runtime_core
@@ -31,4 +31,4 @@ COPY prompts ./prompts
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "world_engine.main:app", "--host", "0.0.0.0", "--port", "8000"]

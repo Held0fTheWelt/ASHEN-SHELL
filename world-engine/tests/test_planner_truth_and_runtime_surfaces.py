@@ -27,12 +27,12 @@ from ai_stack.contracts.npc_agency_contracts import (
     NPC_AGENCY_SIMULATION_IMPLEMENTED_STATUS,
     NPC_AGENCY_SIMULATION_SCHEMA_VERSION,
 )
-from app.story_runtime.commit_models import (
+from world_engine.story_runtime.commit_models import (
     PlannerTruth,
     StoryNarrativeCommitRecord,
     resolve_narrative_commit,
 )
-from app.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager import StoryRuntimeManager
 
 
 def _projection() -> dict:
@@ -470,7 +470,7 @@ def test_planner_truth_absent_when_graph_state_not_provided() -> None:
 
 
 def test_prior_social_state_read_back_from_session_history() -> None:
-    from app.story_runtime.manager import (
+    from world_engine.story_runtime.manager import (
         StorySession,
         _prior_social_state_record_from_session,
     )
@@ -509,7 +509,7 @@ def test_prior_social_state_read_back_from_session_history() -> None:
 
 
 def test_prior_social_pressure_read_back_from_session_history() -> None:
-    from app.story_runtime.manager import (
+    from world_engine.story_runtime.manager import (
         StorySession,
         _prior_social_pressure_state_from_session,
     )
@@ -541,7 +541,7 @@ def test_prior_social_pressure_read_back_from_session_history() -> None:
 
 
 def test_prior_expectation_variation_read_back_from_session_history() -> None:
-    from app.story_runtime.manager import (
+    from world_engine.story_runtime.manager import (
         StorySession,
         _prior_expectation_variation_state_from_session,
     )
@@ -573,7 +573,7 @@ def test_prior_expectation_variation_read_back_from_session_history() -> None:
 
 
 def test_prior_narrative_momentum_read_back_from_session_history() -> None:
-    from app.story_runtime.manager import (
+    from world_engine.story_runtime.manager import (
         StorySession,
         _prior_narrative_momentum_state_from_session,
     )
@@ -606,7 +606,7 @@ def test_prior_narrative_momentum_read_back_from_session_history() -> None:
 
 
 def test_prior_temporal_control_read_back_from_session_history() -> None:
-    from app.story_runtime.manager import (
+    from world_engine.story_runtime.manager import (
         StorySession,
         _prior_temporal_control_state_from_session,
     )

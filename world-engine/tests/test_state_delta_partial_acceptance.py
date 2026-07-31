@@ -1,18 +1,18 @@
 """Wave 4: state delta partial acceptance and capability switches."""
 from __future__ import annotations
 
-from app.story_runtime.commit_models import resolve_narrative_commit
-from app.story_runtime.delta_evaluation import evaluate_proposed_deltas
-from app.story_runtime.failure_recovery import (
+from world_engine.story_runtime.commit_models import resolve_narrative_commit
+from world_engine.story_runtime.delta_evaluation import evaluate_proposed_deltas
+from world_engine.story_runtime.failure_recovery import (
     DegradedMode,
     ReducedContextRetryPolicy,
     SafeTurnPolicy,
     build_reduced_context_retry_prompt,
     deterministic_continuation_turn,
 )
-from app.story_runtime.mutation_policy import DEFAULT_MUTATION_POLICY, MutationPolicy
-from app.story_runtime.source_gate import narrative_commit_for_source_gate_rejection
-from app.story_runtime.state_deltas import StateDelta
+from world_engine.story_runtime.mutation_policy import DEFAULT_MUTATION_POLICY, MutationPolicy
+from world_engine.story_runtime.source_gate import narrative_commit_for_source_gate_rejection
+from world_engine.story_runtime.state_deltas import StateDelta
 
 
 def test_partial_delta_acceptance_commits_partially() -> None:

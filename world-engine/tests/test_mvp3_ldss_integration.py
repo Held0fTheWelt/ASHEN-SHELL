@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 
 from ai_stack.rag import ContextPackAssembler, ContextRetriever, InMemoryRetrievalCorpus
 from story_runtime_core.model_registry import ModelRegistry
-from app.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager import StoryRuntimeManager
 
 
 # ---------------------------------------------------------------------------

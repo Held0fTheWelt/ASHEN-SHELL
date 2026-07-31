@@ -1,6 +1,6 @@
 """ADR-0035: split double-paragraph narrator opening into two scene blocks."""
 
-from app.story_runtime.manager import _maybe_split_goc_opening_into_two_movements
+from world_engine.story_runtime.manager import _maybe_split_goc_opening_into_two_movements
 
 
 def test_split_keeps_already_multi_block_output():

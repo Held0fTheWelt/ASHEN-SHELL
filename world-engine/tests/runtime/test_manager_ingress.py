@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.command_resolution import REJECTION_MISSING_INPUT, REJECTION_NO_INTERPRETABLE_INTENT
-from app.runtime.manager import RuntimeManager
+from world_engine.runtime.command_resolution import REJECTION_MISSING_INPUT, REJECTION_NO_INTERPRETABLE_INTENT
+from world_engine.runtime.manager import RuntimeManager
 
 
 @pytest.mark.asyncio

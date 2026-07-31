@@ -543,7 +543,7 @@ class TestW33InitiativeFieldExtraction:
     @staticmethod
     def _planner_from_state(state: dict[str, Any]):
         _ensure_world_engine_app_importable()
-        from app.story_runtime.commit_models import _planner_truth_from_graph_state
+        from world_engine.story_runtime.commit_models import _planner_truth_from_graph_state
 
         return _planner_truth_from_graph_state(
             graph_state={
@@ -673,7 +673,7 @@ class TestW33InitiativeFieldExtraction:
     def test_planner_truth_has_three_new_fields_in_schema(self):
         """Verify PlannerTruth model has the three new fields."""
         _ensure_world_engine_app_importable()
-        from app.story_runtime.commit_models import PlannerTruth
+        from world_engine.story_runtime.commit_models import PlannerTruth
 
         # Should be able to instantiate with new fields
         values = {
@@ -697,7 +697,7 @@ class TestW33InitiativeWhitelist:
     @staticmethod
     def _session_with_planner_truth(planner_truth: dict[str, Any]):
         _ensure_world_engine_app_importable()
-        from app.story_runtime.manager import StorySession
+        from world_engine.story_runtime.manager import StorySession
 
         return StorySession(
             session_id="test-session",
@@ -709,7 +709,7 @@ class TestW33InitiativeWhitelist:
     def test_whitelist_includes_initiative_seizer_id(self):
         """Verify whitelist has initiative_seizer_id."""
         _ensure_world_engine_app_importable()
-        from app.story_runtime.manager import _prior_planner_truth_from_session
+        from world_engine.story_runtime.manager import _prior_planner_truth_from_session
 
         planner_truth = {"initiative_seizer_id": "veronique_vallon"}
         session = self._session_with_planner_truth(planner_truth)
@@ -720,7 +720,7 @@ class TestW33InitiativeWhitelist:
     def test_snapshot_includes_populated_initiative_fields(self):
         """Verify snapshot includes populated initiative fields."""
         _ensure_world_engine_app_importable()
-        from app.story_runtime.manager import _prior_planner_truth_from_session
+        from world_engine.story_runtime.manager import _prior_planner_truth_from_session
 
         planner_truth = {
             "initiative_seizer_id": "test",

@@ -21,15 +21,15 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.auth.tickets import TicketManager, TicketError
-from app.runtime.manager import RuntimeManager
+from world_engine.auth.tickets import TicketManager, TicketError
+from world_engine.runtime.manager import RuntimeManager
 
 
 @pytest.fixture
 def app_with_secret(tmp_path: Path, monkeypatch) -> FastAPI:
     """Build app with controllable secret for ticket manipulation tests."""
-    from app.api.http import router as http_router
-    from app.api.ws import router as ws_router
+    from world_engine.api.http import router as http_router
+    from world_engine.api.ws import router as ws_router
 
     app = FastAPI()
     app.state.manager = RuntimeManager(store_root=tmp_path)

@@ -21,14 +21,14 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.actor_lane import (
+from world_engine.runtime.actor_lane import (
     build_actor_lane_context,
     build_runtime_state,
     build_story_session_state,
     validate_actor_lane_output,
     validate_responder_plan,
 )
-from app.runtime.models import ActorLaneContext, ActorLaneValidationResult, RuntimeState, StorySessionState
+from world_engine.runtime.models import ActorLaneContext, ActorLaneValidationResult, RuntimeState, StorySessionState
 
 # ---------------------------------------------------------------------------
 # Shared fixture data (derived from MVP1 handoff + content/modules/god_of_carnage/characters.yaml)
@@ -159,7 +159,7 @@ def test_ai_allowed_and_forbidden_are_disjoint():
 
 def test_actor_lane_context_uses_mvp1_handoff():
     """ActorLaneContext builds directly from profiles.py build_actor_ownership() output."""
-    from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile
+    from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile
 
     profile = resolve_runtime_profile("god_of_carnage_solo")
     ownership = build_actor_ownership("annette", profile)
@@ -542,7 +542,7 @@ def test_ai_forbidden_actor_ids_include_human_actor():
 
 def test_actor_lane_context_uses_mvp1_handoff_alain_start():
     """ActorLaneContext builds from real build_actor_ownership() for Alain start."""
-    from app.runtime.profiles import build_actor_ownership, resolve_runtime_profile
+    from world_engine.runtime.profiles import build_actor_ownership, resolve_runtime_profile
 
     profile = resolve_runtime_profile("god_of_carnage_solo")
     ownership = build_actor_ownership("alain", profile)
@@ -690,7 +690,7 @@ def test_runtime_turn_state_has_actor_lane_context_field():
 
 def test_story_runtime_manager_has_extract_actor_lane_context():
     """StoryRuntimeManager must have _extract_actor_lane_context for wiring enforcement."""
-    from app.story_runtime.manager import StoryRuntimeManager
+    from world_engine.story_runtime.manager import StoryRuntimeManager
     assert hasattr(StoryRuntimeManager, "_extract_actor_lane_context"), (
         "StoryRuntimeManager must implement _extract_actor_lane_context "
         "to derive enforcement context from session.runtime_projection."
@@ -699,7 +699,7 @@ def test_story_runtime_manager_has_extract_actor_lane_context():
 
 def test_extract_actor_lane_context_returns_none_without_ownership():
     """When runtime_projection lacks human_actor_id, returns None (no enforcement)."""
-    from app.story_runtime.manager import StoryRuntimeManager, StorySession
+    from world_engine.story_runtime.manager import StoryRuntimeManager, StorySession
     from dataclasses import asdict
 
     session = StorySession(
@@ -713,7 +713,7 @@ def test_extract_actor_lane_context_returns_none_without_ownership():
 
 def test_extract_actor_lane_context_returns_context_with_ownership():
     """When runtime_projection has human_actor_id, returns enforcement context."""
-    from app.story_runtime.manager import StoryRuntimeManager, StorySession
+    from world_engine.story_runtime.manager import StoryRuntimeManager, StorySession
 
     session = StorySession(
         session_id="test",

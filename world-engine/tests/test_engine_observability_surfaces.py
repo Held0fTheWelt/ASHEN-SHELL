@@ -12,11 +12,11 @@ import logging
 import pytest
 
 from ai_stack.telemetry.actor_survival_telemetry import build_actor_survival_telemetry
-from app.narrative.fallback_generator import build_safe_fallback_output
-from app.narrative.package_models import SceneFallbackBundle
-from app.narrative.runtime_health import RuntimeHealthCounters
-from app.observability.audit_log import log_story_runtime_failure, log_story_turn_event
-from app.observability.runtime_metrics import StoryRuntimeMetrics
+from world_engine.narrative.fallback_generator import build_safe_fallback_output
+from world_engine.narrative.package_models import SceneFallbackBundle
+from world_engine.narrative.runtime_health import RuntimeHealthCounters
+from world_engine.observability.audit_log import log_story_runtime_failure, log_story_turn_event
+from world_engine.observability.runtime_metrics import StoryRuntimeMetrics
 
 
 @pytest.fixture(autouse=True)

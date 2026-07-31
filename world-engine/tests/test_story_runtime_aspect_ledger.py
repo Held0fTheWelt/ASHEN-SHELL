@@ -17,8 +17,8 @@ from ai_stack.story_runtime.runtime_aspect_ledger import (
     set_aspect_record,
 )
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.manager import (
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.manager import (
     StorySession,
     _live_scene_blocks_from_visible_bundle,
     _record_hierarchical_memory_aspect,

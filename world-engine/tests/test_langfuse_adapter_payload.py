@@ -7,8 +7,8 @@ import os
 
 import pytest
 
-from app.observability import langfuse_adapter as lf_mod
-from app.observability.langfuse_adapter import (
+from world_engine.observability import langfuse_adapter as lf_mod
+from world_engine.observability.langfuse_adapter import (
     LangfuseAdapter,
     _langfuse_sanitize_value,
 )
@@ -742,7 +742,7 @@ def test_wos_langfuse_score_scope_debug_off_when_zero(monkeypatch: pytest.Monkey
 
 
 def test_align_langfuse_otel_sets_backend_environment_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     monkeypatch.delenv("LANGFUSE_TRACING_ENVIRONMENT", raising=False)
     try:
@@ -753,7 +753,7 @@ def test_align_langfuse_otel_sets_backend_environment_when_unset(monkeypatch: py
 
 
 def test_align_langfuse_otel_noop_when_tracing_env_preset(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     monkeypatch.setenv("LANGFUSE_TRACING_ENVIRONMENT", "production")
     assert lf_mod._align_langfuse_otel_resource_environment("staging") is False

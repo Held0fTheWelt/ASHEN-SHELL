@@ -1,7 +1,7 @@
 import pytest
 
-from app.runtime.engine import RuntimeEngine
-from app.runtime.manager import RuntimeManager
+from world_engine.runtime.engine import RuntimeEngine
+from world_engine.runtime.manager import RuntimeManager
 from story_runtime_core.experience_template_models import (
     ActionTemplate,
     BeatTemplate,
@@ -115,9 +115,9 @@ def test_create_solo_run_and_snapshot(tmp_path):
     # Use synthetic template with required test actions
     template = _build_test_solo_template()
 
-    from app.runtime.models import ParticipantState, RuntimeInstance, RunStatus
-    from app.runtime.engine import RuntimeEngine
-    from app.content.models import ParticipantMode
+    from world_engine.runtime.models import ParticipantState, RuntimeInstance, RunStatus
+    from world_engine.runtime.engine import RuntimeEngine
+    from world_engine.content.models import ParticipantMode
 
     # Create run directly with synthetic template
     run = RuntimeInstance(
@@ -207,7 +207,7 @@ def test_inspect_rejects_remote_room_targets(tmp_path):
 
 def test_remote_templates_override_and_load(tmp_path, monkeypatch):
     import importlib
-    from app.content.models import ExperienceKind, ExperienceTemplate, JoinPolicy, RoleTemplate, RoomTemplate, BeatTemplate, ParticipantMode
+    from world_engine.content.models import ExperienceKind, ExperienceTemplate, JoinPolicy, RoleTemplate, RoomTemplate, BeatTemplate, ParticipantMode
 
     # Set environment variables to enable backend content sync
     monkeypatch.setenv('BACKEND_CONTENT_SYNC_ENABLED', 'true')
@@ -215,7 +215,7 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
     monkeypatch.setenv('BACKEND_CONTENT_SYNC_INTERVAL_SECONDS', '0.0')
 
     # Reload config to pick up environment variables
-    import app.config
+    import world_engine.config
     importlib.reload(app.config)
 
     remote_template = ExperienceTemplate(
@@ -234,15 +234,15 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
     )
 
     # Patch load_published_templates in backend_loader
-    backend_loader = importlib.import_module('app.content.backend_loader')
+    backend_loader = importlib.import_module('world_engine.content.backend_loader')
     monkeypatch.setattr(backend_loader, 'load_published_templates', lambda url, timeout=10: {remote_template.id: remote_template})
 
     # Reload runtime manager to pick up reloaded config
-    import app.runtime.manager
+    import world_engine.runtime.manager
     importlib.reload(app.runtime.manager)
 
     # Now create manager - it will pick up the reloaded config and patched function
-    from app.runtime.manager import RuntimeManager
+    from world_engine.runtime.manager import RuntimeManager
     manager = RuntimeManager(store_root=tmp_path)
     assert manager.get_template('god_of_carnage_solo').title == 'Remote Override'
 
@@ -320,7 +320,7 @@ def test_find_or_join_run_updates_existing_display_name_and_seat_metadata(tmp_pa
 def test_sync_templates_respects_refresh_interval(tmp_path, monkeypatch):
     from datetime import timedelta
 
-    import app.runtime.manager as manager_module
+    import world_engine.runtime.manager as manager_module
 
     calls: list[tuple[str, float]] = []
 
@@ -345,9 +345,9 @@ def test_sync_templates_respects_refresh_interval(tmp_path, monkeypatch):
 
 
 def test_sync_templates_failure_marks_attempt_but_keeps_builtin_template(tmp_path, monkeypatch):
-    from app.content.backend_loader import BackendContentLoadError
+    from world_engine.content.backend_loader import BackendContentLoadError
 
-    import app.runtime.manager as manager_module
+    import world_engine.runtime.manager as manager_module
 
     def failing_loader(url: str, timeout: float = 10.0):
         raise BackendContentLoadError("upstream offline")

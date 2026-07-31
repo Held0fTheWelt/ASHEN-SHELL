@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.live_governance import LiveStoryGovernanceError, is_governed_resolved_config_operational
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.live_governance import LiveStoryGovernanceError, is_governed_resolved_config_operational
 
 
 def _minimal_governed_config() -> dict:

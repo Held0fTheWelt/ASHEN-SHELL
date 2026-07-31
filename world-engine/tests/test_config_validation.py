@@ -2,7 +2,7 @@
 import pytest
 from urllib.parse import urlparse
 
-from app.config import (
+from world_engine.config import (
     validate_play_service_secret,
     validate_database_url,
     validate_redis_url,

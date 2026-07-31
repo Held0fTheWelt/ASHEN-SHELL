@@ -1,7 +1,7 @@
 """Wave 4: capability switch surface on runtime config mixin."""
 from __future__ import annotations
 
-from app.story_runtime.manager.runtime_config import _RuntimeConfigMixin
+from world_engine.story_runtime.manager.runtime_config import _RuntimeConfigMixin
 
 
 class _Probe(_RuntimeConfigMixin):

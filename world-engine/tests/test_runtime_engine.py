@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from app.content.models import ParticipantMode
-from app.runtime.engine import RuntimeEngine
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import ParticipantState, RunStatus, RuntimeInstance
+from world_engine.content.models import ParticipantMode
+from world_engine.runtime.engine import RuntimeEngine
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import ParticipantState, RunStatus, RuntimeInstance
 from story_runtime_core.experience_template_models import (
     ActionTemplate,
     BeatTemplate,

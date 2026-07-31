@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.story_runtime.canonical_turn_lifecycle import (
+from world_engine.story_runtime.canonical_turn_lifecycle import (
     CanonicalTurnLifecycleViolation,
     TurnLifecycleChain,
 )

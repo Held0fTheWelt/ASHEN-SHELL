@@ -6,10 +6,10 @@ import pytest
 
 pytest.importorskip("cryptography.hazmat.primitives.ciphers.aead")
 
-from app.runtime.json_at_rest import JsonAtRestCodec, generate_aead_key
-from app.runtime.models import RuntimeInstance
-from app.runtime.store import JsonRunStore, build_run_store
-from app.story_runtime.story_session_store import JsonStorySessionStore
+from world_engine.runtime.json_at_rest import JsonAtRestCodec, generate_aead_key
+from world_engine.runtime.models import RuntimeInstance
+from world_engine.runtime.store import JsonRunStore, build_run_store
+from world_engine.story_runtime.story_session_store import JsonStorySessionStore
 
 
 def _runtime_instance(run_id: str = "run-aead") -> RuntimeInstance:

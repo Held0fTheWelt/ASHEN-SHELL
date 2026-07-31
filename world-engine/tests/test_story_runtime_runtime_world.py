@@ -4,9 +4,9 @@ import logging
 from typing import Any
 from unittest.mock import MagicMock
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.runtime_world import initialize_runtime_world
-from app.story_runtime.story_session_store import JsonStorySessionStore
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.runtime_world import initialize_runtime_world
+from world_engine.story_runtime.story_session_store import JsonStorySessionStore
 
 
 def _disable_langfuse(monkeypatch: Any) -> None:

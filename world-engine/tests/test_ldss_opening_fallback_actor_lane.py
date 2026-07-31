@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from story_runtime_core.model_registry import ModelRegistry
 
-from app.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager import StoryRuntimeManager
 
 
 def test_ldss_opening_fallback_preserves_actor_lane_nested_in_validation_outcome() -> None:

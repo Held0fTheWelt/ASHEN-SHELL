@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.story_runtime.manager import StorySessionContractError, _validate_runtime_projection_contract
+from world_engine.story_runtime.manager import StorySessionContractError, _validate_runtime_projection_contract
 
 
 def _projection_for(

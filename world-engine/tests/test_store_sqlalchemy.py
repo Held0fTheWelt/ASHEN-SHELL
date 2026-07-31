@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.models import (
+from world_engine.runtime.models import (
     RuntimeInstance,
     TranscriptEntry,
 )
-from app.runtime.store import SqlAlchemyRunStore
+from world_engine.runtime.store import SqlAlchemyRunStore
 
 
 @pytest.mark.persistence
@@ -323,7 +323,7 @@ def test_sqlalchemy_store_preserves_participant_state(tmp_path, sqlalchemy_avail
     if not sqlalchemy_available:
         pytest.skip("sqlalchemy not available")
 
-    from app.runtime.models import ParticipantState
+    from world_engine.runtime.models import ParticipantState
 
     db_url = f"sqlite:///{tmp_path / 'test.db'}"
     store = SqlAlchemyRunStore(db_url)
@@ -365,7 +365,7 @@ def test_sqlalchemy_store_preserves_prop_state(tmp_path, sqlalchemy_available):
     if not sqlalchemy_available:
         pytest.skip("sqlalchemy not available")
 
-    from app.runtime.models import PropState
+    from world_engine.runtime.models import PropState
 
     db_url = f"sqlite:///{tmp_path / 'test.db'}"
     store = SqlAlchemyRunStore(db_url)

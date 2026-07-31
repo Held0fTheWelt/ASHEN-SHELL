@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.narrative.preview_isolation import PreviewIsolationRegistry
+from world_engine.narrative.preview_isolation import PreviewIsolationRegistry
 
 
 @pytest.mark.contract

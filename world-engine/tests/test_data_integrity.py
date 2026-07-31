@@ -15,15 +15,15 @@ from uuid import uuid4
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import (
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import (
     ParticipantState,
     PropState,
     RunStatus,
     RuntimeInstance,
     TranscriptEntry,
 )
-from app.runtime.store import JsonRunStore
+from world_engine.runtime.store import JsonRunStore
 
 
 @pytest.mark.persistence

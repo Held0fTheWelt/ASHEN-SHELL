@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.story_session_store import JsonStorySessionStore
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.story_session_store import JsonStorySessionStore
 
 
 class _FakeTurnGraph:

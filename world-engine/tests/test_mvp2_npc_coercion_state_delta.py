@@ -22,12 +22,12 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.runtime.actor_lane import (
+from world_engine.runtime.actor_lane import (
     build_actor_lane_context,
     validate_npc_action_coercion,
 )
-from app.runtime.models import ActorLaneContext, StateDeltaBoundary, StateDeltaValidationResult
-from app.runtime.state_delta import (
+from world_engine.runtime.models import ActorLaneContext, StateDeltaBoundary, StateDeltaValidationResult
+from world_engine.runtime.state_delta import (
     build_default_goc_boundary,
     first_rejection,
     validate_state_delta,

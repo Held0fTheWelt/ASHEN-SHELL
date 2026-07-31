@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from app.api import http as http_module
+from world_engine.api import http as http_module
 
 
 

@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.config import (
+from world_engine.config import (
     validate_play_service_secret,
     validate_play_service_internal_api_key,
     validate_database_url,
@@ -43,7 +43,7 @@ class TestPlayServiceSecretStartupContract:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 import importlib
-                import app.config
+                import world_engine.config
                 importlib.reload(app.config)
                 warning_messages = [str(warning.message) for warning in w]
                 assert any("PLAY_SERVICE_SECRET" in msg for msg in warning_messages), \
@@ -61,7 +61,7 @@ class TestPlayServiceSecretStartupContract:
         with patch("dotenv.load_dotenv"):
             with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
                 import importlib
-                import app.config
+                import world_engine.config
                 importlib.reload(app.config)
 
     @pytest.mark.contract
@@ -76,7 +76,7 @@ class TestPlayServiceSecretStartupContract:
         with patch("dotenv.load_dotenv"):
             with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
                 import importlib
-                import app.config
+                import world_engine.config
                 importlib.reload(app.config)
 
     @pytest.mark.contract
@@ -119,10 +119,10 @@ class TestPlayServiceSecretStartupContract:
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "fallback-secret")
 
         import importlib
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
         # After reload, PLAY_SERVICE_SECRET should be the primary value
-        from app.config import PLAY_SERVICE_SECRET as pss
+        from world_engine.config import PLAY_SERVICE_SECRET as pss
         assert pss == "primary-secret"
 
     @pytest.mark.contract
@@ -146,9 +146,9 @@ class TestPlayServiceInternalApiKeyStartupContract:
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
             import importlib
-            import app.config
+            import world_engine.config
             importlib.reload(app.config)
-            from app.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
+            from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
             # Should be None when not set
             assert piak is None
 
@@ -158,9 +158,9 @@ class TestPlayServiceInternalApiKeyStartupContract:
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "   ")
 
         import importlib
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
-        from app.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
+        from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
         # Should be None when set to whitespace
         assert piak is None
 
@@ -170,9 +170,9 @@ class TestPlayServiceInternalApiKeyStartupContract:
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key")
 
         import importlib
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
-        from app.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
+        from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
         assert piak == "valid-api-key"
 
     @pytest.mark.contract
@@ -354,7 +354,7 @@ class TestStartupReadinessDeterministic:
     @pytest.mark.integration
     def test_app_creates_ticket_manager_with_secret(self, client):
         """App startup must create TicketManager with configured secret."""
-        from app.auth.tickets import TicketManager
+        from world_engine.auth.tickets import TicketManager
         # Client is created via conftest fixture which builds the app with test-secret
         # The app.state.ticket_manager should be a TicketManager instance
         assert hasattr(client.app, "state")
@@ -365,7 +365,7 @@ class TestStartupReadinessDeterministic:
     @pytest.mark.integration
     def test_app_creates_runtime_manager_on_startup(self, client):
         """App startup must create RuntimeManager."""
-        from app.runtime.manager import RuntimeManager
+        from world_engine.runtime.manager import RuntimeManager
         assert hasattr(client.app, "state")
         assert hasattr(client.app.state, "manager")
         assert isinstance(client.app.state.manager, RuntimeManager)
@@ -374,7 +374,7 @@ class TestStartupReadinessDeterministic:
     def test_config_loading_repeatable(self, monkeypatch):
         """Config loading should be repeatable without side effects."""
         import importlib
-        import app.config as config_mod
+        import world_engine.config as config_mod
 
         # Ensure environment is clean and consistent for this test
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "test-secret-for-repeatability")
@@ -404,7 +404,7 @@ class TestTicketManagerSecretValidation:
     @pytest.mark.security
     def test_ticket_manager_rejects_missing_secret(self):
         """TicketManager should reject missing secret explicitly."""
-        from app.auth.tickets import TicketManager, TicketError
+        from world_engine.auth.tickets import TicketManager, TicketError
 
         with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required"):
             # Pass None with no global secret available
@@ -416,7 +416,7 @@ class TestTicketManagerSecretValidation:
     @pytest.mark.security
     def test_ticket_manager_rejects_blank_secret(self):
         """TicketManager should reject blank secret explicitly."""
-        from app.auth.tickets import TicketManager, TicketError
+        from world_engine.auth.tickets import TicketManager, TicketError
 
         # Empty string should fail
         with pytest.raises(TicketError, match="Secret cannot be None or blank"):
@@ -430,7 +430,7 @@ class TestTicketManagerSecretValidation:
     @pytest.mark.security
     def test_ticket_manager_accepts_valid_explicit_secret(self):
         """TicketManager should accept valid explicit secret."""
-        from app.auth.tickets import TicketManager
+        from world_engine.auth.tickets import TicketManager
 
         manager = TicketManager("valid-secret-32-chars-long-okya")
         assert manager.secret == b"valid-secret-32-chars-long-okya"
@@ -439,7 +439,7 @@ class TestTicketManagerSecretValidation:
     @pytest.mark.security
     def test_ticket_manager_accepts_valid_global_secret(self):
         """TicketManager should accept valid global secret when None passed."""
-        from app.auth.tickets import TicketManager
+        from world_engine.auth.tickets import TicketManager
         from unittest.mock import patch
 
         with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-valid-secret-ok"):
@@ -450,7 +450,7 @@ class TestTicketManagerSecretValidation:
     @pytest.mark.security
     def test_ticket_manager_fails_fast_on_initialization(self):
         """TicketManager should fail fast during __init__, not during use."""
-        from app.auth.tickets import TicketManager, TicketError
+        from world_engine.auth.tickets import TicketManager, TicketError
 
         # Should raise immediately in __init__, not later
         with pytest.raises(TicketError):

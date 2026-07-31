@@ -13,8 +13,8 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from app.api.http import router
-from app.story_runtime.manager import StoryRuntimeManager, _orchestrate_narrative_agent
+from world_engine.api.http import router
+from world_engine.story_runtime.manager import StoryRuntimeManager, _orchestrate_narrative_agent
 from ai_stack.story_runtime.narrative import NarrativeEventKind, NarrativeRuntimeAgent
 
 

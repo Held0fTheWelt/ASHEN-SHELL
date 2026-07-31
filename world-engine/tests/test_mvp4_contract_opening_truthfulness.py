@@ -9,13 +9,13 @@ Verifies that opening turns (Turn 0) are:
 """
 
 import pytest
-from app.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime import StoryRuntimeManager
 
 
 @pytest.fixture(autouse=True)
 def _isolate_langfuse_backend_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
     """These unit contracts should not wait on a live backend credential endpoint."""
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     monkeypatch.setenv("BACKEND_RUNTIME_CONFIG_URL", "")
     monkeypatch.delenv("INTERNAL_RUNTIME_CONFIG_TOKEN", raising=False)

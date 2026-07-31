@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import commit_models
-from app.story_runtime.manager import StoryRuntimeManager
-from app.story_runtime.persist_outcome import Persisted
+from world_engine.story_runtime import commit_models
+from world_engine.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.persist_outcome import Persisted
 from test_story_runtime_narrative_commit import _FakeTurnGraph, _envelope
 
 

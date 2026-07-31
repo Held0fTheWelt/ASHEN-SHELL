@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime import manager as manager_package
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime import manager as manager_package
 
 
 MANAGER_ROOT = Path(__file__).resolve().parents[1] / "app" / "story_runtime" / "manager"
@@ -47,8 +47,8 @@ def test_session_manager_slices_import_from_session_package(module_name: str) ->
 
 @pytest.mark.runtime
 def test_manager_package_keeps_public_session_exports() -> None:
-    payloads = importlib.import_module("app.story_runtime.manager.session.session_payloads")
-    policies = importlib.import_module("app.story_runtime.manager.session.session_memory_policies")
+    payloads = importlib.import_module("world_engine.story_runtime.manager.session.session_payloads")
+    policies = importlib.import_module("world_engine.story_runtime.manager.session.session_memory_policies")
 
     assert manager_package.StorySession is payloads.StorySession
     assert manager_package.story_session_to_payload is payloads.story_session_to_payload

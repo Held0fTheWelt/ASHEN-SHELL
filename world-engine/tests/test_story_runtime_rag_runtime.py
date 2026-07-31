@@ -10,7 +10,7 @@ from ai_stack.contracts.runtime_turn_contracts import (
     EXECUTION_HEALTH_MODEL_FALLBACK,
 )
 
-from app.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime import StoryRuntimeManager
 
 
 _CAPTURE_MOCK_JSON = (
@@ -78,7 +78,7 @@ class FailingAdapter(BaseModelAdapter):
 @pytest.fixture(autouse=True)
 def _isolate_langfuse_backend_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
     """Keep scene-progression tests deterministic when a local backend exposes Langfuse credentials."""
-    from app.observability import langfuse_adapter as lf_mod
+    from world_engine.observability import langfuse_adapter as lf_mod
 
     monkeypatch.setenv("BACKEND_RUNTIME_CONFIG_URL", "")
     monkeypatch.delenv("INTERNAL_RUNTIME_CONFIG_TOKEN", raising=False)

@@ -22,15 +22,15 @@ REPO_ROOT = Path(__file__).resolve().parent
 BACKEND_DIR = REPO_ROOT / "backend"
 WORLD_ENGINE_DIR = REPO_ROOT / "world-engine"
 
-# Match tests/gates/conftest.py: backend ``app`` must win over world-engine ``app`` for
-# ``from app.governance`` / ``from app.content.builtins`` in foundation gates.
-# world-engine stays importable at index 1 for repo-relative scans and ``backend.app.*``.
+# Wave 6 / E4: backend ``app`` and package ``world_engine`` are distinct.
+# Backend stays first for Flask ``app``; world-engine is appended so
+# ``import world_engine`` resolves without an ``app`` name collision.
 _backend_str = str(BACKEND_DIR)
 if BACKEND_DIR.exists() and _backend_str not in sys.path:
     sys.path.insert(0, _backend_str)
 _world_engine_str = str(WORLD_ENGINE_DIR)
 if WORLD_ENGINE_DIR.exists() and _world_engine_str not in sys.path:
-    sys.path.insert(1, _world_engine_str)
+    sys.path.append(_world_engine_str)
 
 for candidate in (REPO_ROOT, REPO_ROOT / "'fy'-suites"):
     text = str(candidate)

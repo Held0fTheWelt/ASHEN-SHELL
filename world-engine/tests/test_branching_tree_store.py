@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.story_runtime.branching_tree_store import JsonBranchingTreeStore
+from world_engine.story_runtime.branching_tree_store import JsonBranchingTreeStore
 
 
 def _record(tree_id: str, session_id: str = "session-1") -> dict:

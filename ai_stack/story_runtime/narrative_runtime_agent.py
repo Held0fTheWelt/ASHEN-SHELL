@@ -128,7 +128,7 @@ class NarrativeRuntimeAgent:
 
     def _load_langfuse_adapter(self) -> Any | None:
         try:
-            from app.observability.langfuse_adapter import LangfuseAdapter
+            from world_engine.observability.langfuse_adapter import LangfuseAdapter
 
             return LangfuseAdapter.get_instance()
         except ImportError:

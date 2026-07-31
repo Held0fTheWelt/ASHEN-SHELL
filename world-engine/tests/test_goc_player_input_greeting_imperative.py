@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.story_runtime.manager import (
+from world_engine.story_runtime.manager import (
     _goc_player_attributed_visible_text,
     _player_input_scene_blocks_for_story_window,
 )

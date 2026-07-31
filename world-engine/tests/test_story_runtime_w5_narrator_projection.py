@@ -24,7 +24,7 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime.manager import StoryRuntimeManager, StorySession
+from world_engine.story_runtime.manager import StoryRuntimeManager, StorySession
 
 
 def _make_session(

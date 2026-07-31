@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from app.story_runtime.manager import StoryRuntimeManager, StorySession
+from world_engine.story_runtime.manager import StoryRuntimeManager, StorySession
 
 
 def _fact(actor_id: str, dim: str, key: str, value: Any, truth: str = "observed") -> dict[str, Any]:

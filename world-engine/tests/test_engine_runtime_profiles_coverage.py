@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.runtime.profiles import (
+from world_engine.runtime.profiles import (
     RuntimeProfile,
     RuntimeProfileError,
     SelectablePlayerRole,
@@ -97,7 +97,7 @@ def test_assert_runtime_module_contains_no_story_truth_rejects_owned_beats() -> 
 
 @pytest.mark.contract
 def test_assert_runtime_module_contains_no_story_truth_rejects_owned_props() -> None:
-    from app.content.models import (
+    from world_engine.content.models import (
         BeatTemplate,
         ExperienceKind,
         ExperienceTemplate,

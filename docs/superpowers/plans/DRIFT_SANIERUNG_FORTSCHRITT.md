@@ -1,33 +1,33 @@
 # Fortschritt Drift-Sanierung
 
 ## Zustand
-Aktuelle Welle: 5 complete → starting 6
-Aktueller Schritt: Backend game + governance unsharded; zero SOURCE/exec(compile) under ai_stack, backend/app, world-engine/app
-Letzter grüner Commit: `eb09085d` (W5 langgraph); W5 backend commit pending
-Baseline-Testlauf: game_routes **40 passed**; no-dynamic-source **7 passed**; product-tree SOURCE/exec scan **0/0**
+Aktuelle Welle: 6 (partial — package rename landed; retirement/DB/orphans open)
+Aktueller Schritt: `world-engine/app` → `world_engine`; dual-import smoke green; cluster deletion deferred
+Letzter grüner Commit: `bf490078` (W5 complete); W6 rename commit pending
+Baseline: import_determinism + gates **12 passed**; `import world_engine` + `import app` distinct
 
 ## Wellen
-- [x] W0–W4
-- [x] W5 Entshardung (runtime_executor + game_routes + governance_runtime; leftover ai_stack shards already 0)
-- [ ] W6 Paketnamen + Retirement
-- [ ] W7 Content-Wahrheit
-- [ ] W8 Test-/CI-/Gate-Wahrheit
-- [ ] W9 Werkzeugplattform + Hygiene
+- [x] W0–W5
+- [ ] W6 Paketnamen + Retirement — **partial**: rename + path hygiene; dormant backend cluster / orphans / G2 DB open
+- [ ] W7–W9
 
 ## Entscheidungen
 | Datum | Welle | Frage | Entscheidung | Begründung |
 | --- | --- | --- | --- | --- |
-| 2026-07-31 | 5 | game_routes / governance loader | Assemble SOURCE → `*_impl.py`; `sys.modules[__name__] = impl` | Preserves monkeypatch namespace; removes exec(compile) |
-| 2026-07-31 | 5 | Route inventory | 29 routes baseline `W5-game-route-inventory.txt` | Exit criterion proof |
+| 2026-07-31 | 6 | Rewrite scope | Only under `world-engine/` (+ few explicit ai_stack WE imports) | `app.config`/`app.api` collide with backend |
+| 2026-07-31 | 6 | Orphan deletion | Defer — tests still consume session_manager/turn_executor/actor_lane/… | Consumer search non-zero |
+| 2026-07-31 | 6 | runtime_sessions drop | Park G2 | Human gate |
 
 ## Geparkte Probleme
 | ID | Welle | Problem | Warum geparkt | Auflösung |
 | --- | --- | --- | --- | --- |
-| P-MCP-1 | * | claude-context offline | Unavailable | Plan anchors |
-| P-LANGFUSE-FLUSH | * | Manager tests hang on flush | Env | Disable in test env |
-| P-G4-ASSURANCE | * | User WIP | G4 | Leave unstaged |
-| P-G2-DB | 6 | Drop `runtime_sessions` | Human gate | Document; do not drop without G2 |
+| P-G2-DB | 6 | Drop `runtime_sessions` | Human gate | Operator approval |
+| P-W6-CLUSTER | 6 | Delete dormant backend runtime cluster + move model_governance | Large; needs consumer proofs | Continue next session |
+| P-W6-ORPHANS | 6 | Delete WE orphan runtime modules | Tests still import | Retire with tests |
+| P-W6-EXT-REFS | 6 | Docs/UML still say `world-engine/app` | Volume | Sweep with SAD update |
+| P-MCP-1 | * | claude-context offline | — | Plan anchors |
+| P-G4-ASSURANCE | * | User WIP | G4 | Unstaged |
 
 ## Journal
-- 2026-07-31 W5 langgraph `eb09085d`.
-- 2026-07-31 W5 backend: assembled game_routes_impl + governance_runtime_service_impl; stubbed 66 segments; structure+routes 40 passed.
+- 2026-07-31 W5 complete `bf490078`.
+- 2026-07-31 W6: `git mv app world_engine`; import rewrite; Dockerfile/CMD; root conftest append path; accidental backend rewrite reverted via `git checkout HEAD -- backend/app`.

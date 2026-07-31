@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import ParticipantState, RunStatus
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import ParticipantState, RunStatus
 
 
 @pytest.mark.contract
@@ -213,7 +213,7 @@ def test_set_ready_in_group_story_lobby(tmp_path):
     assert run.status == RunStatus.LOBBY
 
     # Find a human participant (not NPC)
-    from app.content.models import ParticipantMode
+    from world_engine.content.models import ParticipantMode
     participant = next((p for p in run.participants.values() if p.mode == ParticipantMode.HUMAN), None)
     assert participant, "No human participant found"
 
@@ -234,7 +234,7 @@ def test_set_not_ready_in_group_story_lobby(tmp_path):
     engine = manager.engines[run.id]
 
     # Find a human participant (not NPC)
-    from app.content.models import ParticipantMode
+    from world_engine.content.models import ParticipantMode
     participant = next((p for p in run.participants.values() if p.mode == ParticipantMode.HUMAN), None)
     assert participant, "No human participant found"
 

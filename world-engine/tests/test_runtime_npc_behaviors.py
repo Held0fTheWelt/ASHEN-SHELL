@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from app.content.builtins import (
+from world_engine.content.builtins import (
     build_apartment_confrontation_group,
     build_better_tomorrow_district_open_world,
     build_god_of_carnage_solo,
     load_builtin_templates,
 )
-from app.runtime.models import RunStatus, RuntimeInstance
-from app.runtime.npc_behaviors import RuntimeNpcDirector
+from world_engine.runtime.models import RunStatus, RuntimeInstance
+from world_engine.runtime.npc_behaviors import RuntimeNpcDirector
 
 
 class _Emitter:

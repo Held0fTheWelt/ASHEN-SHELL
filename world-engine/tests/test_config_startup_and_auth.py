@@ -46,7 +46,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.config
     def test_secret_validation_rejects_none(self):
         """PLAY_SERVICE_SECRET validation must reject None."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         with pytest.raises(ValueError, match="play_service_secret cannot be empty"):
             validate_play_service_secret(None, is_production=True)
@@ -55,7 +55,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.config
     def test_secret_validation_rejects_empty_string(self):
         """PLAY_SERVICE_SECRET validation must reject empty string."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         with pytest.raises(ValueError, match="play_service_secret cannot be empty"):
             validate_play_service_secret("", is_production=True)
@@ -64,7 +64,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.config
     def test_secret_validation_rejects_whitespace_only(self):
         """PLAY_SERVICE_SECRET validation must reject whitespace-only strings."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         with pytest.raises(ValueError, match="play_service_secret cannot be empty"):
             validate_play_service_secret("   \t\n  ", is_production=True)
@@ -74,7 +74,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.security
     def test_secret_validation_requires_32_bytes_production(self):
         """PLAY_SERVICE_SECRET must be 32+ bytes in production."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         # Less than 32 bytes should fail
         with pytest.raises(ValueError, match="play_service_secret must be at least 32 bytes in production"):
@@ -85,7 +85,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.security
     def test_secret_validation_accepts_32_bytes_production(self):
         """PLAY_SERVICE_SECRET with exactly 32 bytes should pass in production."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         secret_32 = "a" * 32
         result = validate_play_service_secret(secret_32, is_production=True)
@@ -96,7 +96,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.security
     def test_secret_validation_accepts_64_bytes_production(self):
         """PLAY_SERVICE_SECRET with 64 bytes should pass in production."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         secret_64 = "b" * 64
         result = validate_play_service_secret(secret_64, is_production=True)
@@ -106,7 +106,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.config
     def test_secret_validation_allows_short_test_mode(self):
         """PLAY_SERVICE_SECRET can be short in test mode."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         result = validate_play_service_secret("test", is_production=False)
         assert result is True
@@ -115,7 +115,7 @@ class TestPlayServiceSecretValidation:
     @pytest.mark.config
     def test_secret_validation_rejects_empty_test_mode(self):
         """PLAY_SERVICE_SECRET must not be empty even in test mode."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         with pytest.raises(ValueError, match="play_service_secret cannot be empty"):
             validate_play_service_secret("", is_production=False)
@@ -140,7 +140,7 @@ class TestPlayServiceSecretStartup:
             # Capture warnings on reload
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                import app.config
+                import world_engine.config
                 importlib.reload(app.config)
 
                 # Should have warning about missing secret
@@ -155,7 +155,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "primary-secret-value")
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "fallback-secret-value")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_SECRET == "primary-secret-value"
@@ -171,7 +171,7 @@ class TestPlayServiceSecretStartup:
 
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
-            import app.config
+            import world_engine.config
             importlib.reload(app.config)
 
             assert app.config.PLAY_SERVICE_SECRET == "fallback-secret-value"
@@ -187,7 +187,7 @@ class TestPlayServiceSecretStartup:
 
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
-            import app.config
+            import world_engine.config
             importlib.reload(app.config)
 
             assert app.config.PLAY_SERVICE_SECRET is None
@@ -199,7 +199,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "")
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_SECRET is None
@@ -211,7 +211,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "   \t\n  ")
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_SECRET is None
@@ -227,7 +227,7 @@ class TestPlayServiceInternalApiKeyValidation:
         """Blank PLAY_SERVICE_INTERNAL_API_KEY should be treated as not configured."""
         # When API key is blank (empty string), it's treated the same as None
         # so requests without a key are allowed (key validation is skipped)
-        from app.api.http import _require_internal_api_key
+        from world_engine.api.http import _require_internal_api_key
 
         with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", ""):
             # Should not raise - blank key means no validation
@@ -239,7 +239,7 @@ class TestPlayServiceInternalApiKeyValidation:
     @pytest.mark.security
     def test_invalid_api_key_returns_401(self):
         """Invalid PLAY_SERVICE_INTERNAL_API_KEY in request should return 401."""
-        from app.api.http import _require_internal_api_key
+        from world_engine.api.http import _require_internal_api_key
         from fastapi import HTTPException
 
         with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
@@ -252,7 +252,7 @@ class TestPlayServiceInternalApiKeyValidation:
     @pytest.mark.security
     def test_valid_api_key_passes(self):
         """Valid PLAY_SERVICE_INTERNAL_API_KEY in request should pass."""
-        from app.api.http import _require_internal_api_key
+        from world_engine.api.http import _require_internal_api_key
 
         with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
             # Should not raise
@@ -263,7 +263,7 @@ class TestPlayServiceInternalApiKeyValidation:
     @pytest.mark.config
     def test_api_key_not_required_when_none(self):
         """API key validation should pass when key is None (not configured)."""
-        from app.api.http import _require_internal_api_key
+        from world_engine.api.http import _require_internal_api_key
 
         with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
             # Should not raise even without header
@@ -285,7 +285,7 @@ class TestPlayServiceInternalApiKeyStartup:
 
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
-            import app.config
+            import world_engine.config
             importlib.reload(app.config)
 
             assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
@@ -296,7 +296,7 @@ class TestPlayServiceInternalApiKeyStartup:
         """PLAY_SERVICE_INTERNAL_API_KEY should be None when blank."""
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
@@ -307,7 +307,7 @@ class TestPlayServiceInternalApiKeyStartup:
         """PLAY_SERVICE_INTERNAL_API_KEY should be None when whitespace."""
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "   \t\n  ")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
@@ -318,7 +318,7 @@ class TestPlayServiceInternalApiKeyStartup:
         """PLAY_SERVICE_INTERNAL_API_KEY should be preserved when set."""
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "my-internal-api-key")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY == "my-internal-api-key"
@@ -333,7 +333,7 @@ class TestRunStoreConfigValidation:
         """RUN_STORE_BACKEND should default to json."""
         monkeypatch.delenv("RUN_STORE_BACKEND", raising=False)
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.RUN_STORE_BACKEND == "json"
@@ -345,7 +345,7 @@ class TestRunStoreConfigValidation:
         monkeypatch.setenv("RUN_STORE_BACKEND", "sqlalchemy")
         monkeypatch.setenv("RUN_STORE_URL", "sqlite:///:memory:")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.RUN_STORE_BACKEND == "sqlalchemy"
@@ -356,7 +356,7 @@ class TestRunStoreConfigValidation:
         """RUN_STORE_URL should be empty by default."""
         monkeypatch.delenv("RUN_STORE_URL", raising=False)
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.RUN_STORE_URL == ""
@@ -367,7 +367,7 @@ class TestRunStoreConfigValidation:
         """RUN_STORE_URL should respect environment variable."""
         monkeypatch.setenv("RUN_STORE_URL", "postgresql://localhost/wos")
 
-        import app.config
+        import world_engine.config
         importlib.reload(app.config)
 
         assert app.config.RUN_STORE_URL == "postgresql://localhost/wos"
@@ -376,7 +376,7 @@ class TestRunStoreConfigValidation:
     @pytest.mark.config
     def test_json_store_requires_valid_path(self, tmp_path):
         """JSON store should create directory if it doesn't exist."""
-        from app.runtime.store import JsonRunStore
+        from world_engine.runtime.store import JsonRunStore
 
         store_path = tmp_path / "json_store"
         assert not store_path.exists()
@@ -391,7 +391,7 @@ class TestRunStoreConfigValidation:
     @pytest.mark.config
     def test_sqlalchemy_store_requires_url(self, tmp_path):
         """SQLAlchemy store should raise if URL not provided."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         with pytest.raises(ValueError, match="RUN_STORE_URL is required"):
             build_run_store(root=tmp_path, backend="sqlalchemy", url=None)
@@ -400,7 +400,7 @@ class TestRunStoreConfigValidation:
     @pytest.mark.config
     def test_invalid_store_backend_raises(self, tmp_path):
         """Invalid store backend should raise ValueError."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         with pytest.raises(ValueError, match="Unsupported run store backend"):
             build_run_store(root=tmp_path, backend="invalid-backend", url=None)
@@ -511,7 +511,7 @@ class TestAppStartupValidation:
     @pytest.mark.contract
     def test_app_has_ticket_manager_on_startup(self, client):
         """App should initialize TicketManager on startup."""
-        from app.auth.tickets import TicketManager
+        from world_engine.auth.tickets import TicketManager
 
         assert hasattr(client.app, "state")
         assert hasattr(client.app.state, "ticket_manager")
@@ -521,7 +521,7 @@ class TestAppStartupValidation:
     @pytest.mark.contract
     def test_app_has_runtime_manager_on_startup(self, client):
         """App should initialize RuntimeManager on startup."""
-        from app.runtime.manager import RuntimeManager
+        from world_engine.runtime.manager import RuntimeManager
 
         assert hasattr(client.app, "state")
         assert hasattr(client.app.state, "manager")
@@ -574,7 +574,7 @@ class TestConfigIsolationPerEnvironment:
     @pytest.mark.config
     def test_config_reload_preserves_values(self, monkeypatch):
         """Config module reloads should preserve consistent values."""
-        import app.config
+        import world_engine.config
 
         # Set consistent environment
         monkeypatch.setenv("PLAY_SERVICE_SECRET", "consistent-secret")
@@ -701,7 +701,7 @@ class TestFailFastValidation:
     @pytest.mark.config
     def test_invalid_store_backend_fails_immediately(self, tmp_path):
         """Invalid store backend should fail immediately on store creation."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         with pytest.raises(ValueError, match="Unsupported run store backend"):
             build_run_store(root=tmp_path, backend="invalid-backend")
@@ -710,7 +710,7 @@ class TestFailFastValidation:
     @pytest.mark.config
     def test_missing_store_url_for_sqlalchemy_fails(self, tmp_path):
         """SQLAlchemy backend without URL should fail immediately."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         with pytest.raises(ValueError, match="RUN_STORE_URL is required"):
             build_run_store(root=tmp_path, backend="sqlalchemy", url=None)
@@ -723,7 +723,7 @@ class TestErrorMessagesAreActionable:
     @pytest.mark.config
     def test_missing_store_url_error_message_clear(self, tmp_path):
         """Error for missing store URL should clearly explain requirement."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         try:
             build_run_store(root=tmp_path, backend="sqlalchemy", url=None)
@@ -737,7 +737,7 @@ class TestErrorMessagesAreActionable:
     @pytest.mark.config
     def test_invalid_secret_length_error_message_clear(self):
         """Error for invalid secret length should clearly state requirement."""
-        from app.config import validate_play_service_secret
+        from world_engine.config import validate_play_service_secret
 
         try:
             validate_play_service_secret("short", is_production=True)
@@ -751,7 +751,7 @@ class TestErrorMessagesAreActionable:
     @pytest.mark.config
     def test_invalid_backend_error_message_clear(self, tmp_path):
         """Error for invalid backend should clearly state supported options."""
-        from app.runtime.store import build_run_store
+        from world_engine.runtime.store import build_run_store
 
         try:
             build_run_store(root=tmp_path, backend="invalid")

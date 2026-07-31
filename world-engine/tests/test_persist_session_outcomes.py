@@ -3,17 +3,17 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from app.story_runtime.persist_outcome import (
+from world_engine.story_runtime.persist_outcome import (
     NoStoreConfigured,
     Persisted,
     SkippedSimulation,
 )
-from app.story_runtime.manager.session.session_payloads import (
+from world_engine.story_runtime.manager.session.session_payloads import (
     StorySession,
     story_session_to_payload,
 )
-from app.story_runtime.manager.session.session_memory_policies import story_session_from_payload
-from app.story_runtime.manager.session.manager_init_and_persistence import (
+from world_engine.story_runtime.manager.session.session_memory_policies import story_session_from_payload
+from world_engine.story_runtime.manager.session.manager_init_and_persistence import (
     _ManagerInitAndPersistenceMixin,
 )
 

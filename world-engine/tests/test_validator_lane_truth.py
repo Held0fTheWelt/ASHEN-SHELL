@@ -14,11 +14,11 @@ These tests pin the labeling and the truth-surface publication.
 
 from __future__ import annotations
 
-from app.story_runtime.commit_models import (
+from world_engine.story_runtime.commit_models import (
     PlannerTruth,
     resolve_narrative_commit,
 )
-from app.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager import StoryRuntimeManager
 
 
 def test_planner_truth_validator_layers_from_live_seam() -> None:

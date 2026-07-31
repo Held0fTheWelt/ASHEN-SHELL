@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager, commit_models
-from app.story_runtime.narrative_threads import (
+from world_engine.story_runtime import StoryRuntimeManager, commit_models
+from world_engine.story_runtime.narrative_threads import (
     GRAPH_EXPORT_MAX_ACTIVE,
     StoryNarrativeThread,
     StoryNarrativeThreadSet,

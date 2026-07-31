@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.store import JsonRunStore, build_run_store
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.store import JsonRunStore, build_run_store
 
 
 

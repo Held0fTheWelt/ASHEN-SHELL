@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime.manager import StorySession
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime.manager import StorySession
 
 
 def test_runtime_diagnostic_snapshot_aggregates_thin_path_row() -> None:

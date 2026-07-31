@@ -5,7 +5,7 @@ import ast
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-WE_APP = REPO / "world-engine" / "app"
+WE_APP = REPO / "world-engine" / "world_engine"
 AI_STACK_LANGGRAPH = REPO / "ai_stack" / "langgraph"
 BACKEND_TARGETS = (
     REPO / "backend" / "app" / "api" / "v1" / "game",

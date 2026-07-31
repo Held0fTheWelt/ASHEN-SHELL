@@ -15,7 +15,7 @@ from story_runtime_core.model_call_accounting import (
     wrap_adapters_with_counting,
 )
 from ai_stack.telemetry.runtime_cost_attribution import aggregate_phase_costs
-from app.story_runtime.governed_runtime_adapters import build_governed_model_adapters
+from world_engine.story_runtime.governed_runtime_adapters import build_governed_model_adapters
 
 
 class _CountingProbeAdapter(BaseModelAdapter):
@@ -46,7 +46,7 @@ class _CountingProbeAdapter(BaseModelAdapter):
 
 def test_characterization_phase_costs_today_center_on_model_generation() -> None:
     """Pre-Wave-0 truth: legacy builder only seeds model_generation from path_summary."""
-    from app.story_runtime.manager.model_costs_and_path_core import (
+    from world_engine.story_runtime.manager.model_costs_and_path_core import (
         _build_model_generation_phase_cost,
     )
 

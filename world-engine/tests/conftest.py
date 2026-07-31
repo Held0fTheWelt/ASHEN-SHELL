@@ -14,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 # Explicitly load pytest-asyncio plugin for async test support
 pytest_plugins = ("pytest_asyncio",)
 
-# CRITICAL: Set FLASK_ENV to test before any imports from app.config
+# CRITICAL: Set FLASK_ENV to test before any imports from world_engine.config
 # This allows lenient validation for PLAY_SERVICE_SECRET in test mode
 if "FLASK_ENV" not in os.environ:
     os.environ["FLASK_ENV"] = "test"
@@ -109,26 +109,26 @@ def receive_until_snapshot(websocket, predicate, attempts: int = 10, timeout: fl
 
 def build_test_app(tmp_path: Path, *, store_backend: str = "json", store_url: str | None = None) -> FastAPI:
     # Import modules
-    tickets_module = importlib.import_module("app.auth.tickets")
-    runtime_manager_module = importlib.import_module("app.runtime.manager")
-    story_runtime_module = importlib.import_module("app.story_runtime")
+    tickets_module = importlib.import_module("world_engine.auth.tickets")
+    runtime_manager_module = importlib.import_module("world_engine.runtime.manager")
+    story_runtime_module = importlib.import_module("world_engine.story_runtime")
 
     # Always sync ``app.config`` from ``os.environ`` before (re)binding HTTP routers.
     # Contract tests reload config and can leave in-memory values out of sync with env
     # after monkeypatch teardown; skipping reload caused stale keys in ``app.api.http``.
-    import app.config
+    import world_engine.config as world_engine_config
 
-    importlib.reload(app.config)
+    importlib.reload(world_engine_config)
     runtime_manager_module = importlib.reload(runtime_manager_module)
 
-    http_module = importlib.import_module("app.api.http")
+    http_module = importlib.import_module("world_engine.api.http")
     http_module = importlib.reload(http_module)
 
-    ws_module = importlib.import_module("app.api.ws")
+    ws_module = importlib.import_module("world_engine.api.ws")
     ws_module = importlib.reload(ws_module)
-    main_module = importlib.import_module("app.main")
+    main_module = importlib.import_module("world_engine.main")
 
-    from app.middleware.trace_middleware import install_trace_middleware
+    from world_engine.middleware.trace_middleware import install_trace_middleware
 
     app = FastAPI()
     install_trace_middleware(app)
@@ -176,7 +176,7 @@ def auth_backend_success(monkeypatch):
     """Patch backend login/me for UI auth tests."""
     from typing import Any
 
-    import app.main as main_module
+    import world_engine.main as main_module
 
     calls: dict[str, Any] = {"login": [], "me": []}
 
@@ -218,8 +218,8 @@ def internal_api_key() -> str:
     /api/internal/* endpoints. It reads the actual configured value
     from the environment/config so tests use the correct key.
     """
-    import app.config
+    import world_engine.config
     # Return the configured key, or a default if not configured
     return (os.getenv("PLAY_SERVICE_INTERNAL_API_KEY") or
-            getattr(app.config, "PLAY_SERVICE_INTERNAL_API_KEY", None) or
+            getattr(world_engine.config, "PLAY_SERVICE_INTERNAL_API_KEY", None) or
             "internal-api-key-for-ops")

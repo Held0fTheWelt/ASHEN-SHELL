@@ -15,15 +15,15 @@ from uuid import uuid4
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import (
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import (
     ParticipantState,
     PropState,
     RunStatus,
     RuntimeInstance,
     TranscriptEntry,
 )
-from app.runtime.store import JsonRunStore
+from world_engine.runtime.store import JsonRunStore
 
 
 @pytest.mark.persistence
@@ -259,7 +259,7 @@ def test_store_migration_between_backends(tmp_path):
 
     # Simulate migration to SQLAlchemy
     db_url = "sqlite:///:memory:"
-    from app.runtime.store import SqlAlchemyRunStore
+    from world_engine.runtime.store import SqlAlchemyRunStore
 
     try:
         sql_store = SqlAlchemyRunStore(db_url)

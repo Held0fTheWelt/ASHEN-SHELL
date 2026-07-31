@@ -21,12 +21,12 @@ from conftest import receive_until_snapshot
 @pytest.fixture
 def app_for_isolation(tmp_path: Path) -> FastAPI:
     """Build app for isolation tests."""
-    from app.api.http import router as http_router
-    from app.api.ws import router as ws_router
+    from world_engine.api.http import router as http_router
+    from world_engine.api.ws import router as ws_router
 
     app = FastAPI()
-    from app.runtime.manager import RuntimeManager
-    from app.auth.tickets import TicketManager
+    from world_engine.runtime.manager import RuntimeManager
+    from world_engine.auth.tickets import TicketManager
 
     app.state.manager = RuntimeManager(store_root=tmp_path)
     app.state.ticket_manager = TicketManager("test-secret")

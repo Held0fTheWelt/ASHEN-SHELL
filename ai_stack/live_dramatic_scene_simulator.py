@@ -649,7 +649,7 @@ def build_canonical_step_ldss_output(ldss_input: LDSSInput) -> LDSSOutput | None
 
 def _load_ldss_langfuse_adapter() -> Any | None:
     try:
-        from app.observability.langfuse_adapter import LangfuseAdapter
+        from world_engine.observability.langfuse_adapter import LangfuseAdapter
 
         return LangfuseAdapter.get_instance()
     except ImportError:

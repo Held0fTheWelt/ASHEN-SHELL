@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.runtime.manager import RuntimeManager
-from app.runtime.models import RunStatus
+from world_engine.runtime.manager import RuntimeManager
+from world_engine.runtime.models import RunStatus
 
 
 @pytest.mark.contract

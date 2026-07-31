@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.story_runtime.consequence_cascade_store import JsonConsequenceCascadeStore
+from world_engine.story_runtime.consequence_cascade_store import JsonConsequenceCascadeStore
 from story_runtime_core.consequences import CONSEQUENCE_CASCADE_RECORD_SCHEMA_VERSION
 
 

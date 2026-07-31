@@ -4,9 +4,9 @@ import pytest
 import httpx
 from fastapi.responses import JSONResponse
 
-import app.main as main_module
-import app.ui_backend_proxy as proxy_module
-from app.ui_backend_proxy import user_capabilities
+import world_engine.main as main_module
+import world_engine.ui_backend_proxy as proxy_module
+from world_engine.ui_backend_proxy import user_capabilities
 
 
 @pytest.mark.parametrize(

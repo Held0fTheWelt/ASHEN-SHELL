@@ -1,8 +1,8 @@
 """Wave 3: free role-play commit vocabulary (partial vs blocked)."""
 from __future__ import annotations
 
-from app.story_runtime.commit_models import resolve_narrative_commit
-from app.story_runtime.narrative_commit_resolution import eval_core_transition_rules
+from world_engine.story_runtime.commit_models import resolve_narrative_commit
+from world_engine.story_runtime.narrative_commit_resolution import eval_core_transition_rules
 
 
 def test_free_action_without_scene_transition_commits_partial() -> None:
@@ -45,7 +45,7 @@ def test_free_action_without_scene_transition_commits_partial() -> None:
 
 def test_prevented_action_still_witnessed() -> None:
     """Prevented outcomes still produce a beat tick (witnessed, not frozen)."""
-    from app.story_runtime.commit_models import BeatProgression, PlannerTruth, _resolve_beat_progression
+    from world_engine.story_runtime.commit_models import BeatProgression, PlannerTruth, _resolve_beat_progression
 
     prior = BeatProgression(
         beat_id="scene_1:escalate_conflict",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.story_runtime.branch_timeline_store import JsonBranchTimelineStore
+from world_engine.story_runtime.branch_timeline_store import JsonBranchTimelineStore
 from story_runtime_core.branching import (
     BRANCHING_TIMELINE_RECORD_SCHEMA_VERSION,
     BRANCHING_TIMELINE_STATUS_ACTIVE,

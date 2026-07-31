@@ -75,7 +75,7 @@ def try_emit_adr0041_langfuse_runtime_intelligence_evidence(
         "payload_echo": payload,
     }
     try:
-        from app.observability.langfuse_adapter import LangfuseAdapter
+        from world_engine.observability.langfuse_adapter import LangfuseAdapter
     except ImportError:
         out["reason"] = "langfuse_adapter_not_importable"
         return out

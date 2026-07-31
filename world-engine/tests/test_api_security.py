@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.auth.tickets import TicketManager
+from world_engine.auth.tickets import TicketManager
 
 
 @pytest.mark.security

@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-import app.main as main_module
+import world_engine.main as main_module
 
 
 def _login_form_data(username: str, password: str) -> str:

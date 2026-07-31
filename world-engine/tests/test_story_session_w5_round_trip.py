@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.story_runtime.manager import (
+from world_engine.story_runtime.manager import (
     StorySession,
     story_session_from_payload,
     story_session_to_payload,

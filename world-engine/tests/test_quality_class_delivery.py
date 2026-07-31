@@ -1,7 +1,7 @@
 """Wave 0: quality_class must survive delivery without collapsing to a lone boolean."""
 from __future__ import annotations
 
-from app.story_runtime.manager.story_window_entry_parts import build_story_window_runtime_entry
+from world_engine.story_runtime.manager.story_window_entry_parts import build_story_window_runtime_entry
 
 
 class _Session:

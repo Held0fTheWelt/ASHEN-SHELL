@@ -1,7 +1,7 @@
 """Wave 4: E7 technical failure fallback chain contracts."""
 from __future__ import annotations
 
-from app.story_runtime.failure_recovery import (
+from world_engine.story_runtime.failure_recovery import (
     DEFAULT_FAILURE_RECOVERY,
     ReducedContextRetryPolicy,
     build_reduced_context_retry_prompt,

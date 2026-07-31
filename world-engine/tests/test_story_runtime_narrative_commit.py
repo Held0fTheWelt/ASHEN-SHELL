@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from app.story_runtime import StoryRuntimeManager
-from app.story_runtime import commit_models
+from world_engine.story_runtime import StoryRuntimeManager
+from world_engine.story_runtime import commit_models
 
 
 class _FakeTurnGraph:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.repo_root import resolve_wos_repo_root
+from world_engine.repo_root import resolve_wos_repo_root
 
 
 def test_resolve_prefers_full_monorepo_from_story_runtime_package() -> None:

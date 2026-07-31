@@ -1,8 +1,8 @@
 """Wave 3: blocked is reserved for situatively impossible outcomes only."""
 from __future__ import annotations
 
-from app.story_runtime.narrative_commit_resolution import eval_core_transition_rules
-from app.story_runtime.situation_status_mapping import (
+from world_engine.story_runtime.narrative_commit_resolution import eval_core_transition_rules
+from world_engine.story_runtime.situation_status_mapping import (
     AI_AFFORDANCE_STATUSES,
     AI_TO_SITUATION_STATUS,
     map_ai_affordance_to_situation_status,

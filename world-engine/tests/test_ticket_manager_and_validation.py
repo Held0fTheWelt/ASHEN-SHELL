@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.auth.tickets import TicketManager, TicketError
+from world_engine.auth.tickets import TicketManager, TicketError
 
 
 class TestTicketManagerBasics:

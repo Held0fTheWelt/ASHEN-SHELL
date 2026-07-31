@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-import app.main as main_module
+import world_engine.main as main_module
 
 
 def _login(client, auth_backend_success):
