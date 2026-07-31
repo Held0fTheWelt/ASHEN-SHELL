@@ -183,7 +183,7 @@ def test_terminal_resolves_active_threads(manager: StoryRuntimeManager) -> None:
 
 
 def test_deterministic_eviction_at_capacity(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.story_runtime.narrative_threads.MAX_ACTIVE_THREADS", 2)
+    monkeypatch.setattr("world_engine.story_runtime.narrative_threads.MAX_ACTIVE_THREADS", 2)
     prior = StoryNarrativeThreadSet(active=[], resolved_recent=[])
     tail: list[dict[str, Any]] = []
     scenes = ["s1", "s2", "s3"]

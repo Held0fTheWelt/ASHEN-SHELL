@@ -26,7 +26,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_accepts_valid_key(self):
         """Valid internal API key should be accepted by guard."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             # Should not raise
             _require_internal_api_key(x_play_service_key="valid-api-key")
 
@@ -34,7 +34,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_rejects_invalid_key(self):
         """Invalid key should raise HTTPException 401."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key="wrong-key")
 
@@ -45,7 +45,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_rejects_missing_key(self):
         """Missing key (None) should raise HTTPException 401."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key=None)
 
@@ -55,7 +55,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_allows_any_key_when_not_configured(self):
         """Explicit test mode remains lenient when PLAY_SERVICE_INTERNAL_API_KEY is absent."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
             # Should not raise even with wrong key or no key
             _require_internal_api_key(x_play_service_key="any-key")
             _require_internal_api_key(x_play_service_key=None)
@@ -66,7 +66,7 @@ class TestApiKeyGuardFunction:
         """Non-test runtimes fail closed when the internal API key is not configured."""
         monkeypatch.setenv("FLASK_ENV", "production")
         monkeypatch.delenv("ENV", raising=False)
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key=None)
         assert exc_info.value.status_code == 503
@@ -76,7 +76,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_rejects_empty_key_when_configured(self):
         """Empty string key should be rejected when expected key is set."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key="")
 
@@ -86,7 +86,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_rejects_whitespace_key_when_configured(self):
         """Whitespace-only key should be rejected when expected key is set."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key="   \t   ")
 
@@ -96,7 +96,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_case_sensitive_key_comparison(self):
         """API key comparison should be case-sensitive."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "ValidApiKey"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "ValidApiKey"):
             # Wrong case should fail
             with pytest.raises(HTTPException):
                 _require_internal_api_key(x_play_service_key="validapikey")
@@ -108,7 +108,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_error_message_is_consistent(self):
         """Guard should return consistent error message."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             try:
                 _require_internal_api_key(x_play_service_key="wrong")
             except HTTPException as e:
@@ -120,7 +120,7 @@ class TestApiKeyGuardFunction:
     @pytest.mark.security
     def test_guard_error_code_is_401_not_403(self):
         """Guard should return 401 (Unauthorized) not 403 (Forbidden)."""
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-api-key"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key="wrong")
             assert exc_info.value.status_code == 401
@@ -139,7 +139,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "required-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "required-key"):
                 client = TestClient(app)
 
                 # Create a run first
@@ -167,7 +167,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-internal-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-internal-key"):
                 client = TestClient(app)
 
                 # Create a run first
@@ -199,7 +199,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "correct-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "correct-key"):
                 client = TestClient(app)
 
                 # Create a run
@@ -227,7 +227,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
                 client = TestClient(app)
 
                 # Create a run
@@ -254,7 +254,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "required-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "required-key"):
                 client = TestClient(app)
 
                 # Try without key
@@ -278,7 +278,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-key"):
                 client = TestClient(app)
 
                 # Create a joinable run
@@ -311,7 +311,7 @@ class TestInternalJoinContextEndpoint:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-key"):
                 client = TestClient(app)
 
                 # Create run
@@ -348,7 +348,7 @@ class TestApiKeyHeaderNaming:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-key"):
                 client = TestClient(app)
 
                 # Create run
@@ -377,7 +377,7 @@ class TestApiKeyHeaderNaming:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-key"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "test-key"):
                 client = TestClient(app)
 
                 run_response = client.post(
@@ -416,7 +416,7 @@ class TestApiKeySecurityProperties:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "secret-key-123"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "secret-key-123"):
                 client = TestClient(app)
 
                 run_response = client.post(
@@ -448,7 +448,7 @@ class TestApiKeySecurityProperties:
             tmp_path = Path(tmp_dir)
             app = build_test_app(tmp_path)
 
-            with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-secret"):
+            with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "my-secret"):
                 client = TestClient(app)
 
                 response = client.post(

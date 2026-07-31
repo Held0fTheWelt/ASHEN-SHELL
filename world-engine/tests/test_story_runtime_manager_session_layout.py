@@ -39,9 +39,9 @@ def test_session_related_manager_modules_live_in_session_package() -> None:
 @pytest.mark.runtime
 @pytest.mark.parametrize("module_name", sorted(SESSION_MODULES))
 def test_session_manager_slices_import_from_session_package(module_name: str) -> None:
-    module = importlib.import_module(f"app.story_runtime.manager.session.{module_name}")
+    module = importlib.import_module(f"world_engine.story_runtime.manager.session.{module_name}")
 
-    assert module.__name__ == f"app.story_runtime.manager.session.{module_name}"
+    assert module.__name__ == f"world_engine.story_runtime.manager.session.{module_name}"
     assert getattr(module, "__all__", None)
 
 
@@ -60,9 +60,9 @@ def test_runtime_manager_uses_session_mixins_from_session_package() -> None:
     mixin_modules = {base.__module__ for base in StoryRuntimeManager.__mro__}
 
     assert {
-        "app.story_runtime.manager.session.manager_init_and_persistence",
-        "app.story_runtime.manager.session.recoverable_rejection_and_sessions",
-        "app.story_runtime.manager.session.session_lifecycle",
-        "app.story_runtime.manager.session.session_loop_governance",
-        "app.story_runtime.manager.session.session_state_api",
+        "world_engine.story_runtime.manager.session.manager_init_and_persistence",
+        "world_engine.story_runtime.manager.session.recoverable_rejection_and_sessions",
+        "world_engine.story_runtime.manager.session.session_lifecycle",
+        "world_engine.story_runtime.manager.session.session_loop_governance",
+        "world_engine.story_runtime.manager.session.session_state_api",
     }.issubset(mixin_modules)

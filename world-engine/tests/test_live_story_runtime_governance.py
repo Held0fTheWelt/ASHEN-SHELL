@@ -64,7 +64,7 @@ def test_reload_config_returns_ok_false_when_fetch_returns_none(client, internal
     def _boom(**_kwargs):
         return None
 
-    monkeypatch.setattr("app.runtime.runtime_config_client.fetch_resolved_runtime_config", _boom)
+    monkeypatch.setattr("world_engine.runtime.runtime_config_client.fetch_resolved_runtime_config", _boom)
     r = client.post(
         "/api/internal/story/runtime/reload-config",
         headers={"X-Play-Service-Key": internal_api_key},

@@ -41,7 +41,7 @@ def _disable_langfuse_network_for_ldss_tests(monkeypatch: pytest.MonkeyPatch) ->
 
     disabled = _DisabledLangfuseAdapter()
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: disabled,
     )
 

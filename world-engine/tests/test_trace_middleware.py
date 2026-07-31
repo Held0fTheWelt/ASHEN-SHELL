@@ -361,7 +361,7 @@ def test_langfuse_emits_runtime_aspect_spans_and_reasoned_scores(monkeypatch):
     adapter.create_child_span.side_effect = lambda **kwargs: MagicMock()
 
     monkeypatch.setattr(
-        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        "world_engine.observability.langfuse_adapter.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -431,7 +431,7 @@ def test_langfuse_narrator_path_keeps_opening_trace_narrator_only(monkeypatch):
     adapter.create_child_span.side_effect = lambda **kwargs: MagicMock()
 
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -662,7 +662,7 @@ def test_story_session_create_sets_langfuse_parent_for_opening_turn(client, inte
     adapter.create_child_span.side_effect = lambda **kwargs: MagicMock()
 
     monkeypatch.setattr(
-        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        "world_engine.observability.langfuse_adapter.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -764,7 +764,7 @@ def test_story_session_create_opening_live_projection_skips_ldss_fallback_span(
     adapter.create_child_span.side_effect = lambda **kwargs: MagicMock()
 
     monkeypatch.setattr(
-        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        "world_engine.observability.langfuse_adapter.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -790,7 +790,7 @@ def test_story_session_create_opening_live_projection_skips_ldss_fallback_span(
         return _minimal_goc_live_scene_blocks(turn_number=turn_number)
 
     monkeypatch.setattr(
-        "app.story_runtime.manager._live_scene_blocks_from_visible_bundle",
+        "world_engine.story_runtime.manager._live_scene_blocks_from_visible_bundle",
         _patched_live_blocks,
     )
 
@@ -822,7 +822,7 @@ def test_langfuse_evidence_observations_record_live_generation_retrieval_and_sco
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -921,7 +921,7 @@ def test_langfuse_record_generation_derives_total_when_usage_missing_total(monke
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -963,7 +963,7 @@ def test_langfuse_visible_output_counts_gm_narration_when_scene_blocks_absent(mo
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1004,7 +1004,7 @@ def test_langfuse_visible_output_counts_structured_narrative_without_bundle_line
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1066,7 +1066,7 @@ def test_langfuse_score_metadata_surfaces_canonical_degradation_chain_for_ldss_f
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1158,7 +1158,7 @@ def test_langfuse_score_metadata_omits_chain_extras_for_healthy_path(monkeypatch
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1226,7 +1226,7 @@ def test_world_engine_turn_execute_langfuse_correlates_player_input_hash(
     adapter.create_child_span.side_effect = lambda **kwargs: MagicMock()
 
     monkeypatch.setattr(
-        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        "world_engine.observability.langfuse_adapter.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -1316,7 +1316,7 @@ def test_trace_metadata_can_be_updated_with_canonical_turn_id_after_commit(
     adapter.backfill_trace_metadata_after_commit.side_effect = _backfill
 
     monkeypatch.setattr(
-        "app.observability.langfuse_adapter.LangfuseAdapter.get_instance",
+        "world_engine.observability.langfuse_adapter.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -1499,7 +1499,7 @@ def test_langfuse_score_metadata_surfaces_primary_vs_final_for_ldss_opening_fall
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1585,7 +1585,7 @@ def test_langfuse_generation_records_primary_attempt_when_ldss_fallback_commits(
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1658,7 +1658,7 @@ def test_langfuse_phase_spans_surface_primary_vs_final_for_ldss_opening_fallback
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -1719,7 +1719,7 @@ def test_langfuse_primary_vs_final_metadata_for_healthy_path_marks_primary_eq_fi
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -1843,7 +1843,7 @@ def test_action_context_diagnostics_emit_scores_on_every_player_turn(monkeypatch
     authoritative-action short-path. This guards against silent gaps in trace history."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     # Speech turn with fallback — scores must still emit (vacuous 1.0).
     path_summary = _healthy_path_summary_turn(1)
     path_summary.update({
@@ -1897,7 +1897,7 @@ def test_opening_role_anchor_pass_score_is_emitted(monkeypatch):
     opening_shape_subgates.role_anchor_present. Non-opening turns must report 1.0."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     # Canonical opening with role anchor — score must be 1.0
     blocks_ok = _canonical_opening_blocks()
     _emit_langfuse_evidence_observations(
@@ -1940,7 +1940,7 @@ def test_knowledge_runtime_absent_scores_emit_numeric_on_clean_turn(monkeypatch)
     when hard_forbidden_detection.detected is empty."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     path_summary = _healthy_path_summary_turn(0)
     path_summary["hard_forbidden_detection"] = {"status": "passed", "detected": []}
     path_summary["hard_forbidden_absent"] = True
@@ -1974,7 +1974,7 @@ def test_knowledge_runtime_absent_scores_drop_to_zero_on_detection(monkeypatch):
     matching detection_key is present in hard_forbidden_detection.detected."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     path_summary = _healthy_path_summary_turn(0)
     path_summary["hard_forbidden_detection"] = {
         "status": "rejected",
@@ -2092,7 +2092,7 @@ def test_projection_guard_opening_shape_score_fails_when_projection_drops_narrat
         },
     }
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     _emit_langfuse_evidence_observations(
@@ -2108,7 +2108,7 @@ def test_projection_guard_opening_shape_score_passes_when_scene_blocks_keep_thre
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -2152,7 +2152,7 @@ def test_opening_contract_pass_score_turn0_valid_blocks(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     blocks = [
@@ -2176,7 +2176,7 @@ def test_opening_contract_pass_score_turn0_actor_before_narrators(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     blocks = [
@@ -2198,7 +2198,7 @@ def test_opening_contract_pass_trivially_passes_on_regular_turn(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     blocks = [
@@ -2253,7 +2253,7 @@ def test_opening_shape_subgates_all_pass_for_canonical_opening(monkeypatch):
     """OPEN-SHAPE-EVIDENCE-01: canonical 3-narrator + actor opening yields all subgates true."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = _canonical_opening_blocks()
     _emit_langfuse_evidence_observations(
         path_summary=_healthy_path_summary_turn(0),
@@ -2288,7 +2288,7 @@ def test_opening_shape_subgates_single_narrator_then_actor_failure(monkeypatch):
     """OPEN-SHAPE-EVIDENCE-01: 1 narrator + actor (the audited 2026-05-08 failure mode) surfaces precise reasons."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = [
         {"block_type": "narrator", "text": "Two couples meet, chairs ringing a low table; civility is on offer."},
         {"block_type": "actor_line", "actor_id": "alain_reille", "text": "We should keep this brief."},
@@ -2323,7 +2323,7 @@ def test_opening_shape_subgates_actor_at_index_zero_failure(monkeypatch):
     """OPEN-SHAPE-EVIDENCE-01: actor block before any narrator yields narrator_intro_missing + actor_block_before_intro."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = [
         {"block_type": "actor_line", "actor_id": "alain_reille", "text": "Hello."},
         {"block_type": "narrator", "text": "The salon."},
@@ -2350,7 +2350,7 @@ def test_opening_shape_subgates_no_visible_blocks(monkeypatch):
     """OPEN-SHAPE-EVIDENCE-01: empty scene_blocks produces no_visible_scene_blocks + all narrators absent."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     _emit_langfuse_evidence_observations(
         path_summary=_healthy_path_summary_turn(0),
         graph_state={"model_prompt": "x"},
@@ -2376,7 +2376,7 @@ def test_opening_shape_subgates_empty_on_non_opening_turn(monkeypatch):
     """OPEN-SHAPE-EVIDENCE-01: turn > 0 must keep subgates {} and reasons [] (avoid false negatives in trace history)."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = [
         {"block_type": "actor_line", "actor_id": "alain_reille", "text": "I disagree."},
     ]
@@ -2400,7 +2400,7 @@ def test_opening_shape_evidence_attached_to_alias_and_live_opening_scores(monkey
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = [
         {"block_type": "narrator", "text": "Only one beat present."},
         {"block_type": "actor_line", "actor_id": "alain_reille", "text": "Hello."},
@@ -2489,7 +2489,7 @@ def test_opening_score_split_mock_trace_shape_can_pass_but_live_opening_must_fai
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -2521,7 +2521,7 @@ def test_opening_score_split_live_degraded_trace_never_passes_live_opening(monke
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -2555,7 +2555,7 @@ def test_opening_score_split_live_healthy_missing_intro_blocks_live_opening(monk
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -2586,7 +2586,7 @@ def test_opening_score_split_true_successful_live_opening_sets_both_live_scores(
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
     path_summary = {
@@ -2654,7 +2654,7 @@ def test_live_opening_subgates_all_pass_live_openai(monkeypatch):
     """RUNTIME-CONTRACT-01 A: live OpenAI turn-0, all subgates true → live_opening_contract_pass=1, no failure reasons."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     _emit_langfuse_evidence_observations(
         path_summary=_live_openai_path_summary_turn_0(),
@@ -2674,7 +2674,7 @@ def test_live_opening_subgates_missing_trace_origin(monkeypatch):
     """RUNTIME-CONTRACT-01 B: trace_origin missing → live_opening=0, failure_reasons contains trace_origin_live_ui."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = _live_openai_path_summary_turn_0(trace_origin=None)
     _emit_langfuse_evidence_observations(
@@ -2694,7 +2694,7 @@ def test_live_opening_subgates_canonical_player_flow_false(monkeypatch):
     """RUNTIME-CONTRACT-01 C: canonical_player_flow=False → live_opening=0, failure_reasons contains canonical_player_flow."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = _live_openai_path_summary_turn_0(canonical_player_flow=False)
     _emit_langfuse_evidence_observations(
@@ -2714,7 +2714,7 @@ def test_live_opening_subgates_final_adapter_ldss(monkeypatch):
     """RUNTIME-CONTRACT-01 D: final_adapter=ldss_fallback → live_opening=0, not_ldss_fallback in failure_reasons."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     # event adapter stays "openai" so non_mock_generation_pass=1 and live_runtime_contract_pass can be 1;
     # only path_summary.final_adapter is ldss_fallback to isolate the not_ldss_fallback subgate.
@@ -2739,7 +2739,7 @@ def test_live_opening_subgates_role_mismatch_is_informational_not_gated(monkeypa
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = _live_openai_path_summary_turn_0(
         selected_player_role="annette",
@@ -2775,7 +2775,7 @@ def test_parser_evidence_A_primary_parser_error_preserved_in_score_metadata(monk
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         "session_id": "session-ppe-a",
@@ -2845,7 +2845,7 @@ def test_parser_evidence_B_api_failure_shows_no_parser_error(monkeypatch):
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         "session_id": "session-ppe-b",
@@ -2895,7 +2895,7 @@ def test_parser_evidence_C_successful_primary_parse_sets_structured_output_prese
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         **_live_openai_path_summary_turn_0(),
@@ -3024,7 +3024,7 @@ def test_parser_evidence_D_self_correction_attempt_surfaces_in_score_metadata(mo
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         "session_id": "session-ppe-d",
@@ -3080,7 +3080,7 @@ def test_parser_evidence_D_self_correction_attempt_surfaces_in_score_metadata(mo
 def test_self_correction_evidence_surfaces_in_model_invoke_span(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         **_live_openai_path_summary_turn_0(),
@@ -3119,7 +3119,7 @@ def test_parser_evidence_E_ldss_gate_scores_stay_red_with_evidence_fields_presen
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         "session_id": "session-ppe-e",
@@ -3257,7 +3257,7 @@ def test_S2_graph_fallback_node_called_false_when_only_sc_set_fallback_used(monk
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         # SC fired and set fallback_used=True, but _fallback_model graph node never ran
@@ -3378,7 +3378,7 @@ def test_S5_path_summary_parser_error_none_primary_attempt_parser_error_present(
     """
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     path_summary = {
         "session_id": "session-s5",
@@ -3437,7 +3437,7 @@ def test_S6_primary_parse_span_emitted_with_warning_level_on_parse_failure(monke
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -3490,7 +3490,7 @@ def test_S7_primary_parse_span_default_level_on_healthy_path(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -3529,7 +3529,7 @@ def test_opening_shape_score_metadata_includes_actor_index_and_narrator_count(mo
     """OPEN-SHAPE-EVIDENCE-01: first_actor_block_index + narrator_block_count on turn 0."""
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     blocks = [
         {"block_type": "narrator", "text": "a"},
         {"block_type": "narrator", "text": "b"},
@@ -3563,7 +3563,7 @@ def test_opening_shape_score_metadata_includes_actor_index_and_narrator_count(mo
 def test_opening_shape_failure_appends_single_string_token_when_structured_str(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     event = {
         "model_route": {
             "generation": {
@@ -3912,7 +3912,7 @@ def test_langfuse_path_spans_include_intent_semantic_director_fields(monkeypatch
 
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     rule = rule_spec_for_subtext("direct_accusation")
     path_summary = {
         "session_id": "session-intent-001",
@@ -3971,7 +3971,7 @@ def test_langfuse_scores_include_intent_surface_contract_evidence(monkeypatch):
 
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
     rule = rule_spec_for_subtext("probe_inquiry")
     path_summary = _healthy_path_summary_turn(1)
     path_summary.update(
@@ -4025,7 +4025,7 @@ def test_langfuse_scores_use_shared_extended_intent_contract(monkeypatch):
 
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     intent_kind = "object_interaction"
     assert intent_kind in PLAYER_INPUT_KINDS
@@ -4072,7 +4072,7 @@ def test_langfuse_scores_use_shared_extended_intent_contract(monkeypatch):
 def test_langfuse_scores_reject_guarded_action_probe_alignment(monkeypatch):
     adapter = MagicMock()
     adapter.is_enabled.return_value = True
-    monkeypatch.setattr("app.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
+    monkeypatch.setattr("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", lambda: adapter)
 
     intent_kind = "physical_action"
     forbidden_move = sorted(FORBIDDEN_NON_SPEECH_ACTION_SEMANTIC_MOVES)[0]
@@ -4108,7 +4108,7 @@ def test_langfuse_child_span_log_placeholder_when_sdk_ids_absent(caplog):
     """SDK handles often lack public ids before flush; logs must not read as span creation failure."""
     from world_engine.observability import langfuse_adapter as lf_mod
 
-    caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
+    caplog.set_level(logging.INFO, logger="world_engine.observability.langfuse_adapter")
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
     adapter.is_ready = True
     adapter._public_key = "pk-test"
@@ -4162,7 +4162,7 @@ def test_langfuse_child_span_log_placeholder_when_sdk_ids_absent(caplog):
 def test_langfuse_set_active_span_clear_logs_without_imploding(caplog):
     from world_engine.observability import langfuse_adapter as lf_mod
 
-    caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
+    caplog.set_level(logging.INFO, logger="world_engine.observability.langfuse_adapter")
     adapter = lf_mod.LangfuseAdapter.__new__(lf_mod.LangfuseAdapter)
     adapter.is_ready = True
     prev = MagicMock()

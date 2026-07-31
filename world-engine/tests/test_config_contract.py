@@ -44,7 +44,7 @@ class TestPlayServiceSecretStartupContract:
                 warnings.simplefilter("always")
                 import importlib
                 import world_engine.config
-                importlib.reload(app.config)
+                importlib.reload(world_engine.config)
                 warning_messages = [str(warning.message) for warning in w]
                 assert any("PLAY_SERVICE_SECRET" in msg for msg in warning_messages), \
                     f"Expected PLAY_SERVICE_SECRET warning, got: {warning_messages}"
@@ -62,7 +62,7 @@ class TestPlayServiceSecretStartupContract:
             with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
                 import importlib
                 import world_engine.config
-                importlib.reload(app.config)
+                importlib.reload(world_engine.config)
 
     @pytest.mark.contract
     def test_blank_play_service_secret_fails_in_production_mode(self, monkeypatch):
@@ -77,7 +77,7 @@ class TestPlayServiceSecretStartupContract:
             with pytest.raises(ValueError, match="PLAY_SERVICE_SECRET is required"):
                 import importlib
                 import world_engine.config
-                importlib.reload(app.config)
+                importlib.reload(world_engine.config)
 
     @pytest.mark.contract
     def test_blank_play_service_secret_rejected_in_validation(self):
@@ -120,7 +120,7 @@ class TestPlayServiceSecretStartupContract:
 
         import importlib
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
         # After reload, PLAY_SERVICE_SECRET should be the primary value
         from world_engine.config import PLAY_SERVICE_SECRET as pss
         assert pss == "primary-secret"
@@ -147,7 +147,7 @@ class TestPlayServiceInternalApiKeyStartupContract:
         with patch("dotenv.load_dotenv"):
             import importlib
             import world_engine.config
-            importlib.reload(app.config)
+            importlib.reload(world_engine.config)
             from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
             # Should be None when not set
             assert piak is None
@@ -159,7 +159,7 @@ class TestPlayServiceInternalApiKeyStartupContract:
 
         import importlib
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
         from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
         # Should be None when set to whitespace
         assert piak is None
@@ -171,7 +171,7 @@ class TestPlayServiceInternalApiKeyStartupContract:
 
         import importlib
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
         from world_engine.config import PLAY_SERVICE_INTERNAL_API_KEY as piak
         assert piak == "valid-api-key"
 
@@ -409,7 +409,7 @@ class TestTicketManagerSecretValidation:
         with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required"):
             # Pass None with no global secret available
             from unittest.mock import patch
-            with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+            with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", None):
                 TicketManager(None)
 
     @pytest.mark.contract
@@ -442,7 +442,7 @@ class TestTicketManagerSecretValidation:
         from world_engine.auth.tickets import TicketManager
         from unittest.mock import patch
 
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-valid-secret-ok"):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "global-valid-secret-ok"):
             manager = TicketManager(None)
             assert manager.secret == b"global-valid-secret-ok"
 

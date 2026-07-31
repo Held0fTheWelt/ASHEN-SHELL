@@ -178,9 +178,11 @@ def _get_validator_config(request: Request) -> OutputValidatorConfig:
 def _configured_internal_api_key() -> str | None:
     import sys
 
-    facade = sys.modules.get("app.api.http")
-    if facade is not None and hasattr(facade, "PLAY_SERVICE_INTERNAL_API_KEY"):
-        return getattr(facade, "PLAY_SERVICE_INTERNAL_API_KEY")
+    # Wave 6: prefer world_engine.api.http; keep legacy app.api.http for old patches.
+    for mod_name in ("world_engine.api.http", "app.api.http"):
+        facade = sys.modules.get(mod_name)
+        if facade is not None and hasattr(facade, "PLAY_SERVICE_INTERNAL_API_KEY"):
+            return getattr(facade, "PLAY_SERVICE_INTERNAL_API_KEY")
     return PLAY_SERVICE_INTERNAL_API_KEY
 
 

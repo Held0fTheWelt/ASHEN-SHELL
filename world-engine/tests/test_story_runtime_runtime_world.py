@@ -14,7 +14,7 @@ def _disable_langfuse(monkeypatch: Any) -> None:
     adapter.is_enabled.return_value = False
     adapter.is_ready = False
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 
@@ -141,7 +141,7 @@ def test_story_session_create_emits_governed_session_loop_log(tmp_path, monkeypa
         adapters={},
         governed_runtime_config=_governed_config_with_session_loop_logging(),
     )
-    caplog.set_level(logging.INFO, logger="app.story_runtime.manager")
+    caplog.set_level(logging.INFO, logger="world_engine.story_runtime.manager")
 
     session = manager.create_session(
         module_id="test_module",
@@ -175,7 +175,7 @@ def test_story_session_create_respects_disabled_session_loop_log(tmp_path, monke
         adapters={},
         governed_runtime_config=_governed_config_with_session_loop_logging(enabled=False),
     )
-    caplog.set_level(logging.INFO, logger="app.story_runtime.manager")
+    caplog.set_level(logging.INFO, logger="world_engine.story_runtime.manager")
 
     manager.create_session(
         module_id="test_module",

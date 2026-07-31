@@ -33,14 +33,14 @@ class TestTicketManagerBasics:
     @pytest.mark.unit
     def test_ticket_manager_uses_global_secret_when_none_provided(self):
         """TicketManager should use global PLAY_SERVICE_SECRET when not provided."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-test-secret"):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "global-test-secret"):
             manager = TicketManager()
             assert manager.secret == b"global-test-secret"
 
     @pytest.mark.unit
     def test_ticket_manager_explicit_secret_overrides_global(self):
         """Explicit secret should override global PLAY_SERVICE_SECRET."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-secret"):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "global-secret"):
             manager1 = TicketManager("secret1")
             manager2 = TicketManager("secret2")
             assert manager1.secret != manager2.secret
@@ -50,7 +50,7 @@ class TestTicketManagerBasics:
     @pytest.mark.unit
     def test_ticket_manager_with_empty_global_secret_fallback(self):
         """TicketManager should handle None global secret gracefully."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", None):
             manager = TicketManager("fallback-secret")
             assert manager.secret == b"fallback-secret"
 

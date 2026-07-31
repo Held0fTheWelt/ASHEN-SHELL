@@ -703,7 +703,7 @@ def test_trace_metadata_backfill_does_not_change_score_scope_normalization() -> 
 
 def test_wos_langfuse_score_scope_debug_emits_info_line(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     monkeypatch.setenv("WOS_LANGFUSE_SCORE_DEBUG", "1")
-    caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
+    caplog.set_level(logging.INFO, logger="world_engine.observability.langfuse_adapter")
     LangfuseAdapter._log_wos_langfuse_score_scope_debug(
         "score_x",
         has_trace_id=True,
@@ -717,7 +717,7 @@ def test_wos_langfuse_score_scope_debug_emits_info_line(monkeypatch: pytest.Monk
 
 def test_wos_langfuse_score_scope_debug_default_on_when_env_unset(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     monkeypatch.delenv("WOS_LANGFUSE_SCORE_DEBUG", raising=False)
-    caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
+    caplog.set_level(logging.INFO, logger="world_engine.observability.langfuse_adapter")
     LangfuseAdapter._log_wos_langfuse_score_scope_debug(
         "score_y",
         has_trace_id=True,
@@ -730,7 +730,7 @@ def test_wos_langfuse_score_scope_debug_default_on_when_env_unset(monkeypatch: p
 
 def test_wos_langfuse_score_scope_debug_off_when_zero(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     monkeypatch.setenv("WOS_LANGFUSE_SCORE_DEBUG", "0")
-    caplog.set_level(logging.INFO, logger="app.observability.langfuse_adapter")
+    caplog.set_level(logging.INFO, logger="world_engine.observability.langfuse_adapter")
     LangfuseAdapter._log_wos_langfuse_score_scope_debug(
         "score_z",
         has_trace_id=True,

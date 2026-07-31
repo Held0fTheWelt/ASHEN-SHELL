@@ -216,7 +216,7 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
 
     # Reload config to pick up environment variables
     import world_engine.config
-    importlib.reload(app.config)
+    importlib.reload(world_engine.config)
 
     remote_template = ExperienceTemplate(
         id="god_of_carnage_solo",
@@ -239,7 +239,7 @@ def test_remote_templates_override_and_load(tmp_path, monkeypatch):
 
     # Reload runtime manager to pick up reloaded config
     import world_engine.runtime.manager
-    importlib.reload(app.runtime.manager)
+    importlib.reload(world_engine.runtime.manager)
 
     # Now create manager - it will pick up the reloaded config and patched function
     from world_engine.runtime.manager import RuntimeManager

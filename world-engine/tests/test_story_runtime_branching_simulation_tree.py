@@ -24,7 +24,7 @@ def _disable_langfuse(monkeypatch: Any) -> None:
     adapter.is_enabled.return_value = False
     adapter.is_ready = False
     monkeypatch.setattr(
-        "app.story_runtime.manager.LangfuseAdapter.get_instance",
+        "world_engine.story_runtime.manager.LangfuseAdapter.get_instance",
         lambda: adapter,
     )
 

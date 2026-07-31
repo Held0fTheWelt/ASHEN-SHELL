@@ -234,7 +234,7 @@ def test_provider_generation_without_usage_is_marked_unavailable():
 def test_diagnostics_envelope_langfuse_status():
     """langfuse_status reflects runtime adapter state."""
     mgr, session = _make_manager("annette")
-    with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+    with patch("world_engine.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
         get_instance.return_value.is_enabled.return_value = False
         result = mgr.execute_turn(session_id=session.session_id, player_input="test")
 
@@ -249,7 +249,7 @@ def test_diagnostics_envelope_uses_request_langfuse_trace_id():
     mgr, session = _make_manager("annette")
     token = set_langfuse_trace_id("0123456789abcdef0123456789abcdef")
     try:
-        with patch("app.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
+        with patch("world_engine.story_runtime.manager.LangfuseAdapter.get_instance") as get_instance:
             get_instance.return_value.is_enabled.return_value = True
             result = mgr.execute_turn(session_id=session.session_id, player_input="test")
     finally:
@@ -268,7 +268,7 @@ def test_execute_turn_emits_langfuse_path_spans():
     adapter.is_enabled.return_value = True
     adapter.create_child_span.return_value = MagicMock()
 
-    with patch("app.story_runtime.manager.LangfuseAdapter.get_instance", return_value=adapter):
+    with patch("world_engine.story_runtime.manager.LangfuseAdapter.get_instance", return_value=adapter):
         result = mgr.execute_turn(session_id=session.session_id, player_input="test")
 
     summary = result.get("observability_path_summary") or {}
@@ -302,7 +302,7 @@ def test_execute_turn_audit_log_uses_graph_retrieval_details():
     """Audit log retrieval details come from graph_state['retrieval']."""
     mgr, session = _make_manager("annette")
 
-    with patch("app.story_runtime.manager.log_story_turn_event") as log_turn:
+    with patch("world_engine.story_runtime.manager.log_story_turn_event") as log_turn:
         mgr.execute_turn(session_id=session.session_id, player_input="test")
 
     assert log_turn.called

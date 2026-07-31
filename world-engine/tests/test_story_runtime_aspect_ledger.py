@@ -286,7 +286,7 @@ def test_visible_projection_records_policy_driven_narrative_aspect(monkeypatch) 
         },
     }
     monkeypatch.setattr(
-        "app.story_runtime.manager.load_module_runtime_policy",
+        "world_engine.story_runtime.manager.load_module_runtime_policy",
         lambda **_kwargs: _FakeModulePolicy(policy),
     )
     ledger = initialize_runtime_aspect_ledger(
@@ -351,7 +351,7 @@ def test_visible_projection_records_policy_driven_theme_semantics(monkeypatch) -
         },
     }
     monkeypatch.setattr(
-        "app.story_runtime.manager.load_module_runtime_policy",
+        "world_engine.story_runtime.manager.load_module_runtime_policy",
         lambda **_kwargs: _FakeModulePolicy(policy),
     )
     ledger = initialize_runtime_aspect_ledger(
@@ -468,7 +468,7 @@ def test_hierarchical_memory_records_policy_driven_committed_turn(monkeypatch) -
         },
     }
     monkeypatch.setattr(
-        "app.story_runtime.manager.load_module_runtime_policy",
+        "world_engine.story_runtime.manager.load_module_runtime_policy",
         lambda **_kwargs: _FakeModulePolicy(policy),
     )
     session = StorySession(
@@ -548,7 +548,7 @@ def test_hierarchical_memory_does_not_write_recoverable_turn(monkeypatch) -> Non
         },
     }
     monkeypatch.setattr(
-        "app.story_runtime.manager.load_module_runtime_policy",
+        "world_engine.story_runtime.manager.load_module_runtime_policy",
         lambda **_kwargs: _FakeModulePolicy(policy),
     )
     session = StorySession(

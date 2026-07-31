@@ -141,7 +141,7 @@ class TestPlayServiceSecretStartup:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 import world_engine.config
-                importlib.reload(app.config)
+                importlib.reload(world_engine.config)
 
                 # Should have warning about missing secret
                 warning_messages = [str(warning.message) for warning in w]
@@ -156,7 +156,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "fallback-secret-value")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_SECRET == "primary-secret-value"
 
@@ -172,7 +172,7 @@ class TestPlayServiceSecretStartup:
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
             import world_engine.config
-            importlib.reload(app.config)
+            importlib.reload(world_engine.config)
 
             assert app.config.PLAY_SERVICE_SECRET == "fallback-secret-value"
 
@@ -188,7 +188,7 @@ class TestPlayServiceSecretStartup:
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
             import world_engine.config
-            importlib.reload(app.config)
+            importlib.reload(world_engine.config)
 
             assert app.config.PLAY_SERVICE_SECRET is None
 
@@ -200,7 +200,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_SECRET is None
 
@@ -212,7 +212,7 @@ class TestPlayServiceSecretStartup:
         monkeypatch.setenv("PLAY_SERVICE_SHARED_SECRET", "")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_SECRET is None
 
@@ -229,7 +229,7 @@ class TestPlayServiceInternalApiKeyValidation:
         # so requests without a key are allowed (key validation is skipped)
         from world_engine.api.http import _require_internal_api_key
 
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", ""):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", ""):
             # Should not raise - blank key means no validation
             result = _require_internal_api_key(x_play_service_key=None)
             assert result is None
@@ -242,7 +242,7 @@ class TestPlayServiceInternalApiKeyValidation:
         from world_engine.api.http import _require_internal_api_key
         from fastapi import HTTPException
 
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
             with pytest.raises(HTTPException) as exc_info:
                 _require_internal_api_key(x_play_service_key="wrong-key")
             assert exc_info.value.status_code == 401
@@ -254,7 +254,7 @@ class TestPlayServiceInternalApiKeyValidation:
         """Valid PLAY_SERVICE_INTERNAL_API_KEY in request should pass."""
         from world_engine.api.http import _require_internal_api_key
 
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", "valid-key-value"):
             # Should not raise
             result = _require_internal_api_key(x_play_service_key="valid-key-value")
             assert result is None
@@ -265,7 +265,7 @@ class TestPlayServiceInternalApiKeyValidation:
         """API key validation should pass when key is None (not configured)."""
         from world_engine.api.http import _require_internal_api_key
 
-        with patch("app.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
+        with patch("world_engine.api.http.PLAY_SERVICE_INTERNAL_API_KEY", None):
             # Should not raise even without header
             result = _require_internal_api_key(x_play_service_key=None)
             assert result is None
@@ -286,7 +286,7 @@ class TestPlayServiceInternalApiKeyStartup:
         from unittest.mock import patch
         with patch("dotenv.load_dotenv"):
             import world_engine.config
-            importlib.reload(app.config)
+            importlib.reload(world_engine.config)
 
             assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
@@ -297,7 +297,7 @@ class TestPlayServiceInternalApiKeyStartup:
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
@@ -308,7 +308,7 @@ class TestPlayServiceInternalApiKeyStartup:
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "   \t\n  ")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
@@ -319,7 +319,7 @@ class TestPlayServiceInternalApiKeyStartup:
         monkeypatch.setenv("PLAY_SERVICE_INTERNAL_API_KEY", "my-internal-api-key")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.PLAY_SERVICE_INTERNAL_API_KEY == "my-internal-api-key"
 
@@ -334,7 +334,7 @@ class TestRunStoreConfigValidation:
         monkeypatch.delenv("RUN_STORE_BACKEND", raising=False)
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.RUN_STORE_BACKEND == "json"
 
@@ -346,7 +346,7 @@ class TestRunStoreConfigValidation:
         monkeypatch.setenv("RUN_STORE_URL", "sqlite:///:memory:")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.RUN_STORE_BACKEND == "sqlalchemy"
 
@@ -357,7 +357,7 @@ class TestRunStoreConfigValidation:
         monkeypatch.delenv("RUN_STORE_URL", raising=False)
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.RUN_STORE_URL == ""
 
@@ -368,7 +368,7 @@ class TestRunStoreConfigValidation:
         monkeypatch.setenv("RUN_STORE_URL", "postgresql://localhost/wos")
 
         import world_engine.config
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         assert app.config.RUN_STORE_URL == "postgresql://localhost/wos"
 
@@ -581,12 +581,12 @@ class TestConfigIsolationPerEnvironment:
         monkeypatch.delenv("PLAY_SERVICE_INTERNAL_API_KEY", raising=False)
 
         # Reload to establish baseline
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
         initial_secret = app.config.PLAY_SERVICE_SECRET
         initial_api_key = app.config.PLAY_SERVICE_INTERNAL_API_KEY
 
         # Reload again without changing environment
-        importlib.reload(app.config)
+        importlib.reload(world_engine.config)
 
         # Values should be consistent
         assert app.config.PLAY_SERVICE_SECRET == initial_secret

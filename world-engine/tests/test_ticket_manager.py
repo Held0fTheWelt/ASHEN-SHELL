@@ -31,7 +31,7 @@ class TestTicketManagerBasicContract:
     def test_ticket_manager_uses_global_secret_when_none_provided(self):
         """TicketManager should use global PLAY_SERVICE_SECRET when not provided."""
         # When global secret is available, it should be used
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "global-test-secret"):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "global-test-secret"):
             manager = TicketManager()
             assert manager.secret is not None
             assert isinstance(manager.secret, bytes)
@@ -258,7 +258,7 @@ class TestTicketExpiration:
         """Ticket with 0 second TTL should expire as soon as time advances."""
         manager = TicketManager("test-secret")
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             # Set initial time
             mock_time.return_value = 1000.0
 
@@ -291,7 +291,7 @@ class TestTicketExpiration:
         """Ticket expiration should use time.time() for comparison."""
         manager = TicketManager("test-secret")
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             # Set initial time
             mock_time.return_value = 1000.0
 
@@ -461,7 +461,7 @@ class TestTicketTtlParameter:
         """Different TTL values should result in different expiration times."""
         manager = TicketManager("test-secret")
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             mock_time.return_value = 1000.0
 
             token = manager.issue({"run_id": "r1", "participant_id": "p1"}, ttl_seconds=ttl_seconds)
@@ -480,7 +480,7 @@ class TestTicketTtlParameter:
         """Default TTL should be 3600 seconds (1 hour)."""
         manager = TicketManager("test-secret")
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             mock_time.return_value = 1000.0
 
             # Issue without specifying TTL
@@ -505,7 +505,7 @@ class TestTicketDeterminism:
 
         payload = {"run_id": "r1", "participant_id": "p1"}
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             # Issue at time 1000
             mock_time.return_value = 1000.0
             token1 = manager.issue(payload, ttl_seconds=100)
@@ -533,7 +533,7 @@ class TestTicketDeterminism:
 
         payload = {"run_id": "r1", "participant_id": "p1"}
 
-        with patch("app.auth.tickets.time.time") as mock_time:
+        with patch("world_engine.auth.tickets.time.time") as mock_time:
             mock_time.return_value = 1000.0
 
             token1 = manager.issue(payload, ttl_seconds=100)
@@ -572,7 +572,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_none_secret_uses_global_when_available(self):
         """Passing None as secret should use global PLAY_SERVICE_SECRET if valid."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "fallback-secret"):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "fallback-secret"):
             manager = TicketManager(None)
 
             # Should not raise during construction
@@ -584,7 +584,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_none_secret_with_missing_global_fails(self):
         """Passing None as secret should fail if global PLAY_SERVICE_SECRET is missing."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", None):
             with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
                 TicketManager(None)
 
@@ -592,7 +592,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_none_secret_with_blank_global_fails(self):
         """Passing None as secret should fail if global PLAY_SERVICE_SECRET is blank."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", ""):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", ""):
             with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
                 TicketManager(None)
 
@@ -600,7 +600,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_none_secret_with_whitespace_global_fails(self):
         """Passing None as secret should fail if global PLAY_SERVICE_SECRET is whitespace-only."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", "   \t\n  "):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", "   \t\n  "):
             with pytest.raises(TicketError, match="PLAY_SERVICE_SECRET is required and cannot be empty"):
                 TicketManager(None)
 
@@ -622,7 +622,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_explicit_secret_overrides_missing_global(self):
         """Explicit secret should be used even if global secret is missing."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", None):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", None):
             # Should not raise because explicit secret is provided
             manager = TicketManager("explicit-secret")
             assert manager.secret == b"explicit-secret"
@@ -631,7 +631,7 @@ class TestTicketCustomSecret:
     @pytest.mark.security
     def test_explicit_secret_overrides_blank_global(self):
         """Explicit secret should be used even if global secret is blank."""
-        with patch("app.auth.tickets.PLAY_SERVICE_SECRET", ""):
+        with patch("world_engine.auth.tickets.PLAY_SERVICE_SECRET", ""):
             # Should not raise because explicit secret is provided
             manager = TicketManager("explicit-secret")
             assert manager.secret == b"explicit-secret"
