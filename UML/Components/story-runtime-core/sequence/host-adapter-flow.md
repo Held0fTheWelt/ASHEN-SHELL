@@ -9,7 +9,7 @@
 
 | Element | Responsibility | Contract | Source |
 | --- | --- | --- | --- |
-| World Engine | Own and commit live story state | Calls pure shared contracts | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| World Engine | Own and commit live story state | Calls pure shared contracts | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Story Runtime Core | Provide portable domain contracts and deterministic algorithms | Python package without service authority | [`story_runtime_core/__init__.py`](../../../../story_runtime_core/__init__.py) |
 | Boundary Adapters | Map host-specific data to shared contracts | Anti-corruption mapping | [`story_runtime_core/adapters.py`](../../../../story_runtime_core/adapters.py) |
 | Domain Models | Define actions, scenes, actors and outcomes | Serializable value objects | [`story_runtime_core/models.py`](../../../../story_runtime_core/models.py) |
@@ -23,7 +23,7 @@
 
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
-| World Engine | Story Runtime Core | uses contracts | host retains authority | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| World Engine | Story Runtime Core | uses contracts | host retains authority | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Boundary Adapters | Domain Models | maps host values | explicit anti-corruption layer | [`story_runtime_core/adapters.py`](../../../../story_runtime_core/adapters.py) |
 | Domain Models | Input Intent | constrains | semantic action vocabulary | [`story_runtime_core/player_input_intent_contract.py`](../../../../story_runtime_core/player_input_intent_contract.py) |
 | Input Intent | Committed Truth | is evaluated against | confirmed facts only | [`story_runtime_core/input_interpreter.py`](../../../../story_runtime_core/input_interpreter.py) |

@@ -1,0 +1,33 @@
+@startuml
+' bt-view-kind: component
+' bt-view-id: model-governance:routing-components
+title Model Governance - Components
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: governance
+' bt-element-id: routing
+' bt-element-id: registry
+' bt-element-id: contracts
+' bt-element-id: session
+
+rectangle "Model Governance\nResponsibility: Route adapters and shape in-process governance sessions\nContract: Python package under backend/app/model_governance\n[[../../../../backend/app/model_governance/__init__.py source]]" as governance
+component "Model Routing\nResponsibility: Choose adapters and record routing decisions\nContract: Routing policy without commit side effects\n[[../../../../backend/app/model_governance/model_routing.py source]]" as routing
+component "Adapter Registry\nResponsibility: Register available AI adapters\nContract: Explicit registry bootstrap\n[[../../../../backend/app/model_governance/adapter_registry.py source]]" as registry
+component "Routing Contracts\nResponsibility: Define routing decision vocabulary\nContract: Serializable contract types\n[[../../../../backend/app/model_governance/model_routing_contracts.py source]]" as contracts
+component "Governance Session Persistence\nResponsibility: Serialize in-process governance session shape\nContract: JSON-compatible snapshot; not live WE authority\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]" as session
+
+governance ..> routing : "selects adapter\ncontract: routing-only side effect\n[[../../../../backend/app/model_governance/model_routing.py source]]"
+routing ..> registry : "resolves adapters\ncontract: registered adapters only\n[[../../../../backend/app/model_governance/adapter_registry.py source]]"
+routing ..> contracts : "emits decision vocabulary\ncontract: stable contract types\n[[../../../../backend/app/model_governance/model_routing_contracts.py source]]"
+governance ..> session : "persists governance snapshot\ncontract: non-authoritative snapshot\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]"
+
+legend bottom
+Viewpoint: component
+Concern: Routing, registry, contracts and governance session seams
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

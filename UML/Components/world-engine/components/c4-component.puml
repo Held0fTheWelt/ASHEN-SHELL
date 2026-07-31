@@ -15,20 +15,20 @@ skinparam maxMessageSize 180
 ' bt-element-id: store
 ' bt-element-id: delivery
 
-component "Turn Execution\nResponsibility: Run the canonical lifecycle for one player command\nContract: Exactly one commit or explicit rejection\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]" as turn
-component "Canonical Turn Lifecycle\nResponsibility: Enforce interpret, propose, validate, commit ordering\nContract: No render before commit\n[[../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py source]]" as lifecycle
-component "Live Governance\nResponsibility: Apply runtime policy and authority guards\nContract: Fail-closed mutation policy\n[[../../../../world-engine/app/story_runtime/live_governance.py source]]" as governance
-component "AI Proposal Bridge\nResponsibility: Request and normalize AI proposal packets\nContract: Proposal-only anti-corruption layer\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]" as ai_bridge
-component "Commit Resolution\nResponsibility: Validate proposal against world truth and policy\nContract: Accepted/rejected decision with evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]" as validation
-component "Story Session Store\nResponsibility: Persist committed state and monotonic revision\nContract: Atomic session update\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]" as store
-component "Delivery Surfaces\nResponsibility: Publish committed blocks and state\nContract: Post-commit events only\n[[../../../../world-engine/app/api/story_ws.py source]]" as delivery
+component "Turn Execution\nResponsibility: Run the canonical lifecycle for one player command\nContract: Exactly one commit or explicit rejection\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]" as turn
+component "Canonical Turn Lifecycle\nResponsibility: Enforce interpret, propose, validate, commit ordering\nContract: No render before commit\n[[../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py source]]" as lifecycle
+component "Live Governance\nResponsibility: Apply runtime policy and authority guards\nContract: Fail-closed mutation policy\n[[../../../../world-engine/world_engine/story_runtime/live_governance.py source]]" as governance
+component "AI Proposal Bridge\nResponsibility: Request and normalize AI proposal packets\nContract: Proposal-only anti-corruption layer\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]" as ai_bridge
+component "Commit Resolution\nResponsibility: Validate proposal against world truth and policy\nContract: Accepted/rejected decision with evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]" as validation
+component "Story Session Store\nResponsibility: Persist committed state and monotonic revision\nContract: Atomic session update\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]" as store
+component "Delivery Surfaces\nResponsibility: Publish committed blocks and state\nContract: Post-commit events only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]" as delivery
 
-turn ..> lifecycle : "executes canonical phases\ncontract: ordered lifecycle\n[[../../../../world-engine/app/story_runtime/canonical_turn_lifecycle.py source]]"
-lifecycle ..> governance : "checks authority and policy\ncontract: fail closed\n[[../../../../world-engine/app/story_runtime/live_governance.py source]]"
-governance ..> ai_bridge : "requests bounded proposal\ncontract: proposal-only\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
-ai_bridge ..> validation : "returns candidate\ncontract: proposal plus evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]"
-validation ..> store : "commits accepted delta\ncontract: atomic revision or no write\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
-store ..> delivery : "publishes committed result\ncontract: post-commit only\n[[../../../../world-engine/app/api/story_ws.py source]]"
+turn ..> lifecycle : "executes canonical phases\ncontract: ordered lifecycle\n[[../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py source]]"
+lifecycle ..> governance : "checks authority and policy\ncontract: fail closed\n[[../../../../world-engine/world_engine/story_runtime/live_governance.py source]]"
+governance ..> ai_bridge : "requests bounded proposal\ncontract: proposal-only\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
+ai_bridge ..> validation : "returns candidate\ncontract: proposal plus evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]"
+validation ..> store : "commits accepted delta\ncontract: atomic revision or no write\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
+store ..> delivery : "publishes committed result\ncontract: post-commit only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]"
 
 legend bottom
 Viewpoint: component

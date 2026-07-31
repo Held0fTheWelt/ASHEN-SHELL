@@ -11,7 +11,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: span
 ' bt-element-id: decision
 
-class "TurnTrace\nResponsibility: Identify one end-to-end player turn\nContract: Globally propagated trace id\n[[../../../../world-engine/app/observability/trace.py source]]" as trace {
+class "TurnTrace\nResponsibility: Identify one end-to-end player turn\nContract: Globally propagated trace id\n[[../../../../world-engine/world_engine/observability/trace.py source]]" as trace {
   trace_id
   session_id
   turn_id
@@ -23,15 +23,15 @@ class "SubsystemSpan\nResponsibility: Record bounded operation and ownership\nCo
   component
   status
 }
-class "DecisionEvidence\nResponsibility: Explain validation, routing or commit outcome\nContract: Redacted inputs and explicit result\n[[../../../../world-engine/app/observability/audit_log.py source]]" as decision {
+class "DecisionEvidence\nResponsibility: Explain validation, routing or commit outcome\nContract: Redacted inputs and explicit result\n[[../../../../world-engine/world_engine/observability/audit_log.py source]]" as decision {
   decision_type
   outcome
   reasons
   source
 }
 
-span ..> decision : "records\ncontract: explainable outcome\n[[../../../../world-engine/app/observability/audit_log.py source]]"
-trace ..> span : "contains\ncontract: parented operation tree\n[[../../../../world-engine/app/observability/trace.py source]]"
+span ..> decision : "records\ncontract: explainable outcome\n[[../../../../world-engine/world_engine/observability/audit_log.py source]]"
+trace ..> span : "contains\ncontract: parented operation tree\n[[../../../../world-engine/world_engine/observability/trace.py source]]"
 
 legend bottom
 Viewpoint: class

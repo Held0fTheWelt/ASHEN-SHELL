@@ -11,28 +11,28 @@ skinparam maxMessageSize 180
 ' bt-element-id: proposal
 ' bt-element-id: commit
 
-class "StorySession\nResponsibility: Aggregate live story truth and bindings\nContract: Monotonic revision and bound content\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]" as session {
+class "StorySession\nResponsibility: Aggregate live story truth and bindings\nContract: Monotonic revision and bound content\n[[../../../../world-engine/world_engine/story_runtime/manager/session/session_payloads.py source]]" as session {
   session_id
   content_version
   revision
   world_state
 }
-class "NarrativeProposal\nResponsibility: Carry uncommitted AI result and evidence\nContract: No authoritative mutations\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]" as proposal {
+class "NarrativeProposal\nResponsibility: Carry uncommitted AI result and evidence\nContract: No authoritative mutations\n[[../../../../world-engine/world_engine/story_runtime/commit_models.py source]]" as proposal {
   blocks
   delta
   aspects
   evidence
 }
-class "CommitDecision\nResponsibility: Explain accepted or rejected mutation\nContract: Validation and policy evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]" as commit {
+class "CommitDecision\nResponsibility: Explain accepted or rejected mutation\nContract: Validation and policy evidence\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py source]]" as commit {
   status
   accepted_delta
   findings
   revision
 }
 
-commit ..> session : "advances when accepted\ncontract: monotonic revision\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
-proposal ..> commit : "is resolved as\ncontract: validation evidence\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]"
-session ..> proposal : "bounds evaluation\ncontract: base revision\n[[../../../../world-engine/app/story_runtime/commit_models.py source]]"
+commit ..> session : "advances when accepted\ncontract: monotonic revision\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
+proposal ..> commit : "is resolved as\ncontract: validation evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]"
+session ..> proposal : "bounds evaluation\ncontract: base revision\n[[../../../../world-engine/world_engine/story_runtime/commit_models.py source]]"
 
 legend bottom
 Viewpoint: class

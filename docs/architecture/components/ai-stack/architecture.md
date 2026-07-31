@@ -121,7 +121,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | AI Stack (`ai`) | `system` | Produce bounded narrative proposals and evidence | No direct authoritative session write | [`ai_stack/__init__.py`](../../../../ai_stack/__init__.py) |
 | Content Authority (`content`) | `system` | Supply canonical scenes, actors and policies | Compiled immutable content inputs | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Model Provider (`provider`) | `system` | Generate model completion | Governed route, budget and timeout | [`ai_stack/operational_profile.py`](../../../../ai_stack/operational_profile.py) |
-| World Engine (`world`) | `system` | Provide authoritative session context and accept or reject proposals | Turn request and validated proposal boundary | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+| World Engine (`world`) | `system` | Provide authoritative session context and accept or reject proposals | Turn request and validated proposal boundary | [`world-engine/world_engine/story_runtime/manager/runtime_manager.py`](../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -1063,7 +1063,7 @@ The contract field `presence_breaks_gathering` in `free_player_action_resolution
 When `paused == true`:
 
 - The NPC-agency / mandatory-beat-consumption path (canonical surface around `ai_stack/story_runtime/director/god_of_carnage_scene_director.py:655` `_build_responder_set()` and `ai_stack/langgraph/langgraph_runtime_executor.py:3996` `_build_npc_agency_plan_projection()`) is consulted with a `gathering_paused` gate. The gate **does not** suppress NPC mundane action; it only suppresses mandatory-beat consumption tied to the missing co-presence.
-- The canonical-step pointer does **not** advance while paused. This is observable at `world-engine/app/story_runtime/manager/` (`_turn_holds_canonical_path_for_free_player_action`) and at `:8746` (the gate against `session.canonical_step_id` advance).
+- The canonical-step pointer does **not** advance while paused. This is observable at `world-engine/world_engine/story_runtime/manager/` (`_turn_holds_canonical_path_for_free_player_action`) and at `:8746` (the gate against `session.canonical_step_id` advance).
 
 ### 6. Player remains free
 
@@ -1282,6 +1282,7 @@ The May refactor moved hundreds of modules into langgraph, story_runtime, RAG an
 | --- | --- | --- | --- |
 | `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
 | `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
+| `DRIFT-006` | `open_target` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
 | `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
 
 [Git/archaeology baseline](../../evidence/architecture-drift-baseline.md) · [Drift reconciliation and target directions](../../evidence/architecture-drift-reconciliation.md)

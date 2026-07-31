@@ -26,7 +26,7 @@ Authored module truth, schemas, compilation and runtime consumption for Better T
 
 **Authority rule:** Versioned YAML modules own authored facts; compilers and runtimes may validate and project them but may not create competing content truth.
 
-**Git/archaeology scope:** `content`, `backend/app/content`, `world-engine/app/content`, `ai_stack/story_runtime/god_of_carnage`
+**Git/archaeology scope:** `content`, `backend/app/content`, `world-engine/world_engine/content`, `ai_stack/story_runtime/god_of_carnage`
 
 | Context concern | Model | Boundary statement |
 | --- | --- | --- |
@@ -61,10 +61,10 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | AI Content Adapter (`ai_adapter`) | `component` | Translate canonical content into proposal context | Provenance-preserving read model | [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py) |
 | Backend Module Compiler (`compiler`) | `component` | Load, validate and normalize authored documents | Deterministic module model or diagnostics | [`backend/app/content/module_loader.py`](../../../../backend/app/content/module_loader.py) |
 | Module Validator (`validator`) | `component` | Enforce schemas and cross-document references | Fail-closed validation findings | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
-| World Content Loader (`world_loader`) | `component` | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+| World Content Loader (`world_loader`) | `component` | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/world_engine/content/backend_loader.py`](../../../../world-engine/world_engine/content/backend_loader.py) |
 | Draft (`draft`) | `state` | Accept author changes | Not runtime-consumable | [`backend/app/content/module_models.py`](../../../../backend/app/content/module_models.py) |
 | Published (`published`) | `state` | Expose immutable content version | Active version pointer | [`backend/app/content/module_service.py`](../../../../backend/app/content/module_service.py) |
-| Runtime Projection (`consumed`) | `state` | Serve content to a bound session | No mutation of authored truth | [`world-engine/app/content/backend_source.py`](../../../../world-engine/app/content/backend_source.py) |
+| Runtime Projection (`consumed`) | `state` | Serve content to a bound session | No mutation of authored truth | [`world-engine/world_engine/content/backend_source.py`](../../../../world-engine/world_engine/content/backend_source.py) |
 | Validated (`validated`) | `state` | Record successful structural checks | All references resolve | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
 | Authored Module (`module`) | `system` | Hold canonical versioned content truth | module.yaml plus referenced YAML documents | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
@@ -95,7 +95,7 @@ This scope does not claim an independently deployable runtime. Its deployment ef
 
 - `content`
 - `backend/app/content`
-- `world-engine/app/content`
+- `world-engine/world_engine/content`
 - `ai_stack/story_runtime/god_of_carnage`
 
 A deployment boundary is not inferred from a directory. Process, store, transport and trust contracts must be named by a deployment view or delegated to an owning SAD.
@@ -116,7 +116,7 @@ Writers-room drafts are not production truth.
 | Authored Module | Narrative Policies | contains | declarative runtime bounds | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Authored Module | Scene Graph | contains | referentially complete scene graph | [`content/modules/god_of_carnage/scene_graph.yaml`](../../../../content/modules/god_of_carnage/scene_graph.yaml) |
 | Module Validator | World Content Loader | releases version | validation success only | [`backend/app/content/module_service.py`](../../../../backend/app/content/module_service.py) |
-| World Content Loader | AI Content Adapter | supplies bounded facts | session-bound content projection | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+| World Content Loader | AI Content Adapter | supplies bounded facts | session-bound content projection | [`world-engine/world_engine/content/backend_loader.py`](../../../../world-engine/world_engine/content/backend_loader.py) |
 <!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions

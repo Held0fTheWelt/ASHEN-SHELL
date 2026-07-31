@@ -33,10 +33,10 @@ CLAIM_CATALOG = (
 def test_semantic_catalog_is_source_bound_and_individualized() -> None:
     catalog = load_model_catalog(MODEL_CATALOG)
     assert validate_model_catalog(catalog, ROOT) == []
-    assert len(catalog["subsystems"]) == 16
+    assert len(catalog["subsystems"]) == 17
     assert sum(
         len(model["views"]) for model in catalog["subsystems"].values()
-    ) == 89
+    ) == 94
 
     profiles = {
         subsystem_id: tuple(view["kind"] for view in model["views"])

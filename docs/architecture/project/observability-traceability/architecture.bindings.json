@@ -35,8 +35,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/middleware/trace_middleware.py",
-          "file": "world-engine/app/middleware/trace_middleware.py",
+          "declared_path": "world-engine/world_engine/middleware/trace_middleware.py",
+          "file": "world-engine/world_engine/middleware/trace_middleware.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -47,6 +47,29 @@
       "state": "bound",
       "status": "Implemented",
       "title": "Trace middleware"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Project/architecture-drift/turn-cost-ledger.puml",
+          "file": "UML/Project/architecture-drift/turn-cost-ledger.puml",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "story_runtime_core/model_call_accounting.py",
+          "file": "story_runtime_core/model_call_accounting.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Turn cost ledger (Wave 0)"
+        }
+      ],
+      "id": "B-turn-cost-ledger-wave-0",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Turn cost ledger (Wave 0)"
     }
   ],
   "critical": true,
@@ -77,8 +100,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/middleware/trace_middleware.py",
-          "file": "world-engine/app/middleware/trace_middleware.py",
+          "declared_path": "world-engine/world_engine/middleware/trace_middleware.py",
+          "file": "world-engine/world_engine/middleware/trace_middleware.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -93,8 +116,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/observability/trace.py",
-          "file": "world-engine/app/observability/trace.py",
+          "declared_path": "world-engine/world_engine/observability/trace.py",
+          "file": "world-engine/world_engine/observability/trace.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -4923,7 +4946,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 676,
+        "line": 698,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangChainRetrieverBridge"
@@ -4971,7 +4994,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 619,
+        "line": 641,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "WritersRoomInvocationResult"
@@ -4995,7 +5018,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 794,
+        "line": 816,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_capability_tool_bridge"
@@ -5007,7 +5030,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 778,
+        "line": 800,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langchain_retriever_bridge"
@@ -5031,7 +5054,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 628,
+        "line": 650,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "invoke_writers_room_adapter_with_langchain"
@@ -5055,7 +5078,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 121,
+        "line": 123,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangfuseCategoricalEvaluatorSpec"
@@ -5067,7 +5090,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1512,
+        "line": 1514,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "all_categorical_evaluator_specs"
@@ -5079,7 +5102,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1570,
+        "line": 1572,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langfuse_sync_preview_payload"
@@ -5091,7 +5114,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1462,
+        "line": 1464,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_llm_judge_interpretation"
@@ -5103,7 +5126,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1441,
+        "line": 1443,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "category_severity"
@@ -5115,7 +5138,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1401,
+        "line": 1403,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "doc_table_evaluator_names"
@@ -5127,7 +5150,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1520,
+        "line": 1522,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evaluator_spec_to_public_dict"
@@ -5139,7 +5162,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1516,
+        "line": 1518,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "get_categorical_evaluator_spec"
@@ -5151,7 +5174,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1406,
+        "line": 1408,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "judge_names_for_scope"
@@ -5163,7 +5186,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 112,
+        "line": 114,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "langfuse_evaluator_filter_templates"
@@ -5175,7 +5198,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1410,
+        "line": 1412,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "normalize_judge_category_label"
@@ -5353,6 +5376,90 @@
     },
     {
       "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 4087,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RuntimeTurnGraphExecutor"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3698,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3859,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering_with_optional_w5_projection"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3971,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_actor_locations"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2662,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_npc_context"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3836,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_director_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2539,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_npc_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_package_output.py",
         "kind": "python",
         "line": 164,
@@ -5487,7 +5594,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 15,
+        "line": 13,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeExecutorBoundary"
@@ -5499,7 +5606,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 160,
+        "line": 158,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "iter_source_module_names"
@@ -14305,134 +14412,158 @@
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/audit_log.py",
+        "file": "world-engine/world_engine/observability/audit_log.py",
         "kind": "python",
         "line": 119,
-        "module": "world-engine.app.observability.audit_log",
+        "module": "world-engine.world_engine.observability.audit_log",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "log_story_runtime_failure"
       },
-      "id": "python:world-engine.app.observability.audit_log:log_story_runtime_failure",
+      "id": "python:world-engine.world_engine.observability.audit_log:log_story_runtime_failure",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/audit_log.py",
+        "file": "world-engine/world_engine/observability/audit_log.py",
         "kind": "python",
         "line": 66,
-        "module": "world-engine.app.observability.audit_log",
+        "module": "world-engine.world_engine.observability.audit_log",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "log_story_turn_event"
       },
-      "id": "python:world-engine.app.observability.audit_log:log_story_turn_event",
+      "id": "python:world-engine.world_engine.observability.audit_log:log_story_turn_event",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/langfuse_adapter.py",
+        "file": "world-engine/world_engine/observability/langfuse_adapter.py",
         "kind": "python",
         "line": 239,
-        "module": "world-engine.app.observability.langfuse_adapter",
+        "module": "world-engine.world_engine.observability.langfuse_adapter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangfuseAdapter"
       },
-      "id": "python:world-engine.app.observability.langfuse_adapter:LangfuseAdapter",
+      "id": "python:world-engine.world_engine.observability.langfuse_adapter:LangfuseAdapter",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/runtime_metrics.py",
+        "file": "world-engine/world_engine/observability/runtime_metrics.py",
         "kind": "python",
         "line": 13,
-        "module": "world-engine.app.observability.runtime_metrics",
+        "module": "world-engine.world_engine.observability.runtime_metrics",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "StoryRuntimeMetrics"
       },
-      "id": "python:world-engine.app.observability.runtime_metrics:StoryRuntimeMetrics",
+      "id": "python:world-engine.world_engine.observability.runtime_metrics:StoryRuntimeMetrics",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 50,
-        "module": "world-engine.app.observability.trace",
+        "line": 25,
+        "module": "world-engine.world_engine.observability.trace",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TraceSpan"
+      },
+      "id": "python:world-engine.world_engine.observability.trace:TraceSpan",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "world-engine/world_engine/observability/trace.py",
+        "kind": "python",
+        "line": 34,
+        "module": "world-engine.world_engine.observability.trace",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TurnTrace"
+      },
+      "id": "python:world-engine.world_engine.observability.trace:TurnTrace",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "world-engine/world_engine/observability/trace.py",
+        "kind": "python",
+        "line": 114,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ensure_langfuse_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:ensure_langfuse_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:ensure_langfuse_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 34,
-        "module": "world-engine.app.observability.trace",
+        "line": 98,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ensure_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:ensure_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:ensure_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 26,
-        "module": "world-engine.app.observability.trace",
+        "line": 90,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "get_langfuse_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:get_langfuse_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:get_langfuse_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 18,
-        "module": "world-engine.app.observability.trace",
+        "line": 82,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "get_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:get_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:get_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 30,
-        "module": "world-engine.app.observability.trace",
+        "line": 94,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "reset_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:reset_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:reset_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 22,
-        "module": "world-engine.app.observability.trace",
+        "line": 86,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "set_langfuse_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:set_langfuse_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:set_langfuse_trace_id",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/observability/trace.py",
+        "file": "world-engine/world_engine/observability/trace.py",
         "kind": "python",
-        "line": 14,
-        "module": "world-engine.app.observability.trace",
+        "line": 78,
+        "module": "world-engine.world_engine.observability.trace",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "set_trace_id"
       },
-      "id": "python:world-engine.app.observability.trace:set_trace_id",
+      "id": "python:world-engine.world_engine.observability.trace:set_trace_id",
       "kind": "python"
     }
   ],
@@ -14855,6 +14986,13 @@
     "python:ai_stack.langgraph.langgraph_orchestrator:GameOrchestrator": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_orchestrator:MockGraph": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime:ensure_langgraph_available": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output:package_runtime_graph_output": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_dramatic_review:build_dramatic_review_section": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_repro:build_repro_metadata_and_health": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -15563,17 +15701,19 @@
     "python:backend.app.observability.trace:reset_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.observability.trace:set_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.observability.trace:set_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.audit_log:log_story_runtime_failure": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.audit_log:log_story_turn_event": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.langfuse_adapter:LangfuseAdapter": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.runtime_metrics:StoryRuntimeMetrics": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:ensure_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:ensure_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:get_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:get_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:reset_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:set_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.observability.trace:set_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+    "python:world-engine.world_engine.observability.audit_log:log_story_runtime_failure": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.audit_log:log_story_turn_event": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.langfuse_adapter:LangfuseAdapter": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.runtime_metrics:StoryRuntimeMetrics": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:TraceSpan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:TurnTrace": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:ensure_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:ensure_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:get_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:get_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:reset_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:set_langfuse_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.observability.trace:set_trace_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {
     "python:ai_stack.langfuse.langfuse_evaluator_catalog:LangfuseCategoricalEvaluatorSpec": "B-langfuse-adapters",
@@ -15654,9 +15794,9 @@
         "backend/app/api/v1/game/player_turn_trace_start.py",
         "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
         "tools/mcp_server/langfuse_tracing.py",
-        "world-engine/app/observability/trace.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py",
-        "world-engine/app/web/static/ui_traces.js"
+        "world-engine/world_engine/observability/trace.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+        "world-engine/world_engine/web/static/ui_traces.js"
       ],
       "concern": "Backend, world, AI, MCP and operator projection span ownership",
       "decisions": [
@@ -15676,9 +15816,9 @@
         "ai_stack/langfuse/langfuse_evidence.py",
         "backend/app/api/v1/game/player_turn_trace_start.py",
         "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
-        "world-engine/app/observability/trace.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py",
-        "world-engine/app/web/static/ui_traces.js"
+        "world-engine/world_engine/observability/trace.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+        "world-engine/world_engine/web/static/ui_traces.js"
       ],
       "concern": "Trace identity and evidence cross the canonical turn boundaries",
       "decisions": [
@@ -15695,8 +15835,8 @@
     {
       "anchors": [
         "ai_stack/langfuse/langfuse_evidence.py",
-        "world-engine/app/observability/audit_log.py",
-        "world-engine/app/observability/trace.py"
+        "world-engine/world_engine/observability/audit_log.py",
+        "world-engine/world_engine/observability/trace.py"
       ],
       "concern": "Turn trace, owned spans and explainable decisions",
       "decisions": [
@@ -15713,10 +15853,10 @@
     {
       "anchors": [
         "backend/app/api/v1/game/player_turn_trace_start.py",
-        "world-engine/app/middleware/trace_middleware.py",
-        "world-engine/app/observability/langfuse_adapter.py",
-        "world-engine/app/observability/trace.py",
-        "world-engine/app/web/static/ui_traces.js"
+        "world-engine/world_engine/middleware/trace_middleware.py",
+        "world-engine/world_engine/observability/langfuse_adapter.py",
+        "world-engine/world_engine/observability/trace.py",
+        "world-engine/world_engine/web/static/ui_traces.js"
       ],
       "concern": "Complete and partial telemetry both disclose their evidence quality",
       "decisions": [

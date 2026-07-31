@@ -1,0 +1,32 @@
+@startuml
+' bt-view-kind: class
+' bt-view-id: model-governance:routing-data-model
+title Model Governance - Data Model
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: models
+' bt-element-id: decision
+
+class "Runtime Models\nResponsibility: Carry SessionState and turn deltas for governance pipelines\nContract: Pydantic value objects\n[[../../../../backend/app/model_governance/runtime_models.py source]]" as models {
+  SessionState
+  TurnDelta
+  DecisionLog
+}
+class "Routing Decision\nResponsibility: Explain adapter selection\nContract: Auditable routing evidence\n[[../../../../backend/app/model_governance/model_routing.py source]]" as decision {
+  adapter
+  policy
+  trace
+}
+
+models ..> decision : "bounds routing evidence\ncontract: explainable selection\n[[../../../../backend/app/model_governance/runtime_models.py source]]"
+
+legend bottom
+Viewpoint: class
+Concern: Governance session models and routing decisions
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -238,7 +238,7 @@ has the correct rhythm.
 - `ai_stack/langgraph/langgraph_runtime_executor.py`
 - `ai_stack/story_runtime/runtime_aspect_ledger/__init__.py`
 - `ai_stack/story_runtime/story_runtime_playability.py`
-- `world-engine/app/story_runtime/manager/`
+- `world-engine/world_engine/story_runtime/manager/`
 - `tools/mcp_server/handlers/langfuse_verify/`
 
 ## Verification Anchors

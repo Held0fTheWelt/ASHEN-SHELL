@@ -2,7 +2,7 @@
 
 Canonical reference for the **World of Shadows play service** (`world-engine/`): what it is in isolation, what it **commits** as runtime truth, and how it sits at the center of backend integration, player flows, AI, MCP, authored content, and operations.
 
-**Repository anchors:** [`adr-0001-runtime-authority-in-world-engine.md`](../../../archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md), `world-engine/app/main.py`.
+**Repository anchors:** [`adr-0001-runtime-authority-in-world-engine.md`](../../../archive/adr-retired-2026/adr-0001-runtime-authority-in-world-engine.md), `world-engine/world_engine/main.py`.
 
 ## Purpose and how to use this document
 
@@ -29,7 +29,7 @@ This page is the **spine** for runtime documentation. It connects implementation
 
 **Priority:** (1) repository implementation, (2) existing docs and ADRs, (3) tests and reports, (4) governance artifacts, (5) clearly labeled **inference** only where the code does not name a concern explicitly.
 
-**Repository anchors for scope:** `world-engine/app/main.py` mounts both the HTTP API (`app/api/http.py`) and WebSocket runtime (`app/api/ws.py`), and constructs both `RuntimeManager` and `StoryRuntimeManager` in the FastAPI lifespan.
+**Repository anchors for scope:** `world-engine/world_engine/main.py` mounts both the HTTP API (`app/api/http.py`) and WebSocket runtime (`app/api/ws.py`), and constructs both `RuntimeManager` and `StoryRuntimeManager` in the FastAPI lifespan.
 
 **Important:** The play service hosts **two cooperating runtime surfaces** (see §5). Treating them as one undifferentiated “box” loses accuracy. This document names both and explains shared authority rules.
 
@@ -41,14 +41,14 @@ This page is the **spine** for runtime documentation. It connects implementation
 
 **Technical precision.** The FastAPI app in `world-engine/` exposes:
 
-1. **Template / lobby / run runtime** — `RuntimeManager` + `RuntimeEngine` (`world-engine/app/runtime/manager.py`, `world-engine/app/runtime/engine.py`): nested runs, snapshots, transcripts, WebSocket command processing after ticket verification (`world-engine/app/api/ws.py`).
-2. **Story narrative runtime** — `StoryRuntimeManager` (`world-engine/app/story_runtime/manager/`): in-memory `StorySession` map, `execute_turn` orchestration via `ai_stack.RuntimeTurnGraphExecutor`, narrative commit resolution (`world-engine/app/story_runtime/commit_models.py`), state and diagnostics HTTP endpoints under `/api/story/...` (`world-engine/app/api/http.py`).
+1. **Template / lobby / run runtime** — `RuntimeManager` + `RuntimeEngine` (`world-engine/world_engine/runtime/manager.py`, `world-engine/world_engine/runtime/engine.py`): nested runs, snapshots, transcripts, WebSocket command processing after ticket verification (`world-engine/world_engine/api/ws.py`).
+2. **Story narrative runtime** — `StoryRuntimeManager` (`world-engine/world_engine/story_runtime/manager/`): in-memory `StorySession` map, `execute_turn` orchestration via `ai_stack.RuntimeTurnGraphExecutor`, narrative commit resolution (`world-engine/world_engine/story_runtime/commit_models.py`), state and diagnostics HTTP endpoints under `/api/story/...` (`world-engine/world_engine/api/http.py`).
 
 **Why this matters in World of Shadows.** Without a single authoritative host, you get duplicate turn logic, divergent session state between Flask and FastAPI, and “AI said it, so it must be true” failures. ADR-0001 and backend classification docs exist precisely to prevent that drift.
 
 **Adjacent systems.** Backend proxies story operations through `backend/app/services/game/game_service.py` to internal play URLs (`PLAY_SERVICE_INTERNAL_URL`). Frontend play shell hits Flask first for the path documented in `a1_free_input_primary_runtime_path.md`.
 
-**Repository anchors:** `world-engine/app/main.py`, `world-engine/README.md`.
+**Repository anchors:** `world-engine/world_engine/main.py`, `world-engine/README.md`.
 
 **What the World Engine does not own.** Long-term platform identity, billing, forum/wiki, canonical YAML authoring workflows, or admin-only governance UIs—these live in `backend/` and `administration-tool/`. The engine also does not replace **authored source truth** in `content/modules/`; it consumes compiled projections and feeds.
 
@@ -56,7 +56,7 @@ This page is the **spine** for runtime documentation. It connects implementation
 
 ## The World Engine in one sentence
 
-The **World Engine** is the **FastAPI play service** (`world-engine/`) that hosts **authoritative live runtime state** for template runs (HTTP/WebSocket) and **authoritative story sessions** (HTTP story API), where **AI and interpreters produce proposals and context** until **runtime rules** select and **commit** what becomes session truth—most visibly as **narrative commit records** for scene progression in the story path. **Anchors:** `world-engine/app/main.py` (dual managers + routers), `world-engine/app/story_runtime/manager/` (`StoryRuntimeManager.execute_turn`).
+The **World Engine** is the **FastAPI play service** (`world-engine/`) that hosts **authoritative live runtime state** for template runs (HTTP/WebSocket) and **authoritative story sessions** (HTTP story API), where **AI and interpreters produce proposals and context** until **runtime rules** select and **commit** what becomes session truth—most visibly as **narrative commit records** for scene progression in the story path. **Anchors:** `world-engine/world_engine/main.py` (dual managers + routers), `world-engine/world_engine/story_runtime/manager/` (`StoryRuntimeManager.execute_turn`).
 
 ---
 
@@ -70,10 +70,10 @@ Think of the play service as a building with **two rooms**: one for **group temp
 
 | Face | Primary modules | Entry transport | Authoritative objects |
 |------|-----------------|-----------------|------------------------|
-| **Run / lobby runtime** | `world-engine/app/runtime/*`, tickets `world-engine/app/auth/tickets.py` | REST under `/api/runs`, `/api/tickets`, `/ws` | `RuntimeInstance`, participants, transcript, snapshots via `RuntimeEngine.build_snapshot` |
-| **Story runtime** | `world-engine/app/story_runtime/*` | REST under `/api/story/sessions` (internal API key) | `StorySession` (`session_id`, `module_id`, `runtime_projection`, `current_scene_id`, `environment_state`, `history`, `diagnostics`, narrative threads) |
+| **Run / lobby runtime** | `world-engine/world_engine/runtime/*`, tickets `world-engine/world_engine/auth/tickets.py` | REST under `/api/runs`, `/api/tickets`, `/ws` | `RuntimeInstance`, participants, transcript, snapshots via `RuntimeEngine.build_snapshot` |
+| **Story runtime** | `world-engine/world_engine/story_runtime/*` | REST under `/api/story/sessions` (internal API key) | `StorySession` (`session_id`, `module_id`, `runtime_projection`, `current_scene_id`, `environment_state`, `history`, `diagnostics`, narrative threads) |
 
-**Shared process:** `world-engine/app/main.py` initializes both managers on startup; trace middleware (`world-engine/app/middleware/trace_middleware.py`) can correlate requests.
+**Shared process:** `world-engine/world_engine/main.py` initializes both managers on startup; trace middleware (`world-engine/world_engine/middleware/trace_middleware.py`) can correlate requests.
 
 **Inference.** The repo does not always use a single product name for “face 1” vs “face 2”; “World Engine” and “play service” are used interchangeably in docs. This document uses **play service** for the process and **story runtime** / **run runtime** for the two faces.
 
@@ -90,7 +90,7 @@ Operators debugging “wrong scene” must know whether they are in **story sess
 
 It does not **author** canonical YAML modules; it does not **publish** content to production governance queues; it does not **authenticate end users** for the player site (backend JWT/session domain).
 
-**Repository anchors:** `world-engine/app/main.py`, `world-engine/app/runtime/manager.py`, `world-engine/app/story_runtime/manager/`, `world-engine/README.md`.
+**Repository anchors:** `world-engine/world_engine/main.py`, `world-engine/world_engine/runtime/manager.py`, `world-engine/world_engine/story_runtime/manager/`, `world-engine/README.md`.
 
 ---
 
@@ -179,9 +179,9 @@ flowchart TB
   SM --> SRC2[story_runtime_core]
 ```
 
-**What to notice.** **Story** path pulls in `ai_stack` and `story_runtime_core` at construction time (`StoryRuntimeManager.__init__` in `world-engine/app/story_runtime/manager/`). **Run** path centers on `RuntimeEngine` and store configuration (`world-engine/app/runtime/store.py`, `world-engine/app/config.py`).
+**What to notice.** **Story** path pulls in `ai_stack` and `story_runtime_core` at construction time (`StoryRuntimeManager.__init__` in `world-engine/world_engine/story_runtime/manager/`). **Run** path centers on `RuntimeEngine` and store configuration (`world-engine/world_engine/runtime/store.py`, `world-engine/world_engine/config.py`).
 
-**Seams:** `world-engine/app/main.py`, `world-engine/app/api/http.py`, `world-engine/app/api/ws.py`.
+**Seams:** `world-engine/world_engine/main.py`, `world-engine/world_engine/api/http.py`, `world-engine/world_engine/api/ws.py`.
 
 ---
 
@@ -193,7 +193,7 @@ flowchart TB
 
 ### Technical precision
 
-For **story runtime**, `resolve_narrative_commit` (`world-engine/app/story_runtime/commit_models.py`) builds a `StoryNarrativeCommitRecord`: prior scene, proposed scene, **committed** scene, `situation_status`, `commit_reason_code`, candidate provenance (`explicit_command` vs `model_structured_output` vs `player_input_token_scan`), and bounded consequence tokens. `StoryRuntimeManager.execute_turn` applies `committed_scene_id` to the session **after** graph execution ([`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md)).
+For **story runtime**, `resolve_narrative_commit` (`world-engine/world_engine/story_runtime/commit_models.py`) builds a `StoryNarrativeCommitRecord`: prior scene, proposed scene, **committed** scene, `situation_status`, `commit_reason_code`, candidate provenance (`explicit_command` vs `model_structured_output` vs `player_input_token_scan`), and bounded consequence tokens. `StoryRuntimeManager.execute_turn` applies `committed_scene_id` to the session **after** graph execution ([`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md)).
 
 **Kinds of truth (disciplined terminology):**
 
@@ -219,7 +219,7 @@ Prevents silent world drift and makes audits possible (`narrative_commit` in dia
 
 Downstream **analytics truth** or **moderation decisions** for user-generated forum content; **publishing approval** for modules (backend / admin domain).
 
-**Repository anchors:** `world-engine/app/story_runtime/commit_models.py`, `world-engine/app/story_runtime/manager/`, [`runtime-authority-and-state-flow.md`](runtime-authority-and-state-flow.md).
+**Repository anchors:** `world-engine/world_engine/story_runtime/commit_models.py`, `world-engine/world_engine/story_runtime/manager/`, [`runtime-authority-and-state-flow.md`](runtime-authority-and-state-flow.md).
 
 ---
 
@@ -269,7 +269,7 @@ stateDiagram-v2
   Ended --> [*]
 ```
 
-**What to notice.** Exact termination conditions are **module-driven** (`is_terminal`, terminal scenes in projection); handlers live under `world-engine/app/api/http.py` and session usage in backend.
+**What to notice.** Exact termination conditions are **module-driven** (`is_terminal`, terminal scenes in projection); handlers live under `world-engine/world_engine/api/http.py` and session usage in backend.
 
 **Seams:** `StoryRuntimeManager.create_session`, `execute_turn`.
 
@@ -283,7 +283,7 @@ Each story session is a small, server-side record: which module, which scene you
 
 ### Technical precision
 
-- **Session map:** `StoryRuntimeManager.sessions: dict[str, StorySession]` (`world-engine/app/story_runtime/manager/`).
+- **Session map:** `StoryRuntimeManager.sessions: dict[str, StorySession]` (`world-engine/world_engine/story_runtime/manager/`).
 - **Turn execution:** increments `turn_counter`, runs `turn_graph.run(...)`, computes `narrative_commit`, updates `narrative_threads`, appends to `history` and `diagnostics`, returns a turn envelope including `visible_output_bundle` and graph diagnostics references.
 - **Runtime intelligence ledger:** records `turn_aspect_ledger` for input, selected beat, selected/required/blocked capabilities, narrator/NPC/player authority, voice consistency, information disclosure, expectation variation, dramatic irony, callback web, no-dead-end recovery, pacing rhythm, social pressure, relationship state, genre awareness, symbolic object resonance, sensory context, improvisational coherence, visible origin evidence, validation status, commit result, and hierarchical memory. The ledger is persisted with the canonical turn record and projected to diagnostics/path summaries; the frontend may render it only as backend-provided data.
 - **Voice consistency:** derives active character voice profiles from canonical module content and validates `spoken_lines` before commit. Policy-declared forbidden language markers can trigger recoverable rejection and rewrite feedback through `runtime_voice_consistency_v1`. The semantic classifier compares spoken lines to every active canonical profile, emits ranking/dimension evidence, and, in `strict_rule_engine`, can reject high-confidence cross-actor or mixed voice drift through `runtime_voice_consistency_v2`. The same evidence is projected to the `voice_consistency` aspect, Langfuse runtime-aspect spans/scores, and the MCP runtime-aspect matrix. Authoring `dialogue_examples` are excluded from runtime profile serialization and are not used as prose oracles.
@@ -303,7 +303,7 @@ Each story session is a small, server-side record: which module, which scene you
 - **Module runtime governance:** loads `ModuleRuntimePolicy.runtime_governance_policy` from module content. The runtime core consumes generic policy fields such as action-resolution short-path eligibility, visible-projection hard-failure behavior, capability gate behavior, and continuity hooks; module-specific names stay in content/configuration.
 - **Hierarchical memory:** loads module `memory_policy` through `ModuleRuntimePolicy`, records the `hierarchical_memory` runtime aspect, writes bounded memory items only after canonical commit, and projects safe memory context into the next LangGraph turn. Recoverable/rejected turns record guard evidence but do not write memory truth.
 - **No-dead-end recovery:** player-visible committed and recoverable turns carry `no_dead_end_recovery.v1` with recovery class, obstacle kind, attempt fingerprint, commit policy, and bounded next-step options. Recoverable validation rejections and expected graph `RuntimeError` failures also return `recoverable_playability.v1`, `commits_story_truth=false`, and an explicit retry/redirect affordance. Recoverable turns are audit/story-window records, not committed truth for memory, callback, or cascade feedback. See [`no_dead_end_recovery_contract.md`](no_dead_end_recovery_contract.md).
-- **Failure handling:** expected graph `RuntimeError` failures log via `log_story_runtime_failure` (`world-engine/app/observability/audit_log.py`) and may be converted into recoverable playable turns. Programming/contract exceptions such as `TypeError`, `AttributeError`, `KeyError`, import/OS errors, `StorySessionContractError`, and `LiveStoryGovernanceError` roll back the attempted turn counter and re-raise; HTTP layer maps missing session to 404 (`world-engine/app/api/http.py`).
+- **Failure handling:** expected graph `RuntimeError` failures log via `log_story_runtime_failure` (`world-engine/world_engine/observability/audit_log.py`) and may be converted into recoverable playable turns. Programming/contract exceptions such as `TypeError`, `AttributeError`, `KeyError`, import/OS errors, `StorySessionContractError`, and `LiveStoryGovernanceError` roll back the attempted turn counter and re-raise; HTTP layer maps missing session to 404 (`world-engine/world_engine/api/http.py`).
 
 ### Why this matters in World of Shadows
 
@@ -317,7 +317,7 @@ Backend stores the World-Engine story-session id in the canonical player-session
 
 Persistent **cross-session player memory** or unbounded learned memory. The implemented hierarchical memory layer is a module-policy-driven, session-local projection of committed turn truth. The `long_term` tier is generic contract surface only until a durable store and explicit module policy enable it.
 
-**Repository anchors:** `world-engine/app/story_runtime/manager/`, `world-engine/app/api/http.py`, `world-engine/app/story_runtime/callback_web_store.py`, `world-engine/app/story_runtime/consequence_cascade_store.py`, `ai_stack/module_runtime_policy.py`, `world-engine/tests/test_story_runtime_aspect_ledger.py`, `world-engine/tests/test_story_runtime_narrative_commit.py`, `world-engine/tests/test_story_runtime_callback_web.py`, `world-engine/tests/test_story_runtime_consequence_cascade.py`.
+**Repository anchors:** `world-engine/world_engine/story_runtime/manager/`, `world-engine/world_engine/api/http.py`, `world-engine/world_engine/story_runtime/callback_web_store.py`, `world-engine/world_engine/story_runtime/consequence_cascade_store.py`, `ai_stack/module_runtime_policy.py`, `world-engine/tests/test_story_runtime_aspect_ledger.py`, `world-engine/tests/test_story_runtime_narrative_commit.py`, `world-engine/tests/test_story_runtime_callback_web.py`, `world-engine/tests/test_story_runtime_consequence_cascade.py`.
 
 ---
 
@@ -330,7 +330,7 @@ The backend is still the **front door** for many clients, but for live story tur
 ### Technical precision
 
 - **HTTP client:** `backend/app/services/game/game_service.py` uses `PLAY_SERVICE_INTERNAL_URL` for internal calls (see `_request` in same module): `POST /api/story/sessions`, `POST .../turns`, `GET .../state`, `GET .../diagnostics`.
-- **Auth:** Story routes on the play service require internal API key dependency (`_require_internal_api_key` in `world-engine/app/api/http.py`); backend supplies `X-Play-Service-Key` / `PLAY_SERVICE_INTERNAL_API_KEY` per `world-engine/README.md` and `docker-compose.yml`.
+- **Auth:** Story routes on the play service require internal API key dependency (`_require_internal_api_key` in `world-engine/world_engine/api/http.py`); backend supplies `X-Play-Service-Key` / `PLAY_SERVICE_INTERNAL_API_KEY` per `world-engine/README.md` and `docker-compose.yml`.
 - **Proxy pattern:** `backend/app/api/v1/game_routes.py` resolves `/api/v1/game/player-sessions/<run_id>`, loads or recreates the stored World-Engine story-session id, then calls `execute_story_turn_in_engine`.
 - **Classification:** Flask in-process `SessionState` and W2 turn paths are **deprecated / volatile** for live authority—see [`backend-runtime-classification.md`](../architecture/backend-runtime-classification.md).
 
@@ -387,7 +387,7 @@ sequenceDiagram
 
 **What to notice.** Flask does not execute a parallel turn; it resolves continuity and forwards to the story runtime.
 
-**Seams:** `backend/app/api/v1/game_routes.py`, `world-engine/app/api/http.py`.
+**Seams:** `backend/app/api/v1/game_routes.py`, `world-engine/world_engine/api/http.py`.
 
 ---
 
@@ -401,7 +401,7 @@ Players type natural language (or explicit commands). That text becomes a **turn
 
 Documented path: [`a1_free_input_primary_runtime_path.md`](a1_free_input_primary_runtime_path.md) — `/play/<run_id>`, `POST /api/v1/game/player-sessions`, `POST /api/v1/game/player-sessions/<run_id>/turns`, backend proxies to world-engine, UI reads `turn.visible_output_bundle.gm_narration` and `state.committed_state`.
 
-**Second path (template / real-time):** Backend can issue **WebSocket tickets** (`game_service.issue_play_ticket`) verified by `world-engine/app/auth/tickets.py`; client opens `/ws?ticket=...` and `RuntimeManager.process_command` handles messages (`world-engine/app/api/ws.py`). This path is **not** the same as the story HTTP turn graph.
+**Second path (template / real-time):** Backend can issue **WebSocket tickets** (`game_service.issue_play_ticket`) verified by `world-engine/world_engine/auth/tickets.py`; client opens `/ws?ticket=...` and `RuntimeManager.process_command` handles messages (`world-engine/world_engine/api/ws.py`). This path is **not** the same as the story HTTP turn graph.
 
 ### Why this matters in World of Shadows
 
@@ -415,7 +415,7 @@ Interpretation contract is shared conceptually with `story_runtime_core` ([`play
 
 **Rendering policy** in the frontend (typography, layout); the engine supplies **data** for truthful rendering.
 
-**Repository anchors:** [`a1_free_input_primary_runtime_path.md`](a1_free_input_primary_runtime_path.md), `world-engine/app/api/ws.py`, `backend/app/services/game/game_service.py`.
+**Repository anchors:** [`a1_free_input_primary_runtime_path.md`](a1_free_input_primary_runtime_path.md), `world-engine/world_engine/api/ws.py`, `backend/app/services/game/game_service.py`.
 
 ---
 
@@ -460,7 +460,7 @@ sequenceDiagram
   WE->>RM: connect_and_process_command_loop
 ```
 
-**Seams:** `world-engine/app/api/ws.py`, `world-engine/app/auth/tickets.py`, `game_service.issue_play_ticket`.
+**Seams:** `world-engine/world_engine/api/ws.py`, `world-engine/world_engine/auth/tickets.py`, `game_service.issue_play_ticket`.
 
 ---
 
@@ -472,7 +472,7 @@ AI can retrieve lore, interpret tone, and propose the next scene—but **the eng
 
 ### Technical precision
 
-- **Orchestration:** `RuntimeTurnGraphExecutor` from `ai_stack` (`world-engine/app/story_runtime/manager/` imports).
+- **Orchestration:** `RuntimeTurnGraphExecutor` from `ai_stack` (`world-engine/world_engine/story_runtime/manager/` imports).
 - **Interpretation:** `interpret_player_input` from `story_runtime_core` passed into the executor.
 - **Commit boundary:** After `turn_graph.run`, `resolve_narrative_commit` applies legality; model structured `proposed_scene_id` is only a **candidate** ([`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md), [`CANONICAL_TURN_CONTRACT_GOC.md`](../../MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md)).
 
@@ -488,7 +488,7 @@ Writers’ Room and improvement flows may share adapters/routing patterns (`ai-s
 
 **Model provider credentials** policy outside its env configuration; **training data** governance; **external LLM account** billing.
 
-**Repository anchors:** `ai_stack/langgraph/langgraph_runtime.py` (graph definition), `world-engine/app/story_runtime/manager/`, `story_runtime_core` package root.
+**Repository anchors:** `ai_stack/langgraph/langgraph_runtime.py` (graph definition), `world-engine/world_engine/story_runtime/manager/`, `story_runtime_core` package root.
 
 ---
 
@@ -578,7 +578,7 @@ Stories start as **files** and **review workflows**; the runtime consumes a **co
 
 - **Canonical modules:** `content/modules/<module_id>/` (YAML-first).
 - **Backend compilation:** `compile_module` is used by the canonical player-session path when creating the engine story session; it produces the `runtime_projection` payload for `create_story_session`.
-- **Published feed:** Play service can pull backend-published templates via `load_published_templates` (`world-engine/app/content/backend_loader.py`) when `BACKEND_API_URL` or `BACKEND_CONTENT_FEED_URL` is set (`world-engine/README.md`); falls back to built-ins (`world-engine/app/content/builtins.py`).
+- **Published feed:** Play service can pull backend-published templates via `load_published_templates` (`world-engine/world_engine/content/backend_loader.py`) when `BACKEND_API_URL` or `BACKEND_CONTENT_FEED_URL` is set (`world-engine/README.md`); falls back to built-ins (`world-engine/world_engine/content/builtins.py`).
 - **Writers’ Room:** Backend APIs under `/api/v1/writers-room/...` ([`how-ai-fits-the-platform.md`](../../start-here/how-ai-fits-the-platform.md)); optional UI in `writers-room/`.
 
 ### Why this matters in World of Shadows
@@ -593,7 +593,7 @@ Admin tool uses backend only; engine receives **already published** or **compile
 
 **Work-in-progress draft** semantics inside Writers’ Room databases—unless exposed via feed the engine is configured to read.
 
-**Repository anchors:** `world-engine/app/content/backend_loader.py`, `backend/app/content/compiler/compiler.py`, `backend/app/api/v1/game_routes.py`, `content/modules/`.
+**Repository anchors:** `world-engine/world_engine/content/backend_loader.py`, `backend/app/content/compiler/compiler.py`, `backend/app/api/v1/game_routes.py`, `content/modules/`.
 
 ---
 
@@ -622,8 +622,8 @@ When something goes wrong in a turn, engineers need **two levels**: rich interna
 
 ### Technical precision
 
-- **HTTP:** `GET /api/story/sessions/{id}/state` and `/diagnostics` (`world-engine/app/api/http.py`); semantics in [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md) (`committed_state`, `authoritative_history_tail`).
-- **Logging:** `log_story_turn_event`, `log_story_runtime_failure` (`world-engine/app/observability/audit_log.py`); trace middleware (`world-engine/app/middleware/trace_middleware.py`).
+- **HTTP:** `GET /api/story/sessions/{id}/state` and `/diagnostics` (`world-engine/world_engine/api/http.py`); semantics in [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md) (`committed_state`, `authoritative_history_tail`).
+- **Logging:** `log_story_turn_event`, `log_story_runtime_failure` (`world-engine/world_engine/observability/audit_log.py`); trace middleware (`world-engine/world_engine/middleware/trace_middleware.py`).
 - **Bridge logging:** `log_world_engine_bridge` in backend service/control flows when proxying to World-Engine.
 
 ### Why this matters in World of Shadows
@@ -638,7 +638,7 @@ CI and contract tests (`world-engine/tests/test_story_runtime_*.py`, [`WORLD_ENG
 
 **Long-term cold storage** of every diagnostic envelope in external analytics—retention policies are deployment-specific (**inference**).
 
-**Repository anchors:** `world-engine/app/observability/audit_log.py`, `world-engine/app/middleware/trace_middleware.py`, [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md).
+**Repository anchors:** `world-engine/world_engine/observability/audit_log.py`, `world-engine/world_engine/middleware/trace_middleware.py`, [`world_engine_authoritative_narrative_commit.md`](world_engine_authoritative_narrative_commit.md).
 
 ---
 
@@ -701,7 +701,7 @@ flowchart LR
 
 **Not owned.** End-to-end **product analytics** funnels outside logging hooks.
 
-**Repository anchors:** `world-engine/app/main.py`, `backend/app/services/game/game_service.py`, [`architecture-overview.md`](../architecture/architecture-overview.md).
+**Repository anchors:** `world-engine/world_engine/main.py`, `backend/app/services/game/game_service.py`, [`architecture-overview.md`](../architecture/architecture-overview.md).
 
 ---
 

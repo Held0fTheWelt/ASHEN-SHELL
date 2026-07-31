@@ -25,5 +25,5 @@ flowchart LR
 
 | Kind | Link |
 | --- | --- |
-| Source | `world-engine/app/story_runtime/manager/` |
+| Source | `world-engine/world_engine/story_runtime/manager/` |
 | Test | `world-engine/tests/test_story_runtime_api.py` |

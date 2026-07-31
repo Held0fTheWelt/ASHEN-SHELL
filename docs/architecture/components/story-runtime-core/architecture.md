@@ -44,7 +44,7 @@ Extract shared shapes from deprecated backend runtime toward importable package 
 | Block | Path |
 | --- | --- |
 | Branching | `story_runtime_core/branching/` |
-| GoC builtin template | `goc_solo_builtin_template.py`, catalog/roles modules |
+| GoC solo runtime profile | `content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml` |
 | Tests | `story_runtime_core/tests/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
@@ -69,7 +69,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Validated (`validated`) | `state` | Meet portable invariants | Safe to return to host | [`story_runtime_core/model_registry.py`](../../../../story_runtime_core/model_registry.py) |
 | AI Stack (`ai`) | `system` | Produce proposals using shared semantic contracts | Proposal-only integration | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
 | Story Runtime Core (`core`) | `system` | Provide portable domain contracts and deterministic algorithms | Python package without service authority | [`story_runtime_core/__init__.py`](../../../../story_runtime_core/__init__.py) |
-| World Engine (`world`) | `system` | Own and commit live story state | Calls pure shared contracts | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| World Engine (`world`) | `system` | Own and commit live story state | Calls pure shared contracts | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View

@@ -332,9 +332,69 @@
   "discovered_units": [
     {
       "anchor": {
+        "file": "tools/architecture_assurance/assemble_backend_source_segments.py",
+        "kind": "python",
+        "line": 27,
+        "module": "tools.architecture_assurance.assemble_backend_source_segments",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "assemble"
+      },
+      "id": "python:tools.architecture_assurance.assemble_backend_source_segments:assemble",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/assemble_backend_source_segments.py",
+        "kind": "python",
+        "line": 11,
+        "module": "tools.architecture_assurance.assemble_backend_source_segments",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "extract_source_constant"
+      },
+      "id": "python:tools.architecture_assurance.assemble_backend_source_segments:extract_source_constant",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/assemble_backend_source_segments.py",
+        "kind": "python",
+        "line": 136,
+        "module": "tools.architecture_assurance.assemble_backend_source_segments",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.architecture_assurance.assemble_backend_source_segments:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/assemble_backend_source_segments.py",
+        "kind": "python",
+        "line": 56,
+        "module": "tools.architecture_assurance.assemble_backend_source_segments",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "stub_segments"
+      },
+      "id": "python:tools.architecture_assurance.assemble_backend_source_segments:stub_segments",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/assemble_runtime_executor.py",
+        "kind": "python",
+        "line": 11,
+        "module": "tools.architecture_assurance.assemble_runtime_executor",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.architecture_assurance.assemble_runtime_executor:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "tools/architecture_assurance/audit.py",
         "kind": "python",
-        "line": 366,
+        "line": 367,
         "module": "tools.architecture_assurance.audit",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_report"
@@ -346,7 +406,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/audit.py",
         "kind": "python",
-        "line": 471,
+        "line": 480,
         "module": "tools.architecture_assurance.audit",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evaluate_gate"
@@ -466,7 +526,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/cli.py",
         "kind": "python",
-        "line": 79,
+        "line": 83,
         "module": "tools.architecture_assurance.cli",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "main"
@@ -644,6 +704,90 @@
     },
     {
       "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 1060,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_drift_edge_report"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:build_drift_edge_report",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 1010,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "generate_drift_edge_projection"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:generate_drift_edge_projection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 309,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_drift_edge_catalog"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:load_drift_edge_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 926,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_drift_edge_markdown"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:render_drift_edge_markdown",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 831,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_drift_edge_puml"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:render_drift_edge_puml",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 139,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_authoritative_write_surfaces"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:validate_authoritative_write_surfaces",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/drift_edges.py",
+        "kind": "python",
+        "line": 776,
+        "module": "tools.architecture_assurance.drift_edges",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_drift_edge_catalog"
+      },
+      "id": "python:tools.architecture_assurance.drift_edges:validate_drift_edge_catalog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "tools/architecture_assurance/drift_evidence.py",
         "kind": "python",
         "line": 293,
@@ -694,7 +838,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 213,
+        "line": 218,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "generate_manifests"
@@ -718,12 +862,48 @@
       "anchor": {
         "file": "tools/architecture_assurance/manifest_builder.py",
         "kind": "python",
-        "line": 209,
+        "line": 214,
         "module": "tools.architecture_assurance.manifest_builder",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_manifest"
       },
       "id": "python:tools.architecture_assurance.manifest_builder:render_manifest",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/out_of_scope_policy.py",
+        "kind": "python",
+        "line": 46,
+        "module": "tools.architecture_assurance.out_of_scope_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "format_out_of_scope_reason"
+      },
+      "id": "python:tools.architecture_assurance.out_of_scope_policy:format_out_of_scope_reason",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/out_of_scope_policy.py",
+        "kind": "python",
+        "line": 55,
+        "module": "tools.architecture_assurance.out_of_scope_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "out_of_scope_share"
+      },
+      "id": "python:tools.architecture_assurance.out_of_scope_policy:out_of_scope_share",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/out_of_scope_policy.py",
+        "kind": "python",
+        "line": 30,
+        "module": "tools.architecture_assurance.out_of_scope_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "parse_out_of_scope_reason"
+      },
+      "id": "python:tools.architecture_assurance.out_of_scope_policy:parse_out_of_scope_reason",
       "kind": "python"
     },
     {
@@ -754,7 +934,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/reporters.py",
         "kind": "python",
-        "line": 131,
+        "line": 171,
         "module": "tools.architecture_assurance.reporters",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_sarif"
@@ -766,12 +946,36 @@
       "anchor": {
         "file": "tools/architecture_assurance/reporters.py",
         "kind": "python",
-        "line": 189,
+        "line": 229,
         "module": "tools.architecture_assurance.reporters",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "write_reports"
       },
       "id": "python:tools.architecture_assurance.reporters:write_reports",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/rewrite_world_engine_imports.py",
+        "kind": "python",
+        "line": 41,
+        "module": "tools.architecture_assurance.rewrite_world_engine_imports",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.architecture_assurance.rewrite_world_engine_imports:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/rewrite_world_engine_imports.py",
+        "kind": "python",
+        "line": 33,
+        "module": "tools.architecture_assurance.rewrite_world_engine_imports",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rewrite_text"
+      },
+      "id": "python:tools.architecture_assurance.rewrite_world_engine_imports:rewrite_text",
       "kind": "python"
     },
     {
@@ -968,6 +1172,90 @@
     },
     {
       "anchor": {
+        "file": "tools/architecture_assurance/stub_runtime_executor_shards.py",
+        "kind": "python",
+        "line": 22,
+        "module": "tools.architecture_assurance.stub_runtime_executor_shards",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.architecture_assurance.stub_runtime_executor_shards:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 37,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "assemble_chunks"
+      },
+      "id": "python:tools.architecture_assurance.unshard:assemble_chunks",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 13,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "extract_source_payload"
+      },
+      "id": "python:tools.architecture_assurance.unshard:extract_source_payload",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 86,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "main"
+      },
+      "id": "python:tools.architecture_assurance.unshard:main",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 58,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_method_module"
+      },
+      "id": "python:tools.architecture_assurance.unshard:render_method_module",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 76,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "render_toplevel_module"
+      },
+      "id": "python:tools.architecture_assurance.unshard:render_toplevel_module",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/unshard.py",
+        "kind": "python",
+        "line": 47,
+        "module": "tools.architecture_assurance.unshard",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "write_if_changed"
+      },
+      "id": "python:tools.architecture_assurance.unshard:write_if_changed",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "tools/architecture_assurance/view_builder.py",
         "kind": "python",
         "line": 52,
@@ -984,6 +1272,11 @@
     "python"
   ],
   "out_of_scope": {
+    "python:tools.architecture_assurance.assemble_backend_source_segments:assemble": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.assemble_backend_source_segments:extract_source_constant": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.assemble_backend_source_segments:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.assemble_backend_source_segments:stub_segments": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.assemble_runtime_executor:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.audit:build_report": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.audit:evaluate_gate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.canon:build_canon_manifest": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -1010,6 +1303,13 @@
     "python:tools.architecture_assurance.drift_claims:project_claim_reconciliation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.drift_claims:render_claim_reconciliation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.drift_claims:validate_claim_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:build_drift_edge_report": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:generate_drift_edge_projection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:load_drift_edge_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:render_drift_edge_markdown": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:render_drift_edge_puml": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:validate_authoritative_write_surfaces": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.drift_edges:validate_drift_edge_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.drift_evidence:build_drift_evidence": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.drift_evidence:render_drift_evidence": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.drift_evidence:write_drift_evidence": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -1017,10 +1317,15 @@
     "python:tools.architecture_assurance.manifest_builder:generate_manifests": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.manifest_builder:load_config": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.manifest_builder:render_manifest": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.out_of_scope_policy:format_out_of_scope_reason": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.out_of_scope_policy:out_of_scope_share": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.out_of_scope_policy:parse_out_of_scope_reason": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.reporters:render_json": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.reporters:render_junit": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.reporters:render_sarif": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.reporters:write_reports": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.rewrite_world_engine_imports:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.rewrite_world_engine_imports:rewrite_text": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.sad_enricher:enrich_sads": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.sad_parser:Declaration": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.sad_parser:SadDocument": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -1037,6 +1342,13 @@
     "python:tools.architecture_assurance.semantic_models:render_view_companion": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.semantic_models:validate_model_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.semantic_models:view_requirements": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.stub_runtime_executor_shards:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:assemble_chunks": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:extract_source_payload": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:render_method_module": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:render_toplevel_module": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:tools.architecture_assurance.unshard:write_if_changed": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:tools.architecture_assurance.view_builder:generate_views": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {},

@@ -16,10 +16,10 @@ skinparam maxMessageSize 180
 rectangle "API v1\nResponsibility: Expose platform, play-proxy and admin HTTP contracts\nContract: Blueprint routes with auth and rate limits\n[[../../../../backend/app/api/v1/__init__.py source]]\n[[c4-component.puml drill-down]]" as api
 rectangle "Domain Services\nResponsibility: Implement platform and governance use cases\nContract: Transaction-scoped service operations\n[[../../../../backend/app/services/__init__.py source]]" as services
 rectangle "Persistence Models\nResponsibility: Represent backend and narrative-governance durable truth\nContract: SQLAlchemy models and Alembic schema\n[[../../../../backend/app/models/__init__.py source]]" as models
-rectangle "Transitional Runtime\nResponsibility: Retain explicitly non-authoritative compatibility functions\nContract: Quarantined; never player truth authority\n[[../../../../backend/app/runtime/__init__.py source]]" as compat
+rectangle "Retired Transitional Runtime\nResponsibility: Document absence of former backend/app/runtime live-session surfaces\nContract: Retired; never player truth authority\n[[../../../../tests/gates/test_runtime_sessions_table_absent.py source]]" as compat
 rectangle "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
 
-api ..> compat : "uses explicit compatibility paths\ncontract: quarantined non-authoritative behavior\n[[../../../../backend/app/runtime/__init__.py source]]"
+api ..> compat : "no longer routes through retired runtime package\ncontract: absence enforced; never player truth authority\n[[../../../../tests/gates/test_runtime_sessions_table_absent.py source]]"
 api ..> services : "invokes use cases\ncontract: validated request DTOs\n[[../../../../backend/app/api/v1/__init__.py source]]"
 services ..> models : "reads/writes durable truth\ncontract: transaction boundary\n[[../../../../backend/app/extensions.py source]]"
 services ..> observability : "emits evidence\ncontract: redacted trace correlation\n[[../../../../backend/app/observability/trace.py source]]"

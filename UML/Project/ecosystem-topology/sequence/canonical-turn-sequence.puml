@@ -17,16 +17,16 @@ skinparam maxMessageSize 180
 actor "Player\nResponsibility: Experience and influence a live dramatic scene\nContract: Authenticated semantic interaction\n[[../../../../frontend/templates/session_shell.html source]]" as player
 participant "Frontend\nResponsibility: Present player interaction and transient UI state\nContract: Browser shell\n[[../../../../frontend/app/__init__.py source]]" as frontend
 participant "Backend\nResponsibility: Own identity, community and control-plane truth\nContract: Flask API\n[[../../../../backend/app/factory_app.py source]]" as backend
-participant "World Engine\nResponsibility: Own live sessions and commit story truth\nContract: Story HTTP/WebSocket API\n[[../../../../world-engine/app/main.py source]]" as world
+participant "World Engine\nResponsibility: Own live sessions and commit story truth\nContract: Story HTTP/WebSocket API\n[[../../../../world-engine/world_engine/main.py source]]" as world
 participant "Content Authority\nResponsibility: Own authored experience facts and policy\nContract: Versioned YAML modules\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as content
 participant "AI Stack\nResponsibility: Propose dramatically informed outcomes\nContract: Proposal-only runtime\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor.py source]]" as ai
 
 player -> frontend : "interacts\ncontract: browser session\n[[../../../../frontend/app/routes_play.py source]]"
 frontend -> backend : "authenticates and launches\ncontract: HTTP API\n[[../../../../frontend/app/api_client.py source]]"
 backend -> world : "delegates live turn\ncontract: signed proxy request\n[[../../../../backend/app/services/game/game_service.py source]]"
-content -> world : "binds authored truth\ncontract: content version\n[[../../../../world-engine/app/content/backend_loader.py source]]"
-world -> ai : "requests proposal\ncontract: bounded context\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
-world -> frontend : "streams committed blocks\ncontract: post-commit events\n[[../../../../world-engine/app/api/story_ws.py source]]"
+content -> world : "binds authored truth\ncontract: content version\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]"
+world -> ai : "requests proposal\ncontract: bounded context\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
+world -> frontend : "streams committed blocks\ncontract: post-commit events\n[[../../../../world-engine/world_engine/api/story_ws.py source]]"
 
 legend bottom
 Viewpoint: sequence

@@ -62,7 +62,7 @@ Trace presence, routing, mock success, fallback completion, validation approval,
 | --- | --- |
 | Gate | `ai_stack/story_runtime/live_runtime_commit_semantics.py` |
 | Tests | `tests/gates/test_adr_live_runtime_commit_semantics_gate.py` |
-| Traces | `world-engine/app/middleware/trace_middleware.py` |
+| Traces | `world-engine/world_engine/middleware/trace_middleware.py` |
 
 Related: [frontend D1](../frontend/architecture.md#d1-player-facing-narrative-shell-contract-mvp5) (shell readiness), [SAD D5](#d5-canonical-turn-lifecycle-adr-0038) (envelope join key).
 

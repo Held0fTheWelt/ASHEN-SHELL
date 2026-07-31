@@ -13,7 +13,7 @@
 | Authored Module | Hold canonical versioned content truth | module.yaml plus referenced YAML documents | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Backend Module Compiler | Load, validate and normalize authored documents | Deterministic module model or diagnostics | [`backend/app/content/module_loader.py`](../../../../backend/app/content/module_loader.py) |
 | Module Validator | Enforce schemas and cross-document references | Fail-closed validation findings | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
-| World Content Loader | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+| World Content Loader | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/world_engine/content/backend_loader.py`](../../../../world-engine/world_engine/content/backend_loader.py) |
 
 ## Modeled relationships
 

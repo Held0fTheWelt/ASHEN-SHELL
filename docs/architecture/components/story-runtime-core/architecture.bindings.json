@@ -19,18 +19,18 @@
     {
       "anchors": [
         {
-          "declared_path": "goc_solo_builtin_template.py",
-          "file": "story_runtime_core/goc_solo_builtin_template.py",
-          "kind": "python",
+          "declared_path": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+          "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+          "kind": "content",
           "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "GoC builtin template"
+          "object": "GoC solo runtime profile",
+          "schema_version": "bt.source_anchor.v1"
         }
       ],
-      "id": "B-goc-builtin-template",
+      "id": "B-goc-solo-runtime-profile",
       "state": "bound",
       "status": "Implemented",
-      "title": "GoC builtin template"
+      "title": "GoC solo runtime profile"
     },
     {
       "anchors": [
@@ -1035,7 +1035,7 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 60,
+        "line": 39,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_apartment_confrontation_group"
@@ -1047,7 +1047,7 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 116,
+        "line": 95,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_better_tomorrow_district_open_world"
@@ -1059,19 +1059,19 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 25,
+        "line": 22,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_god_of_carnage_content_template"
+        "symbol": "build_god_of_carnage_solo"
       },
-      "id": "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template",
+      "id": "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_solo",
       "kind": "python"
     },
     {
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 47,
+        "line": 27,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "load_builtin_templates"
@@ -1465,102 +1465,6 @@
     },
     {
       "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
-        "kind": "python",
-        "line": 55,
-        "module": "story_runtime_core.goc_solo_builtin_catalog",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_action_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_action_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
-        "kind": "python",
-        "line": 61,
-        "module": "story_runtime_core.goc_solo_builtin_catalog",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_beat_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_beat_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_catalog.py",
-        "kind": "python",
-        "line": 8,
-        "module": "story_runtime_core.goc_solo_builtin_catalog",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_prop_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_prop_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_catalog_actions.py",
-        "kind": "python",
-        "line": 306,
-        "module": "story_runtime_core.goc_solo_builtin_catalog_actions",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_goc_solo_action_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_catalog_actions:build_goc_solo_action_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-        "kind": "python",
-        "line": 13,
-        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_role_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_role_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-        "kind": "python",
-        "line": 117,
-        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_room_templates"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-        "kind": "python",
-        "line": 57,
-        "module": "story_runtime_core.goc_solo_builtin_roles_rooms",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "goc_solo_room_templates_with_content"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates_with_content",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "story_runtime_core/goc_solo_builtin_template.py",
-        "kind": "python",
-        "line": 17,
-        "module": "story_runtime_core.goc_solo_builtin_template",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_god_of_carnage_solo"
-      },
-      "id": "python:story_runtime_core.goc_solo_builtin_template:build_god_of_carnage_solo",
-      "kind": "python"
-    },
-    {
-      "anchor": {
         "file": "story_runtime_core/input_interpreter.py",
         "kind": "python",
         "line": 72,
@@ -1621,9 +1525,141 @@
     },
     {
       "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 250,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CountingModelAdapter"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:CountingModelAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 230,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "HardBudgetExceeded"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:HardBudgetExceeded",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 51,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ModelCallPhaseContext"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:ModelCallPhaseContext",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 154,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TurnCallLedger"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:TurnCallLedger",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 139,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TurnCallRecord"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:TurnCallRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 97,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "bind_turn_call_ledger"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:bind_turn_call_ledger",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 110,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "current_model_call_phase"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:current_model_call_phase",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 372,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "merge_ledger_into_phase_costs"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:merge_ledger_into_phase_costs",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 76,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "model_call_phase"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:model_call_phase",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 130,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_model_call_phase"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:resolve_model_call_phase",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/model_call_accounting.py",
+        "kind": "python",
+        "line": 357,
+        "module": "story_runtime_core.model_call_accounting",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "wrap_adapters_with_counting"
+      },
+      "id": "python:story_runtime_core.model_call_accounting:wrap_adapters_with_counting",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "story_runtime_core/model_registry.py",
         "kind": "python",
-        "line": 57,
+        "line": 59,
         "module": "story_runtime_core.model_registry",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ModelRegistry"
@@ -1635,7 +1671,7 @@
       "anchor": {
         "file": "story_runtime_core/model_registry.py",
         "kind": "python",
-        "line": 36,
+        "line": 38,
         "module": "story_runtime_core.model_registry",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ModelSpec"
@@ -1647,7 +1683,7 @@
       "anchor": {
         "file": "story_runtime_core/model_registry.py",
         "kind": "python",
-        "line": 50,
+        "line": 52,
         "module": "story_runtime_core.model_registry",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RoutingDecision"
@@ -1659,7 +1695,7 @@
       "anchor": {
         "file": "story_runtime_core/model_registry.py",
         "kind": "python",
-        "line": 71,
+        "line": 73,
         "module": "story_runtime_core.model_registry",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RoutingPolicy"
@@ -1671,7 +1707,7 @@
       "anchor": {
         "file": "story_runtime_core/model_registry.py",
         "kind": "python",
-        "line": 111,
+        "line": 113,
         "module": "story_runtime_core.model_registry",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_default_registry"
@@ -2005,6 +2041,42 @@
     },
     {
       "anchor": {
+        "file": "story_runtime_core/runtime_profile_loader.py",
+        "kind": "python",
+        "line": 126,
+        "module": "story_runtime_core.runtime_profile_loader",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "goc_solo_role_templates"
+      },
+      "id": "python:story_runtime_core.runtime_profile_loader:goc_solo_role_templates",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/runtime_profile_loader.py",
+        "kind": "python",
+        "line": 90,
+        "module": "story_runtime_core.runtime_profile_loader",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "load_runtime_profile_template"
+      },
+      "id": "python:story_runtime_core.runtime_profile_loader:load_runtime_profile_template",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "story_runtime_core/runtime_profile_loader.py",
+        "kind": "python",
+        "line": 34,
+        "module": "story_runtime_core.runtime_profile_loader",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_profile_path"
+      },
+      "id": "python:story_runtime_core.runtime_profile_loader:runtime_profile_path",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "story_runtime_core/serialization.py",
         "kind": "python",
         "line": 21,
@@ -2066,7 +2138,7 @@
     "python:story_runtime_core.adapters:openai_http_error_excerpt": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:build_apartment_confrontation_group": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:build_better_tomorrow_district_open_world": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_solo": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:load_builtin_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.callbacks.callback_web:build_callback_web_record": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.callbacks.callback_web:build_callback_web_snapshot": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -2100,18 +2172,22 @@
     "python:story_runtime_core.experience_template_models:PropTemplate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.experience_template_models:RoleTemplate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.experience_template_models:RoomTemplate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_action_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_beat_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_catalog:goc_solo_prop_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_catalog_actions:build_goc_solo_action_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_role_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.goc_solo_builtin_roles_rooms:goc_solo_room_templates_with_content": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.input_interpreter:interpret_player_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.langfuse_tracing_environment:is_local_langfuse_evidence_context": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.langfuse_tracing_environment:local_langfuse_evidence_metadata": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.langfuse_tracing_environment:resolve_langfuse_environment": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.langfuse_tracing_environment:resolve_runtime_langfuse_base_url": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:CountingModelAdapter": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:HardBudgetExceeded": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:ModelCallPhaseContext": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:TurnCallLedger": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:TurnCallRecord": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:bind_turn_call_ledger": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:current_model_call_phase": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:merge_ledger_into_phase_costs": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:model_call_phase": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:resolve_model_call_phase": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.model_call_accounting:wrap_adapters_with_counting": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.model_registry:ModelRegistry": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.model_registry:ModelSpec": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.model_registry:RoutingDecision": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -2144,6 +2220,9 @@
     "python:story_runtime_core.recovery.no_dead_end:validate_no_dead_end_recovery_record": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.runtime_delivery:extract_spoken_text_for_delivery": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.runtime_delivery:natural_input_to_room_command": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.runtime_profile_loader:goc_solo_role_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.runtime_profile_loader:load_runtime_profile_template": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.runtime_profile_loader:runtime_profile_path": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.serialization:as_list": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.serialization:clean_text": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.serialization:json_safe": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -2196,15 +2275,14 @@
     "python:story_runtime_core.branching.simulation_tree:make_simulated_turn_node": "B-branching",
     "python:story_runtime_core.branching.simulation_tree:make_simulation_tree": "B-branching",
     "python:story_runtime_core.branching.simulation_tree:simulated_input_for_branch_option": "B-branching",
-    "python:story_runtime_core.branching.simulation_tree:stable_simulation_id": "B-branching",
-    "python:story_runtime_core.goc_solo_builtin_template:build_god_of_carnage_solo": "B-goc-builtin-template"
+    "python:story_runtime_core.branching.simulation_tree:stable_simulation_id": "B-branching"
   },
   "required_views": [
     {
       "anchors": [
         "ai_stack/story_runtime/player_action_resolution.py",
         "story_runtime_core/__init__.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py"
       ],
       "concern": "Portable contracts versus live and proposal authorities",
       "decisions": [
@@ -2254,7 +2332,7 @@
         "story_runtime_core/models.py",
         "story_runtime_core/player_input_intent_contract.py",
         "story_runtime_core/runtime_delivery.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py"
       ],
       "concern": "Host data crosses portable algorithms and returns without authority transfer",
       "decisions": [

@@ -25,7 +25,7 @@ Agency preservation is enforced at two levels:
 
 ## Code anchor (first read)
 
-`world-engine/app/story_runtime/manager/` — `StoryRuntimeManager`:
+`world-engine/world_engine/story_runtime/manager/` — `StoryRuntimeManager`:
 
 - Holds in-memory `StorySession` objects (`session_id`, `module_id`, `runtime_projection`, history, diagnostics, narrative threads, policy-driven hierarchical memory snapshot).
 - Builds default retriever and context assembler via `ai_stack` (`build_runtime_retriever`).
@@ -54,19 +54,15 @@ stateDiagram-v2
   Ended --> [*]
 ```
 
-Exact transitions depend on module endings and HTTP/WebSocket handlers under `world-engine/app/`.
+Exact transitions depend on module endings and HTTP/WebSocket handlers under `world-engine/world_engine/`.
 
 ## Backend integration
 
 The backend calls the play service using `PLAY_SERVICE_*` environment variables (see root `docker-compose.yml` and [`docs/dev/local-development-and-test-workflow.md`](../../dev/local-development-and-test-workflow.md)). Do not duplicate runtime business logic in the backend without an ADR.
 
-## Backend volatile session registry (transitional)
+## Backend volatile session registry (retired)
 
-For **in-process** operator/MCP/test flows, the backend keeps a **process-local**, **non-durable** map `session_id → RuntimeSession` in [`backend/app/runtime/session/session_store.py`](../../../backend/app/runtime/session/session_store.py). It is **not** the World Engine session authority; entries vanish on process restart.
-
-- **API:** Use `create_session`, `get_session`, `update_session`, `delete_session`, or the `RuntimeSessionRegistry` accessor `get_runtime_session_registry()` — do not rely on a raw module-level dict.
-- **Concurrency:** The registry is an ordinary in-memory dict without locking; assume single-threaded use per worker consistent with typical Flask request handling unless you add external synchronization.
-- **Lifecycle:** Matches the backend process; `clear_registry()` exists for tests.
+The former process-local `session_id → RuntimeSession` map in `backend/app/runtime/session/session_store.py` and the SQL `runtime_sessions` table were retired in Wave 6 G2 (Alembic 049). Live session authority remains exclusively in world-engine; do not reintroduce a backend session truth store without a new ADR. Absence is enforced by [`tests/gates/test_runtime_sessions_table_absent.py`](../../../tests/gates/test_runtime_sessions_table_absent.py).
 
 ## Related
 

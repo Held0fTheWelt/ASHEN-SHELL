@@ -261,7 +261,7 @@
         },
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -402,8 +402,8 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -795,22 +795,6 @@
     {
       "anchors": [
         {
-          "declared_path": "backend/app/runtime/ai/ai_decision_logging.py",
-          "file": "backend/app/runtime/ai/ai_decision_logging.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Role-aware `AIDecisionLog` and `ParsedRoleAwareDecision`"
-        },
-        {
-          "declared_path": "backend/tests/runtime/test_ai_decision_logging.py",
-          "file": "backend/tests/runtime/test_ai_decision_logging.py",
-          "kind": "test",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Role-aware `AIDecisionLog` and `ParsedRoleAwareDecision`"
-        },
-        {
           "declared_path": "docs/architecture/components/ai-stack/architecture.md",
           "file": "docs/architecture/components/ai-stack/architecture.md",
           "kind": "file",
@@ -832,14 +816,6 @@
     },
     {
       "anchors": [
-        {
-          "declared_path": "backend/tests/runtime/test_responder_gating.py",
-          "file": "backend/tests/runtime/test_responder_gating.py",
-          "kind": "test",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "ProposalSource enum and responder-only gating"
-        },
         {
           "declared_path": "docs/architecture/components/ai-stack/architecture.md",
           "file": "docs/architecture/components/ai-stack/architecture.md",
@@ -5595,7 +5571,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 676,
+        "line": 698,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangChainRetrieverBridge"
@@ -5643,7 +5619,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 619,
+        "line": 641,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "WritersRoomInvocationResult"
@@ -5667,7 +5643,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 794,
+        "line": 816,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_capability_tool_bridge"
@@ -5679,7 +5655,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 778,
+        "line": 800,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langchain_retriever_bridge"
@@ -5703,7 +5679,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 628,
+        "line": 650,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "invoke_writers_room_adapter_with_langchain"
@@ -5727,7 +5703,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 121,
+        "line": 123,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangfuseCategoricalEvaluatorSpec"
@@ -5739,7 +5715,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1512,
+        "line": 1514,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "all_categorical_evaluator_specs"
@@ -5751,7 +5727,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1570,
+        "line": 1572,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langfuse_sync_preview_payload"
@@ -5763,7 +5739,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1462,
+        "line": 1464,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_llm_judge_interpretation"
@@ -5775,7 +5751,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1441,
+        "line": 1443,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "category_severity"
@@ -5787,7 +5763,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1401,
+        "line": 1403,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "doc_table_evaluator_names"
@@ -5799,7 +5775,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1520,
+        "line": 1522,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evaluator_spec_to_public_dict"
@@ -5811,7 +5787,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1516,
+        "line": 1518,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "get_categorical_evaluator_spec"
@@ -5823,7 +5799,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1406,
+        "line": 1408,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "judge_names_for_scope"
@@ -5835,7 +5811,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 112,
+        "line": 114,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "langfuse_evaluator_filter_templates"
@@ -5847,7 +5823,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1410,
+        "line": 1412,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "normalize_judge_category_label"
@@ -6025,6 +6001,90 @@
     },
     {
       "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 4087,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RuntimeTurnGraphExecutor"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3698,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3859,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering_with_optional_w5_projection"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3971,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_actor_locations"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2662,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_npc_context"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3836,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_director_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2539,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_npc_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_package_output.py",
         "kind": "python",
         "line": 164,
@@ -6159,7 +6219,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 15,
+        "line": 13,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeExecutorBoundary"
@@ -6171,7 +6231,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 160,
+        "line": 158,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "iter_source_module_names"
@@ -14828,6 +14888,13 @@
     "python:ai_stack.langgraph.langgraph_agent_state:create_initial_state": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_orchestrator:GameOrchestrator": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_orchestrator:MockGraph": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output:package_runtime_graph_output": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_dramatic_review:build_dramatic_review_section": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_repro:build_repro_metadata_and_health": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -15910,8 +15977,8 @@
         "ai_stack/operational_profile.py",
         "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py",
         "content/modules/god_of_carnage/module.yaml",
-        "world-engine/app/story_runtime/manager/runtime_manager.py",
-        "world-engine/app/story_runtime/manager/turn_execution.py"
+        "world-engine/world_engine/story_runtime/manager/runtime_manager.py",
+        "world-engine/world_engine/story_runtime/manager/turn_execution.py"
       ],
       "concern": "Proposal authority and external collaborators",
       "decisions": [
@@ -16012,8 +16079,8 @@
         "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
         "ai_stack/story_runtime/runtime_aspect_ledger/records.py",
         "ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py",
-        "world-engine/app/story_runtime/manager/runtime_manager.py",
-        "world-engine/app/story_runtime/manager/turn_execution.py"
+        "world-engine/world_engine/story_runtime/manager/runtime_manager.py",
+        "world-engine/world_engine/story_runtime/manager/turn_execution.py"
       ],
       "concern": "Ordered proposal production from semantic input to validation evidence",
       "decisions": [

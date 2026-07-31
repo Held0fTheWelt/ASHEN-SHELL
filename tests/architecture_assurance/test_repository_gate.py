@@ -22,5 +22,5 @@ def test_generated_artifacts_are_current_without_writes() -> None:
 def test_better_tomorrow_architecture_depth_gate_passes() -> None:
     report = build_report(CONFIG, ROOT)
     assert report["gate"]["status"] == "PASS", report["gate"]["failures"]
-    assert report["corpus_rollup"]["subsystems"] == 16
-    assert report["corpus_rollup"]["view_counts"] == {"model": 89}
+    assert report["corpus_rollup"]["subsystems"] == 17
+    assert report["corpus_rollup"]["view_counts"] == {"model": 94}

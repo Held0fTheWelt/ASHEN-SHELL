@@ -12,13 +12,13 @@ skinparam maxMessageSize 180
 ' bt-element-id: provider
 ' bt-element-id: content
 
-rectangle "World Engine\nResponsibility: Provide authoritative session context and accept or reject proposals\nContract: Turn request and validated proposal boundary\n[[../../../../world-engine/app/story_runtime/manager/runtime_manager.py source]]" as world
+rectangle "World Engine\nResponsibility: Provide authoritative session context and accept or reject proposals\nContract: Turn request and validated proposal boundary\n[[../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py source]]" as world
 rectangle "AI Stack\nResponsibility: Produce bounded narrative proposals and evidence\nContract: No direct authoritative session write\n[[../../../../ai_stack/__init__.py source]]\n[[c4-container.puml drill-down]]" as ai
 rectangle "Model Provider\nResponsibility: Generate model completion\nContract: Governed route, budget and timeout\n[[../../../../ai_stack/operational_profile.py source]]" as provider
 rectangle "Content Authority\nResponsibility: Supply canonical scenes, actors and policies\nContract: Compiled immutable content inputs\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as content
 
 content ..> ai : "supplies canon\ncontract: read-only compiled content\n[[../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py source]]"
-world ..> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/app/story_runtime/manager/turn_execution.py source]]"
+world ..> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]"
 ai ..> provider : "invokes governed model route\ncontract: provider/model/budget policy\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py source]]"
 ai ..> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
 

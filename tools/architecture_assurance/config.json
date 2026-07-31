@@ -43,8 +43,8 @@
       "bound": 200,
       "accepted_declared": 177,
       "accepted_bound": 177,
-      "discovered": 7511,
-      "represented": 7511,
+      "discovered": 7500,
+      "represented": 7500,
       "views": 89
     },
     "critical_floor": {
@@ -139,7 +139,7 @@
       "id": "model-governance",
       "scope": "component",
       "critical": true,
-      "sad_path": "docs/architecture/components/backend/architecture.md",
+      "sad_path": "docs/architecture/components/model-governance/architecture.md",
       "lanes": [
         "python"
       ],
@@ -231,6 +231,9 @@
       "binding_overrides": {
         "B-tests": [
           "story_runtime_core/tests/test_adapters.py"
+        ],
+        "B-goc-solo-runtime-profile": [
+          "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml"
         ]
       }
     },
@@ -245,33 +248,33 @@
       ],
       "lane_roots": {
         "python": [
-          "world-engine/app"
+          "world-engine/world_engine"
         ],
         "api": [
-          "world-engine/app"
+          "world-engine/world_engine"
         ]
       },
       "binding_overrides": {
         "B-auth-tickets": [
-          "world-engine/app/auth/tickets.py"
+          "world-engine/world_engine/auth/tickets.py"
         ],
         "B-commit-models": [
-          "world-engine/app/story_runtime/commit_models.py"
+          "world-engine/world_engine/story_runtime/commit_models.py"
         ],
         "B-http-api": [
-          "world-engine/app/api/http.py"
+          "world-engine/world_engine/api/http.py"
         ],
         "B-run-runtime": [
-          "world-engine/app/runtime/manager.py"
+          "world-engine/world_engine/runtime/manager.py"
         ],
         "B-story-runtime-manager": [
-          "world-engine/app/story_runtime/manager"
+          "world-engine/world_engine/story_runtime/manager"
         ],
         "B-trace-middleware": [
-          "world-engine/app/middleware/trace_middleware.py"
+          "world-engine/world_engine/middleware/trace_middleware.py"
         ],
         "B-websocket-api": [
-          "world-engine/app/api/ws.py"
+          "world-engine/world_engine/api/ws.py"
         ]
       }
     },
@@ -359,14 +362,14 @@
       ],
       "lane_roots": {
         "python": [
-          "world-engine/app/runtime",
+          "world-engine/world_engine/runtime",
           "ai_stack",
           "frontend/app"
         ]
       },
       "binding_overrides": {
         "B-mvp1-identity": [
-          "world-engine/app/runtime/profiles.py"
+          "world-engine/world_engine/runtime/profiles.py"
         ],
         "B-mvp2-actor-lanes": [
           "world-engine/world_engine/runtime/models.py"
@@ -375,7 +378,7 @@
           "ai_stack/live_dramatic_scene_simulator.py"
         ],
         "B-mvp4-observability": [
-          "world-engine/app/observability/trace.py"
+          "world-engine/world_engine/observability/trace.py"
         ],
         "B-mvp5-frontend-blocks": [
           "frontend/static/play_block_renderer.js"
@@ -393,13 +396,13 @@
       "lane_roots": {
         "python": [
           "backend/app/observability",
-          "world-engine/app/observability",
+          "world-engine/world_engine/observability",
           "ai_stack"
         ]
       },
       "binding_overrides": {
         "D3": [
-          "world-engine/app/observability/trace.py"
+          "world-engine/world_engine/observability/trace.py"
         ]
       }
     },

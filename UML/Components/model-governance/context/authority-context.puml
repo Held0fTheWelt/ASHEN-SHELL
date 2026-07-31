@@ -1,0 +1,27 @@
+@startuml
+' bt-view-kind: context
+' bt-view-id: model-governance:authority-context
+title Model Governance - Authority Context
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: governance
+' bt-element-id: world
+
+actor "Operator / Platform\nResponsibility: Configure and invoke model routing without owning live commits\nContract: Privileged or internal platform call\n[[../../../../backend/app/model_governance/__init__.py source]]" as operator
+rectangle "Model Governance\nResponsibility: Route adapters and shape in-process governance sessions\nContract: Python package under backend/app/model_governance\n[[../../../../backend/app/model_governance/__init__.py source]]" as governance
+rectangle "World Engine\nResponsibility: Own live story commits\nContract: Authoritative play service\n[[../../../../world-engine/world_engine/main.py source]]" as world
+
+governance ..> world : "never commits live truth\ncontract: authority boundary\n[[../../../../tests/gates/test_runtime_sessions_table_absent.py source]]"
+operator ..> governance : "configures routing\ncontract: platform intent\n[[../../../../backend/app/model_governance/__init__.py source]]"
+
+legend bottom
+Viewpoint: context
+Concern: Routing package versus live world-engine authority
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

@@ -33,7 +33,7 @@ Cross-system trace identity, spans, evidence projections, redaction and degradat
 
 **Authority rule:** Each subsystem emits its own facts under one propagated trace identity; observability records execution but does not become business or narrative truth.
 
-**Git/archaeology scope:** `backend/app/observability`, `world-engine/app/observability`, `ai_stack/langfuse`, `tools/mcp_server/langfuse_tracing.py`, `tests/test_langfuse_story_turn_trace.py`
+**Git/archaeology scope:** `backend/app/observability`, `world-engine/world_engine/observability`, `ai_stack/langfuse`, `tools/mcp_server/langfuse_tracing.py`, `tests/test_langfuse_story_turn_trace.py`
 
 | Context concern | Model | Boundary statement |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ Historical MVP and work-order material is classified evidence, not an authority 
 
 | Block | Path |
 | --- | --- |
-| Trace middleware | `world-engine/app/middleware/trace_middleware.py` |
+| Trace middleware | `world-engine/world_engine/middleware/trace_middleware.py` |
 | Langfuse adapters | `ai_stack/langfuse/` |
 | Evaluator catalog | `ai_stack/quality_lab/` |
 | Turn cost ledger (Wave 0) | `story_runtime_core/model_call_accounting.py` — every `BaseModelAdapter.generate` is ledgered at the adapter seam (`CountingModelAdapter`); soft/hard turn-call budgets; `aggregate_phase_costs` exposes `call_count` / `attributed_call_count` / `unattributed_call_count`. UML: `UML/Project/architecture-drift/turn-cost-ledger.puml`. |
@@ -64,18 +64,18 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Operator (`operator`) | `actor` | Diagnose a player turn across services | Authorized redacted view | [`administration-tool/templates/manage/diagnosis.html`](../../../../administration-tool/templates/manage/diagnosis.html) |
-| DecisionEvidence (`decision`) | `class` | Explain validation, routing or commit outcome | Redacted inputs and explicit result | [`world-engine/app/observability/audit_log.py`](../../../../world-engine/app/observability/audit_log.py) |
+| DecisionEvidence (`decision`) | `class` | Explain validation, routing or commit outcome | Redacted inputs and explicit result | [`world-engine/world_engine/observability/audit_log.py`](../../../../world-engine/world_engine/observability/audit_log.py) |
 | SubsystemSpan (`span`) | `class` | Record bounded operation and ownership | Parent relation and timing | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
-| TurnTrace (`trace`) | `class` | Identify one end-to-end player turn | Globally propagated trace id | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
+| TurnTrace (`trace`) | `class` | Identify one end-to-end player turn | Globally propagated trace id | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | AI Langfuse Evidence (`ai`) | `component` | Record retrieval, planning, generation and validation spans | Proposal trace under parent turn | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
 | Backend Trace Start (`backend`) | `component` | Create or propagate player request identity | Stable trace and request ids | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
 | MCP Trace Adapter (`mcp`) | `component` | Record tool execution with redaction | No secret payloads | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
-| Operator Projection (`projection`) | `component` | Present cross-service trace tree and diagnostics | Read-only evidence view | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
-| World Runtime Trace (`world`) | `component` | Record authoritative lifecycle spans | Session and revision correlation | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
-| Complete (`complete`) | `state` | Close all required spans | Terminal outcome recorded | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
-| Partial (`partial`) | `state` | Retain useful evidence after telemetry failure | Domain flow not failed solely by telemetry | [`world-engine/app/observability/langfuse_adapter.py`](../../../../world-engine/app/observability/langfuse_adapter.py) |
-| Propagating (`propagating`) | `state` | Carry identity across service boundaries | Parent context retained | [`world-engine/app/middleware/trace_middleware.py`](../../../../world-engine/app/middleware/trace_middleware.py) |
-| Redacted (`redacted`) | `state` | Publish safe operator evidence | Secrets and sensitive text removed | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
+| Operator Projection (`projection`) | `component` | Present cross-service trace tree and diagnostics | Read-only evidence view | [`world-engine/world_engine/web/static/ui_traces.js`](../../../../world-engine/world_engine/web/static/ui_traces.js) |
+| World Runtime Trace (`world`) | `component` | Record authoritative lifecycle spans | Session and revision correlation | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
+| Complete (`complete`) | `state` | Close all required spans | Terminal outcome recorded | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
+| Partial (`partial`) | `state` | Retain useful evidence after telemetry failure | Domain flow not failed solely by telemetry | [`world-engine/world_engine/observability/langfuse_adapter.py`](../../../../world-engine/world_engine/observability/langfuse_adapter.py) |
+| Propagating (`propagating`) | `state` | Carry identity across service boundaries | Parent context retained | [`world-engine/world_engine/middleware/trace_middleware.py`](../../../../world-engine/world_engine/middleware/trace_middleware.py) |
+| Redacted (`redacted`) | `state` | Publish safe operator evidence | Secrets and sensitive text removed | [`world-engine/world_engine/web/static/ui_traces.js`](../../../../world-engine/world_engine/web/static/ui_traces.js) |
 | Started (`started`) | `state` | Establish trace identity | Trace id present | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
 | Turn Observability (`trace_system`) | `system` | Correlate execution evidence without owning domain truth | Trace id and redaction policy | [`docs/architecture/project/observability-traceability/architecture.md`](architecture.md) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
@@ -105,7 +105,7 @@ Langfuse optional via env; deterministic export paths for CI.
 This scope does not claim an independently deployable runtime. Its deployment effect is expressed through the owning systems and the following implementation roots:
 
 - `backend/app/observability`
-- `world-engine/app/observability`
+- `world-engine/world_engine/observability`
 - `ai_stack/langfuse`
 - `tools/mcp_server/langfuse_tracing.py`
 - `tests/test_langfuse_story_turn_trace.py`
@@ -189,10 +189,10 @@ Player input observability fields on spans (ADR-0033 §13.6).
 | AI Langfuse Evidence | World Runtime Trace | returns evidence references | proposal span linkage | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
 | Backend Trace Start | World Runtime Trace | propagates trace context | trace and request ids | [`backend/app/api/v1/game/trace_identity_and_auth_helpers.py`](../../../../backend/app/api/v1/game/trace_identity_and_auth_helpers.py) |
 | MCP Trace Adapter | Operator Projection | adds tool evidence | redacted MCP span | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
-| SubsystemSpan | DecisionEvidence | records | explainable outcome | [`world-engine/app/observability/audit_log.py`](../../../../world-engine/app/observability/audit_log.py) |
-| TurnTrace | SubsystemSpan | contains | parented operation tree | [`world-engine/app/observability/trace.py`](../../../../world-engine/app/observability/trace.py) |
-| World Runtime Trace | AI Langfuse Evidence | parents proposal trace | turn trace context | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
-| World Runtime Trace | Operator Projection | publishes lifecycle evidence | redacted trace DTO | [`world-engine/app/web/static/ui_traces.js`](../../../../world-engine/app/web/static/ui_traces.js) |
+| SubsystemSpan | DecisionEvidence | records | explainable outcome | [`world-engine/world_engine/observability/audit_log.py`](../../../../world-engine/world_engine/observability/audit_log.py) |
+| TurnTrace | SubsystemSpan | contains | parented operation tree | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
+| World Runtime Trace | AI Langfuse Evidence | parents proposal trace | turn trace context | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
+| World Runtime Trace | Operator Projection | publishes lifecycle evidence | redacted trace DTO | [`world-engine/world_engine/web/static/ui_traces.js`](../../../../world-engine/world_engine/web/static/ui_traces.js) |
 <!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
@@ -227,7 +227,7 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Consequences.** Trace middleware and adapters must propagate trace ids without claiming success when Langfuse is disabled.
 
-**Evidence.** [`world-engine/app/middleware/trace_middleware.py`](../../../../world-engine/app/middleware/trace_middleware.py).
+**Evidence.** [`world-engine/world_engine/middleware/trace_middleware.py`](../../../../world-engine/world_engine/middleware/trace_middleware.py).
 
 ### D3: Traceable decisions
 

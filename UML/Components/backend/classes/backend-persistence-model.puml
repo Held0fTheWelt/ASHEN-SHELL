@@ -25,7 +25,6 @@ class "Narrative Governance Models\nResponsibility: Persist packages, revisions,
   RevisionCandidate
   EvaluationRun
   RuntimeHealth
-  RuntimeSession
 }
 class "Alembic Schema\nResponsibility: Version backend persistence\nContract: Forward migration sequence\n[[../../../../backend/migrations/env.py source]]" as migration {
   48 tracked revisions

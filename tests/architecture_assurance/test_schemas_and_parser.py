@@ -70,7 +70,7 @@ def test_claimed_only_cannot_smuggle_an_anchor() -> None:
 def test_every_better_tomorrow_sad_has_arc42_sections_1_through_12() -> None:
     root = Path(__file__).resolve().parents[2]
     paths = sorted(root.glob("docs/architecture/**/architecture.md"))
-    assert len(paths) == 16
+    assert len(paths) == 17
     for path in paths:
         sad = parse_sad(path.read_text(encoding="utf-8-sig"))
         assert sad.section_numbers == tuple(range(1, 13)), path

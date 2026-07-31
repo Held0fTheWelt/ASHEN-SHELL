@@ -16,7 +16,7 @@
       "effect": "compatibility_delegate",
       "label": "delegates legacy entry without owning truth",
       "contract": "Compatibility paths may translate and delegate but never persist live-session state.",
-      "anchor": "world-engine/app/runtime/manager.py",
+      "anchor": "world-engine/world_engine/runtime/manager.py",
       "carries": [
         "validated_command"
       ]
@@ -63,7 +63,7 @@
       "effect": "content_projection",
       "label": "publishes immutable runtime projection",
       "contract": "World Engine receives a version-bound compiled projection.",
-      "anchor": "world-engine/app/content/backend_loader.py",
+      "anchor": "world-engine/world_engine/content/backend_loader.py",
       "carries": [
         "content_version",
         "source_provenance"
@@ -168,7 +168,7 @@
       "effect": "proposal_flow",
       "label": "returns uncommitted proposal and evidence",
       "contract": "The cross-process payload has no authoritative write capability.",
-      "anchor": "world-engine/app/story_runtime/governed_runtime_adapters.py",
+      "anchor": "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
       "carries": [
         "selected_scene_function",
         "primary_responder_id",
@@ -188,7 +188,7 @@
       "effect": "proposal_flow",
       "label": "resolves proposal against live authority",
       "contract": "World-owned validation produces a CommitDecision or a no-write rejection.",
-      "anchor": "world-engine/app/story_runtime/narrative_commit_resolution.py",
+      "anchor": "world-engine/world_engine/story_runtime/narrative_commit_resolution.py",
       "carries": [
         "selected_scene_function",
         "primary_responder_id",
@@ -210,7 +210,7 @@
       "write_resource": "live_story_session",
       "label": "commits one revision-safe transition",
       "contract": "Exactly one atomic session write occurs after an accepted CommitDecision; rejection performs no write.",
-      "anchor": "world-engine/app/story_runtime/story_session_store.py",
+      "anchor": "world-engine/world_engine/story_runtime/story_session_store.py",
       "carries": [
         "selected_scene_function",
         "primary_responder_id",
@@ -232,7 +232,7 @@
       "effect": "visible_projection",
       "label": "projects post-commit player-visible state",
       "contract": "Delivery is derived from committed state and cannot infer a new authoritative outcome.",
-      "anchor": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+      "anchor": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
       "carries": [
         "selected_scene_function",
         "primary_responder_id",
@@ -251,7 +251,7 @@
       "effect": "visible_projection",
       "label": "delivers committed visible blocks",
       "contract": "Transport preserves block order and speaker identity.",
-      "anchor": "world-engine/app/api/story_ws.py",
+      "anchor": "world-engine/world_engine/api/story_ws.py",
       "carries": [
         "visible_blocks",
         "speaker_identity"
@@ -315,7 +315,7 @@
       "effect": "evidence_flow",
       "label": "projects complete or explicitly partial trace",
       "contract": "Missing spans are visible as gaps and never presented as complete evidence.",
-      "anchor": "world-engine/app/web/static/ui_traces.js",
+      "anchor": "world-engine/world_engine/web/static/ui_traces.js",
       "carries": [
         "trace_id",
         "completeness",
@@ -402,7 +402,7 @@
       "write_resource": "live_run_instance",
       "label": "persists lobby/run instance state",
       "contract": "Only RuntimeManager writes live_run_instance through RunStore.",
-      "anchor": "world-engine/app/runtime/manager.py",
+      "anchor": "world-engine/world_engine/runtime/manager.py",
       "carries": [
         "runtime_profile_handoff"
       ]
@@ -418,7 +418,7 @@
       "write_resource": "branching_tree",
       "label": "persists branching tree records",
       "contract": "Exactly one manager sink owns branching_tree persistence.",
-      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
       "carries": [
         "tree_id"
       ]
@@ -434,7 +434,7 @@
       "write_resource": "branch_timeline",
       "label": "persists branch timeline records",
       "contract": "Exactly one manager sink owns branch_timeline persistence.",
-      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
       "carries": [
         "timeline_id"
       ]
@@ -450,7 +450,7 @@
       "write_resource": "callback_web",
       "label": "persists callback web records",
       "contract": "Exactly one manager sink owns callback_web persistence.",
-      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
       "carries": [
         "callback_web_id"
       ]
@@ -466,25 +466,9 @@
       "write_resource": "consequence_cascade",
       "label": "persists consequence cascade records",
       "contract": "Exactly one manager sink owns consequence_cascade persistence.",
-      "anchor": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+      "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
       "carries": [
         "cascade_id"
-      ]
-    },
-    {
-      "id": "backend-runtime-session-sql-write",
-      "claim_ids": [
-        "DRIFT-001"
-      ],
-      "from": "backend:compat",
-      "to": "backend:database",
-      "effect": "authoritative_write",
-      "write_resource": "backend_runtime_session",
-      "label": "persists backend runtime_sessions rows",
-      "contract": "Backend session store owns runtime_sessions SQL writes; Wave 6 may retire this resource.",
-      "anchor": "backend/app/runtime/session/session_store.py",
-      "carries": [
-        "session_id"
       ]
     }
   ],
@@ -545,15 +529,6 @@
       "forbidden_writers": [
         "world-engine:runtime"
       ]
-    },
-    {
-      "id": "single-backend-runtime-session-writer",
-      "resource": "backend_runtime_session",
-      "expected_writer": "backend:compat",
-      "expected_sink": "backend:database",
-      "forbidden_writers": [
-        "world-engine:runtime"
-      ]
     }
   ],
   "write_surfaces": [
@@ -566,13 +541,13 @@
         "_session_store"
       ],
       "scan_roots": [
-        "world-engine/app",
+        "world-engine/world_engine",
         "ai_stack",
         "backend/app"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "path": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_session"
         }
       ],
@@ -588,35 +563,35 @@
         "store"
       ],
       "scan_roots": [
-        "world-engine/app"
+        "world-engine/world_engine"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "attach_runtime_profile_handoff"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "bind_story_session"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "_bootstrap_instance"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "find_or_join_run"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "connect"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "disconnect"
         },
         {
-          "path": "world-engine/app/runtime/manager.py",
+          "path": "world-engine/world_engine/runtime/manager.py",
           "symbol": "process_command"
         }
       ],
@@ -632,11 +607,11 @@
         "_branching_tree_store"
       ],
       "scan_roots": [
-        "world-engine/app"
+        "world-engine/world_engine"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "path": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_branching_tree_record"
         }
       ],
@@ -652,11 +627,11 @@
         "_branch_timeline_store"
       ],
       "scan_roots": [
-        "world-engine/app"
+        "world-engine/world_engine"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "path": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_branch_timeline_record"
         }
       ],
@@ -672,11 +647,11 @@
         "_callback_web_store"
       ],
       "scan_roots": [
-        "world-engine/app"
+        "world-engine/world_engine"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "path": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_callback_web_record"
         }
       ],
@@ -692,30 +667,12 @@
         "_consequence_cascade_store"
       ],
       "scan_roots": [
-        "world-engine/app"
+        "world-engine/world_engine"
       ],
       "allowed_callsites": [
         {
-          "path": "world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py",
+          "path": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
           "symbol": "_persist_consequence_cascade_record"
-        }
-      ],
-      "minimum_calls": 1,
-      "maximum_calls": 1
-    },
-    {
-      "id": "backend-runtime-session-sql-persist-callsite",
-      "resource": "backend_runtime_session",
-      "language": "python",
-      "call": "_persist_session_to_database",
-      "store_attrs": [],
-      "scan_roots": [
-        "backend/app"
-      ],
-      "allowed_callsites": [
-        {
-          "path": "backend/app/runtime/session/session_store.py",
-          "symbol": "create_session"
         }
       ],
       "minimum_calls": 1,
@@ -743,7 +700,7 @@
               "token": "selected_scene_function"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "selected_scene_function"
             }
           ]
@@ -758,7 +715,7 @@
               "token": "primary_responder_id"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "primary_responder_id"
             }
           ]
@@ -773,7 +730,7 @@
               "token": "continuity_impacts"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "continuity_impacts"
             }
           ]
@@ -784,11 +741,11 @@
           "required_through": "world-validation-authoritative-write",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/planner_truth_projection.py",
+              "path": "world-engine/world_engine/story_runtime/planner_truth_projection.py",
               "token": "dramatic_effect_gate"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "dramatic_effect_gate"
             }
           ]
@@ -799,11 +756,11 @@
           "required_through": "committed-state-to-delivery",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "beat_progression"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+              "path": "world-engine/world_engine/story_runtime/manager/committed_dramatic_context.py",
               "token": "beat_progression"
             }
           ]
@@ -814,11 +771,11 @@
           "required_through": "world-validation-authoritative-write",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "commit_contract_version"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/session/session_loop_governance.py",
+              "path": "world-engine/world_engine/story_runtime/manager/session/session_loop_governance.py",
               "token": "commit_contract_version"
             }
           ]
@@ -839,7 +796,7 @@
           "required_through": "frontend-stream-to-renderer",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "scene_blocks"
             },
             {
@@ -854,7 +811,7 @@
           "required_through": "frontend-stream-to-renderer",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "\"speaker\""
             },
             {
@@ -887,7 +844,7 @@
               "token": "selected_scene_function"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "selected_scene_function"
             }
           ]
@@ -902,7 +859,7 @@
               "token": "primary_responder_id"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "primary_responder_id"
             }
           ]
@@ -917,7 +874,7 @@
               "token": "continuity_impacts"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "continuity_impacts"
             }
           ]
@@ -928,11 +885,11 @@
           "required_through": "world-validation-authoritative-write",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/planner_truth_projection.py",
+              "path": "world-engine/world_engine/story_runtime/planner_truth_projection.py",
               "token": "dramatic_effect_gate"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "dramatic_effect_gate"
             }
           ]
@@ -943,11 +900,11 @@
           "required_through": "committed-state-to-delivery",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "beat_progression"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+              "path": "world-engine/world_engine/story_runtime/manager/committed_dramatic_context.py",
               "token": "beat_progression"
             }
           ]
@@ -958,11 +915,11 @@
           "required_through": "world-validation-authoritative-write",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "commit_contract_version"
             },
             {
-              "path": "world-engine/app/story_runtime/manager/session/session_loop_governance.py",
+              "path": "world-engine/world_engine/story_runtime/manager/session/session_loop_governance.py",
               "token": "commit_contract_version"
             }
           ]
@@ -973,11 +930,11 @@
           "required_through": "committed-state-to-delivery",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/session/session_payloads.py",
+              "path": "world-engine/world_engine/story_runtime/manager/session/session_payloads.py",
               "token": "revision"
             },
             {
-              "path": "world-engine/app/story_runtime/persist_outcome.py",
+              "path": "world-engine/world_engine/story_runtime/persist_outcome.py",
               "token": "Persisted"
             }
           ]
@@ -988,11 +945,11 @@
           "required_through": "committed-state-to-delivery",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/session/recoverable_rejection_and_sessions.py",
+              "path": "world-engine/world_engine/story_runtime/manager/session/recoverable_rejection_and_sessions.py",
               "token": "recoverable_rejection"
             },
             {
-              "path": "world-engine/app/story_runtime/commit_models.py",
+              "path": "world-engine/world_engine/story_runtime/commit_models.py",
               "token": "commit_reason_code"
             }
           ]
@@ -1013,7 +970,7 @@
           "required_through": "frontend-stream-to-renderer",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "scene_blocks"
             },
             {
@@ -1028,7 +985,7 @@
           "required_through": "frontend-stream-to-renderer",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "\"speaker\""
             },
             {
@@ -1082,7 +1039,7 @@
           "required_through": "ledger-to-langfuse-observation",
           "source_proofs": [
             {
-              "path": "world-engine/app/story_runtime/manager/story_window_entry_parts.py",
+              "path": "world-engine/world_engine/story_runtime/manager/story_window_entry_parts.py",
               "token": "quality_class"
             },
             {

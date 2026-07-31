@@ -12,7 +12,7 @@
 | MCP Client | Discover and invoke Better Tomorrow tools | JSON-RPC over stdio | [`tools/mcp_server/README.md`](../../../../tools/mcp_server/README.md) |
 | MCP Server | Validate protocol and dispatch registered capabilities | MCP JSON-RPC | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
 | Backend | Authorize and execute platform mutations | Authenticated backend API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
-| World Engine | Expose safe session inspection and commands | Runtime API | [`world-engine/app/api/http.py`](../../../../world-engine/app/api/http.py) |
+| World Engine | Expose safe session inspection and commands | Runtime API | [`world-engine/world_engine/api/http.py`](../../../../world-engine/world_engine/api/http.py) |
 
 ## Modeled relationships
 

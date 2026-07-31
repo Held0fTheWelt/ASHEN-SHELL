@@ -1,0 +1,36 @@
+@startuml
+' bt-view-kind: sequence
+' bt-view-id: model-governance:routing-sequence
+title Model Governance - Routing Sequence
+
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: operator
+' bt-element-id: governance
+' bt-element-id: routing
+' bt-element-id: registry
+' bt-element-id: contracts
+' bt-element-id: session
+
+actor "Operator / Platform\nResponsibility: Configure and invoke model routing without owning live commits\nContract: Privileged or internal platform call\n[[../../../../backend/app/model_governance/__init__.py source]]" as operator
+participant "Model Governance\nResponsibility: Route adapters and shape in-process governance sessions\nContract: Python package under backend/app/model_governance\n[[../../../../backend/app/model_governance/__init__.py source]]" as governance
+participant "Model Routing\nResponsibility: Choose adapters and record routing decisions\nContract: Routing policy without commit side effects\n[[../../../../backend/app/model_governance/model_routing.py source]]" as routing
+participant "Adapter Registry\nResponsibility: Register available AI adapters\nContract: Explicit registry bootstrap\n[[../../../../backend/app/model_governance/adapter_registry.py source]]" as registry
+participant "Routing Contracts\nResponsibility: Define routing decision vocabulary\nContract: Serializable contract types\n[[../../../../backend/app/model_governance/model_routing_contracts.py source]]" as contracts
+participant "Governance Session Persistence\nResponsibility: Serialize in-process governance session shape\nContract: JSON-compatible snapshot; not live WE authority\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]" as session
+
+operator -> governance : "configures routing\ncontract: platform intent\n[[../../../../backend/app/model_governance/__init__.py source]]"
+governance -> routing : "selects adapter\ncontract: routing-only side effect\n[[../../../../backend/app/model_governance/model_routing.py source]]"
+routing -> registry : "resolves adapters\ncontract: registered adapters only\n[[../../../../backend/app/model_governance/adapter_registry.py source]]"
+routing -> contracts : "emits decision vocabulary\ncontract: stable contract types\n[[../../../../backend/app/model_governance/model_routing_contracts.py source]]"
+governance -> session : "persists governance snapshot\ncontract: non-authoritative snapshot\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]"
+
+legend bottom
+Viewpoint: sequence
+Concern: Adapter selection without live commit
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

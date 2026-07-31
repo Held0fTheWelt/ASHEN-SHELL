@@ -206,11 +206,11 @@ Tests may assert that evidence fields name structured sources such as `narrative
 - `ai_stack/story_runtime/runtime_aspect_ledger/__init__.py`
 - `tools/mcp_server/handlers/langfuse_verify/`
 - `content/modules/god_of_carnage/module.yaml`
-- `world-engine/app/story_runtime/callback_web_store.py`
-- `world-engine/app/story_runtime/manager/`
-- `world-engine/app/api/http.py`
-- `world-engine/app/config.py`
-- `world-engine/app/main.py`
+- `world-engine/world_engine/story_runtime/callback_web_store.py`
+- `world-engine/world_engine/story_runtime/manager/`
+- `world-engine/world_engine/api/http.py`
+- `world-engine/world_engine/config.py`
+- `world-engine/world_engine/main.py`
 
 ## Verification Anchors
 

@@ -15,7 +15,7 @@ skinparam maxMessageSize 180
 actor "MCP Client\nResponsibility: Discover and invoke Better Tomorrow tools\nContract: JSON-RPC over stdio\n[[../../../../tools/mcp_server/README.md source]]" as client
 rectangle "MCP Server\nResponsibility: Validate protocol and dispatch registered capabilities\nContract: MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]" as server
 rectangle "Backend\nResponsibility: Authorize and execute platform mutations\nContract: Authenticated backend API\n[[../../../../backend/app/api/v1/__init__.py source]]" as backend
-rectangle "World Engine\nResponsibility: Expose safe session inspection and commands\nContract: Runtime API\n[[../../../../world-engine/app/api/http.py source]]" as world
+rectangle "World Engine\nResponsibility: Expose safe session inspection and commands\nContract: Runtime API\n[[../../../../world-engine/world_engine/api/http.py source]]" as world
 
 server ..> backend : "delegates mutation\ncontract: backend authority and audit\n[[../../../../tools/mcp_server/backend_client.py source]]"
 server ..> world : "inspects session\ncontract: safe runtime surface\n[[../../../../tools/mcp_server/handlers/tools_registry_handlers_backend_session.py source]]"

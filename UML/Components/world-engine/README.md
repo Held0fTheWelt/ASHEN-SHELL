@@ -20,6 +20,6 @@ Authoritative live story runtime coordinating sessions, content, AI proposals, v
 
 ## Drift focus
 
-The engine contains both app/story_runtime and app/runtime generations plus manager decompositions and legacy surfaces. Models make the canonical turn path, compatibility seams and commit authority testable.
+The engine contains both world_engine/story_runtime and world_engine/runtime generations plus manager decompositions and legacy surfaces. Models make the canonical turn path, compatibility seams and commit authority testable.
 
 [Decision/view/source traceability](TRACEABILITY.md)

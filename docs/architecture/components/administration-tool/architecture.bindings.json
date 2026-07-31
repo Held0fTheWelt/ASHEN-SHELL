@@ -45,22 +45,6 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "backend/app/runtime/presentation/debug_presenter.py",
-          "file": "backend/app/runtime/presentation/debug_presenter.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Debug Panel UI — bounded diagnostics in session UI"
-        },
-        {
-          "declared_path": "backend/tests/runtime/test_debug_presenter.py",
-          "file": "backend/tests/runtime/test_debug_presenter.py",
-          "kind": "test",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Debug Panel UI — bounded diagnostics in session UI"
-        },
-        {
           "declared_path": "docs/architecture/components/administration-tool/architecture.md",
           "file": "docs/architecture/components/administration-tool/architecture.md",
           "kind": "file",

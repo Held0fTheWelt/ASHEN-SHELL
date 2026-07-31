@@ -12,7 +12,7 @@
 | Player | Launch and interact with a story session | Authenticated browser interaction | [`frontend/templates/session_shell.html`](../../../../frontend/templates/session_shell.html) |
 | Frontend | Render platform pages and live play shell | Flask blueprint plus browser assets | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
 | Backend | Own identity and proxy play operations | HTTP API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
-| World Engine | Stream authoritative session updates | Ticketed WebSocket/HTTP via backend | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| World Engine | Stream authoritative session updates | Ticketed WebSocket/HTTP via backend | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 
 ## Modeled relationships
 

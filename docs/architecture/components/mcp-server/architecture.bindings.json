@@ -1409,7 +1409,7 @@
         "tools/mcp_server/backend_client.py",
         "tools/mcp_server/handlers/tools_registry_handlers_backend_session.py",
         "tools/mcp_server/server.py",
-        "world-engine/app/api/http.py"
+        "world-engine/world_engine/api/http.py"
       ],
       "concern": "Protocol adapter boundary against domain authorities",
       "decisions": [

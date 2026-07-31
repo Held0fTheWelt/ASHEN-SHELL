@@ -11,12 +11,12 @@ skinparam maxMessageSize 180
 ' bt-element-id: core
 ' bt-element-id: ai
 
-rectangle "World Engine\nResponsibility: Own and commit live story state\nContract: Calls pure shared contracts\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]" as world
+rectangle "World Engine\nResponsibility: Own and commit live story state\nContract: Calls pure shared contracts\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]" as world
 rectangle "Story Runtime Core\nResponsibility: Provide portable domain contracts and deterministic algorithms\nContract: Python package without service authority\n[[../../../../story_runtime_core/__init__.py source]]" as core
 rectangle "AI Stack\nResponsibility: Produce proposals using shared semantic contracts\nContract: Proposal-only integration\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]" as ai
 
 ai ..> core : "uses semantic models\ncontract: proposal-only values\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]"
-world ..> core : "uses contracts\ncontract: host retains authority\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
+world ..> core : "uses contracts\ncontract: host retains authority\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
 
 legend bottom
 Viewpoint: context

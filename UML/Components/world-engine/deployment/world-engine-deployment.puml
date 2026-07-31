@@ -12,14 +12,14 @@ skinparam maxMessageSize 180
 ' bt-element-id: ai_node
 ' bt-element-id: store_node
 
-node "Backend/Browser Clients\nResponsibility: Call story endpoints and consume events\nContract: HTTP/WebSocket\n[[../../../../world-engine/app/api/http.py source]]" as client_node
+node "Backend/Browser Clients\nResponsibility: Call story endpoints and consume events\nContract: HTTP/WebSocket\n[[../../../../world-engine/world_engine/api/http.py source]]" as client_node
 node "World Engine Process\nResponsibility: Host authoritative runtime\nContract: Python service\n[[../../../../world-engine/Dockerfile source]]" as world_node
 node "AI Runtime\nResponsibility: Produce proposals\nContract: In-process/service adapter\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor.py source]]" as ai_node
-database "Session Persistence\nResponsibility: Persist committed state and evidence\nContract: Atomic revision storage\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]" as store_node
+database "Session Persistence\nResponsibility: Persist committed state and evidence\nContract: Atomic revision storage\n[[../../../../world-engine/world_engine/story_runtime/persist_outcome.py source]]" as store_node
 
 client_node --> world_node : "HTTP/WebSocket\ncontract: ticketed story API"
-world_node --> ai_node : "proposal call\ncontract: bounded trace context\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
-world_node --> store_node : "commit transaction\ncontract: monotonic session revision\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
+world_node --> ai_node : "proposal call\ncontract: bounded trace context\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
+world_node --> store_node : "commit transaction\ncontract: monotonic session revision\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
 
 legend bottom
 Viewpoint: deployment

@@ -19,9 +19,9 @@
         "WOS_COMBINED_FOUNDATION_REPAIR_AND_REPLACEMENT_BUNDLE_TASK.md"
       ],
       "current_evidence": [
-        "world-engine/app/story_runtime/manager/runtime_manager.py",
-        "world-engine/app/runtime/manager.py",
-        "world-engine/app/story_runtime/manager/commit_finalization.py"
+        "world-engine/world_engine/story_runtime/manager/runtime_manager.py",
+        "world-engine/world_engine/runtime/manager.py",
+        "world-engine/world_engine/story_runtime/manager/commit_finalization.py"
       ],
       "status": "confirmed_current",
       "diagnosis": "Live story session and live run instance are separate persistence resources (Wave 2). Remaining risk is incomplete retirement of overlapping runtime generations.",
@@ -44,8 +44,8 @@
       ],
       "current_evidence": [
         "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
-        "world-engine/app/story_runtime/narrative_commit_resolution.py",
-        "world-engine/app/story_runtime/canonical_turn_lifecycle.py"
+        "world-engine/world_engine/story_runtime/narrative_commit_resolution.py",
+        "world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py"
       ],
       "status": "conflicting",
       "diagnosis": "AI validation/finalization still uses commit terminology while world-engine is the declared commit authority. Even when behavior is proposal-only, naming and payload semantics invite authority drift.",
@@ -68,9 +68,9 @@
         "world_of_shadows_narrative_system_audit_2026-04-22.md"
       ],
       "current_evidence": [
-        "world-engine/app/story_runtime/manager/turn_execution.py",
-        "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
-        "world-engine/app/story_runtime/manager/committed_dramatic_context_parts.py",
+        "world-engine/world_engine/story_runtime/manager/turn_execution.py",
+        "world-engine/world_engine/story_runtime/manager/committed_dramatic_context.py",
+        "world-engine/world_engine/story_runtime/manager/committed_dramatic_context_parts.py",
         "tests/test_pr_b_live_effect_propagation.py"
       ],
       "status": "open_target",
@@ -96,7 +96,7 @@
       "current_evidence": [
         "content/modules/god_of_carnage/module.yaml",
         "backend/app/content/module_loader.py",
-        "world-engine/app/content/backend_loader.py",
+        "world-engine/world_engine/content/backend_loader.py",
         "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py"
       ],
       "status": "conflicting",
@@ -120,8 +120,8 @@
       ],
       "current_evidence": [
         "content/modules/god_of_carnage/canonical_path/_schema.yaml",
-        "world-engine/app/story_runtime/manager/turn_execution.py",
-        "world-engine/app/story_runtime/manager/committed_dramatic_context.py",
+        "world-engine/world_engine/story_runtime/manager/turn_execution.py",
+        "world-engine/world_engine/story_runtime/manager/committed_dramatic_context.py",
         "frontend/static/play_block_renderer.js"
       ],
       "status": "open_target",
@@ -144,16 +144,16 @@
         "WOS_FOUNDATION_STABILIZATION_REPAIR_PROMPT.md"
       ],
       "current_evidence": [
-        "world-engine/app/story_runtime/manager/commit_finalization.py",
-        "world-engine/app/story_runtime/manager/runtime_manager.py",
-        "world-engine/app/story_runtime/manager/turn_execution.py",
+        "world-engine/world_engine/story_runtime/manager/commit_finalization.py",
+        "world-engine/world_engine/story_runtime/manager/runtime_manager.py",
+        "world-engine/world_engine/story_runtime/manager/turn_execution.py",
         "ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py"
       ],
       "status": "open_target",
       "diagnosis": "World-engine manager SOURCE/exec shards are removed (Wave 1). Remaining dynamic SOURCE assembly lives in ai_stack/backend/tools (Waves 5/9).",
       "target": "Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion.",
       "acceptance_evidence": [
-        "No SOURCE/SOURCE_LINES or exec(compile under world-engine/app (gate test green).",
+        "No SOURCE/SOURCE_LINES or exec(compile under world-engine/world_engine (gate test green).",
         "No SOURCE modules remain under ai_stack, backend/app, or tools production roots.",
         "Primary and degraded turn traces remain behaviorally equivalent."
       ]
@@ -169,8 +169,8 @@
         "world_of_shadows_narrative_system_audit_2026-04-22.md"
       ],
       "current_evidence": [
-        "world-engine/app/story_runtime/manager/story_window_entries.py",
-        "world-engine/app/story_runtime/manager/player_visible_canonical_record.py",
+        "world-engine/world_engine/story_runtime/manager/story_window_entries.py",
+        "world-engine/world_engine/story_runtime/manager/player_visible_canonical_record.py",
         "frontend/static/play_block_renderer.js",
         "frontend/static/play_narrative_stream.js"
       ],
@@ -196,7 +196,7 @@
       ],
       "current_evidence": [
         "backend/app/api/v1/game/player_turn_trace_start.py",
-        "world-engine/app/observability/trace.py",
+        "world-engine/world_engine/observability/trace.py",
         "ai_stack/langfuse/langfuse_evidence.py",
         "tools/mcp_server/langfuse_tracing.py"
       ],

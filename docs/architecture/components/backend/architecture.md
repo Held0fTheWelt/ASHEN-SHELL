@@ -55,7 +55,7 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Game proxy | `backend/app/services/game/game_service.py` |
 | Content | `backend/app/content/` |
 | Governance | `backend/app/services/governance/` |
-| Transitional runtime | `backend/app/runtime/` (deprecated for live play) |
+| Retired transitional runtime | `tests/gates/test_runtime_sessions_table_absent.py` (former `backend/app/runtime/` removed in Wave 6 G2) |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
 ### Source-bound building-block catalog
@@ -78,7 +78,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Domain Services (`services`) | `container` | Implement platform and governance use cases | Transaction-scoped service operations | [`backend/app/services/__init__.py`](../../../../backend/app/services/__init__.py) |
 | Observability (`observability`) | `container` | Record platform traces, metrics and diagnostic evidence | Trace correlation with redaction | [`backend/app/observability/__init__.py`](../../../../backend/app/observability/__init__.py) |
 | Persistence Models (`models`) | `container` | Represent backend and narrative-governance durable truth | SQLAlchemy models and Alembic schema | [`backend/app/models/__init__.py`](../../../../backend/app/models/__init__.py) |
-| Transitional Runtime (`compat`) | `container` | Retain explicitly non-authoritative compatibility functions | Quarantined; never player truth authority | [`backend/app/runtime/__init__.py`](../../../../backend/app/runtime/__init__.py) |
+| Retired Transitional Runtime (`compat`) | `container` | Document absence of former backend/app/runtime live-session surfaces | Retired; never player truth authority | [`tests/gates/test_runtime_sessions_table_absent.py`](../../../../tests/gates/test_runtime_sessions_table_absent.py) |
 | Backend Database (`database`) | `database` | Persist platform and governance truth | SQLAlchemy/Alembic | [`backend/app/extensions.py`](../../../../backend/app/extensions.py) |
 | Redis (`redis`) | `database` | Share governed runtime configuration and rate-limit state | Explicit bootstrap and health policy | [`docker-compose.yml`](../../../../docker-compose.yml) |
 | Backend Process (`backend_node`) | `node` | Serve Flask API and platform pages | Port 5000 | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
@@ -86,7 +86,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | World Engine Process (`world_node`) | `node` | Execute authoritative play | Internal HTTP | [`world-engine/Dockerfile`](../../../../world-engine/Dockerfile) |
 | Administration Tool (`admin`) | `system` | Present operator intent | Backend proxy only | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
 | Backend (`backend`) | `system` | Own platform data and governed control-plane operations | Flask /api/v1 | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
-| World Engine (`world`) | `system` | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+| World Engine (`world`) | `system` | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -120,7 +120,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 
 ## 8. Crosscutting Concepts
 
-- Model routing: `backend/app/runtime/model_routing.py` (adapter choice, traces).
+- Model routing: `backend/app/model_governance/model_routing.py` (adapter choice, traces).
 - Operational governance routes tested in `backend/tests/test_operational_governance_*.py`.
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
@@ -128,7 +128,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 
 | From | To | Semantics | Contract | Evidence |
 | --- | --- | --- | --- | --- |
-| API v1 | Transitional Runtime | uses explicit compatibility paths | quarantined non-authoritative behavior | [`backend/app/runtime/__init__.py`](../../../../backend/app/runtime/__init__.py) |
+| API v1 | Retired Transitional Runtime | no longer routes through retired runtime package | absence enforced; never player truth authority | [`tests/gates/test_runtime_sessions_table_absent.py`](../../../../tests/gates/test_runtime_sessions_table_absent.py) |
 | API v1 | Domain Services | invokes use cases | validated request DTOs | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
 | Authentication API | Domain Services | authenticates | identity and token services | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
 | Content Services | Persistence Models | persists package lifecycle | immutable versions and events | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
@@ -170,7 +170,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 **Implementation status.** **Implemented — matches ADR (inventory complete; retirement ongoing).**
 
 - Backend transitional session surfaces are inventoried and classified; documented in `docs/technical/architecture/backend-runtime-classification.md`.
-- The former backend session API route and flat session service surfaces are retired; the remaining backend-local compatibility store lives at `backend/app/runtime/session/session_store.py` and is classified non-authoritative per the ADR.
+- The former backend session API route, flat session service surfaces, and `tests/gates/test_runtime_sessions_table_absent.py` are retired. SQL `runtime_sessions` was dropped in Wave 6 G2 (Alembic 049); live session authority remains exclusively in world-engine.
 - Governance investigation confirms `CTR-ADR-0002-BACKEND-SESSION-QUARANTINE` is implemented; validated by `backend/tests/test_session_routes.py` and `backend/tests/test_world_engine_console_routes.py`.
 - One open gap: the ADR cites "Appendix A" (normative surface list) as a living artifact — retirement timeline for remaining transitional shims is intentionally unresolved (`CNF-RUNTIME-SPINE-TRANSITIONAL-RETIREMENT`). No action required before marking Accepted; tracking continues in governance audit.
 

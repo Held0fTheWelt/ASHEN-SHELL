@@ -20,7 +20,7 @@ generates bindings and depth views, verifies canon drift and emits CI evidence.
 <!-- BEGIN BT-SEMANTIC-DEPTH:3 -->
 ### Evidence-grounded scope and authority
 
-Executable architecture correspondence system for declarations, source bindings, semantic views, drift evidence, reports and canonical AKDB export.
+Executable architecture correspondence system for declarations, source bindings, semantic views, machine-readable drift edges, reports and canonical AKDB export.
 
 **Authority rule:** Human-authored SAD decisions and the semantic model catalog define intent; source anchors and Git evidence establish implementation correspondence; generated evidence never invents authority.
 
@@ -62,7 +62,9 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Architecture Declarations (`declarations`) | `class` | Capture decisions, qualities and constraints | Stable SAD identifiers | [`tools/architecture_assurance/sad_parser.py`](../../../../tools/architecture_assurance/sad_parser.py) |
 | Audit Findings (`findings`) | `class` | Explain drift with stable identifiers | severity, scope, evidence and remediation | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
 | Correspondence Bindings (`bindings`) | `class` | Relate declarations to implementation evidence | Existing paths and explicit kinds | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
+| Drift Edge Catalog (`drift_edges`) | `class` | Describe authority, proposal, projection and evidence flows | Resolvable model nodes, claim ids, source anchors and carried fields | [`tools/architecture_assurance/drift_edge_catalog.json`](../../../../tools/architecture_assurance/drift_edge_catalog.json) |
 | Audit Engine (`audit`) | `component` | Evaluate correspondence and model semantics | Stable findings and exit policy | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
+| Authority and Envelope Gate (`drift_gate`) | `component` | Resolve drift edges and reject competing writers or lost envelope fields | Source-bound topology with stable CI rule identifiers | [`tools/architecture_assurance/drift_edges.py`](../../../../tools/architecture_assurance/drift_edges.py) |
 | Binding Manifest Builder (`manifest`) | `component` | Bind SAD declarations to source, tests and views | One deterministic manifest per scope | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
 | Canon Exporter (`canon`) | `component` | Create idempotent AKDB source projection | Hash-stable destination manifest | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
 | Report Exporters (`reports`) | `component` | Emit human, JSON, JUnit and SARIF evidence | Schema-stable deterministic serialization | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
@@ -89,7 +91,7 @@ and renders the single result to requested formats.
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| From authored intent and source discovery to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) | 6 |
+| From authored intent and source discovery through drift invariants to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) | 9 |
 | Audit, multi-format reporting, canonical export and external validation | `sequence` | [Architecture Assurance - Export Sequence](../../../../UML/Project/architecture-assurance/sequence/export-sequence.md) | 4 |
 | Intent, correlation, evaluation, export and later drift | `state` | [Architecture Assurance - Evidence Lifecycle](../../../../UML/Project/architecture-assurance/states/evidence-lifecycle.md) | 5 |
 
@@ -131,9 +133,13 @@ implemented or accepted declaration needs a real anchor; dry-run never writes.
 | Audit Engine | Report Exporters | emits findings | normalized result model | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
 | Correspondence Bindings | Audit Findings | produce gaps or proof | traceable evidence locations | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
 | Semantic Model Catalog | Repository Discovery | scopes evidence | history roots and source anchors | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Semantic Model Catalog | Drift Edge Catalog | resolves drift topology | subsystem and element references | [`tools/architecture_assurance/drift_edges.py`](../../../../tools/architecture_assurance/drift_edges.py) |
 | Semantic Model Catalog | Semantic View Builder | projects viewpoints | semantic elements and edge contracts | [`tools/architecture_assurance/semantic_models.py`](../../../../tools/architecture_assurance/semantic_models.py) |
 | Architecture Declarations | Correspondence Bindings | are grounded by | stable declaration ids | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
 | Repository Discovery | Binding Manifest Builder | supplies inventory | normalized repository paths | [`tools/architecture_assurance/discovery.py`](../../../../tools/architecture_assurance/discovery.py) |
+| Drift Edge Catalog | Audit Findings | produce authority or envelope violations | stable gate findings with source locations | [`tools/architecture_assurance/drift_edges.py`](../../../../tools/architecture_assurance/drift_edges.py) |
+| Drift Edge Catalog | Authority and Envelope Gate | supplies authority and field-flow contracts | versioned drift-edge schema | [`tools/architecture_assurance/drift_edge_catalog.json`](../../../../tools/architecture_assurance/drift_edge_catalog.json) |
+| Authority and Envelope Gate | Audit Engine | emits hard invariant findings | write-conflict and field-loss rules | [`tools/architecture_assurance/drift_edges.py`](../../../../tools/architecture_assurance/drift_edges.py) |
 | Binding Manifest Builder | Audit Engine | supplies declared correspondence | binding schema | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
 | Report Exporters | Canon Exporter | joins canonical evidence | accepted report state | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
 | Semantic View Builder | Audit Engine | supplies analyzable models | view requirements and source links | [`tools/architecture_assurance/semantic_models.py`](../../../../tools/architecture_assurance/semantic_models.py) |
@@ -232,10 +238,10 @@ by this test. Evidence:
 | Decision(s) | Concern | Viewpoint | Model |
 | --- | --- | --- | --- |
 | `D1`, `D4` | Human intent, repository truth and disposable external AKDB | `context` | [Architecture Assurance - Context](../../../../UML/Project/architecture-assurance/context/assurance-context.md) |
-| `D1`, `D2`, `D3` | Discovery, correspondence, semantic projection, audit, reporting and canon seams | `component` | [Architecture Assurance - Components](../../../../UML/Project/architecture-assurance/components/assurance-components.md) |
-| `D1`, `D2` | From authored intent and source discovery to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) |
+| `D1`, `D2`, `D3`, `D7` | Discovery, correspondence, semantic projection, drift invariants, audit, reporting and canon seams | `component` | [Architecture Assurance - Components](../../../../UML/Project/architecture-assurance/components/assurance-components.md) |
+| `D1`, `D2`, `D7` | From authored intent and source discovery through drift invariants to classified evidence | `activity` | [Architecture Assurance - Audit Flow](../../../../UML/Project/architecture-assurance/activity/audit-flow.md) |
 | `D3`, `D4` | Audit, multi-format reporting, canonical export and external validation | `sequence` | [Architecture Assurance - Export Sequence](../../../../UML/Project/architecture-assurance/sequence/export-sequence.md) |
-| `D1` | Declarations, correspondence bindings and explainable findings | `class` | [Architecture Assurance - Evidence Model](../../../../UML/Project/architecture-assurance/classes/evidence-model.md) |
+| `D1`, `D7` | Declarations, correspondence bindings, drift edges and explainable findings | `class` | [Architecture Assurance - Evidence Model](../../../../UML/Project/architecture-assurance/classes/evidence-model.md) |
 | `D2`, `D3` | Intent, correlation, evaluation, export and later drift | `state` | [Architecture Assurance - Evidence Lifecycle](../../../../UML/Project/architecture-assurance/states/evidence-lifecycle.md) |
 
 The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
@@ -257,7 +263,7 @@ or generated surfaces require an explicit scanner before they can count.
 <!-- BEGIN BT-SEMANTIC-DEPTH:11 -->
 ### Git-grounded drift profile
 
-The previous migration proved file coverage while shallow star diagrams hid semantic gaps. This model separates discovery, correspondence, interpretation, projection and export.
+The previous migration proved file coverage while shallow star diagrams hid semantic gaps. This model separates discovery, correspondence, interpretation, drift-edge invariants, projection and export.
 
 | Tracked files | Lifetime commits | Recent path touches | Recent renames |
 | ---: | ---: | ---: | ---: |

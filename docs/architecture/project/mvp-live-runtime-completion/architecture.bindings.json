@@ -3,8 +3,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/runtime/profiles.py",
-          "file": "world-engine/app/runtime/profiles.py",
+          "declared_path": "world-engine/world_engine/runtime/profiles.py",
+          "file": "world-engine/world_engine/runtime/profiles.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -19,8 +19,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/runtime/actor_lane.py",
-          "file": "world-engine/app/runtime/actor_lane.py",
+          "declared_path": "world-engine/world_engine/runtime/models.py",
+          "file": "world-engine/world_engine/runtime/models.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -51,8 +51,8 @@
     {
       "anchors": [
         {
-          "declared_path": "world-engine/app/observability/trace.py",
-          "file": "world-engine/app/observability/trace.py",
+          "declared_path": "world-engine/world_engine/observability/trace.py",
+          "file": "world-engine/world_engine/observability/trace.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -159,16 +159,16 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "MVP4 Live Runtime Setup Requirements"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -221,32 +221,24 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-          "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Experience Identity"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/runtime/manager.py",
+          "file": "world-engine/world_engine/runtime/manager.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Experience Identity"
         },
         {
-          "declared_path": "world-engine/app/runtime/manager.py",
-          "file": "world-engine/app/runtime/manager.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Experience Identity"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/profiles.py",
-          "file": "world-engine/app/runtime/profiles.py",
+          "declared_path": "world-engine/world_engine/runtime/profiles.py",
+          "file": "world-engine/world_engine/runtime/profiles.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -275,16 +267,16 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Runtime Profile Resolver"
         },
         {
-          "declared_path": "world-engine/app/runtime/profiles.py",
-          "file": "world-engine/app/runtime/profiles.py",
+          "declared_path": "world-engine/world_engine/runtime/profiles.py",
+          "file": "world-engine/world_engine/runtime/profiles.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -313,32 +305,24 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-          "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Role Selection and Actor Ownership"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/runtime/manager.py",
+          "file": "world-engine/world_engine/runtime/manager.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Role Selection and Actor Ownership"
         },
         {
-          "declared_path": "world-engine/app/runtime/manager.py",
-          "file": "world-engine/app/runtime/manager.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Role Selection and Actor Ownership"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/profiles.py",
-          "file": "world-engine/app/runtime/profiles.py",
+          "declared_path": "world-engine/world_engine/runtime/profiles.py",
+          "file": "world-engine/world_engine/runtime/profiles.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -423,25 +407,17 @@
           "symbol": "Canonical Content Authority"
         },
         {
-          "declared_path": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-          "file": "story_runtime_core/goc_solo_builtin_roles_rooms.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Canonical Content Authority"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/profiles.py",
-          "file": "world-engine/app/runtime/profiles.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Canonical Content Authority"
-        },
-        {
           "declared_path": "world-engine/tests/test_mvp1_experience_identity.py",
           "file": "world-engine/tests/test_mvp1_experience_identity.py",
           "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Canonical Content Authority"
+        },
+        {
+          "declared_path": "world-engine/world_engine/runtime/profiles.py",
+          "file": "world-engine/world_engine/runtime/profiles.py",
+          "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Canonical Content Authority"
@@ -628,24 +604,8 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/runtime/actor_lane.py",
-          "file": "world-engine/app/runtime/actor_lane.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "NPC Coercion Rejection and StateDeltaBoundary"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/models.py",
-          "file": "world-engine/app/runtime/models.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "NPC Coercion Rejection and StateDeltaBoundary"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/state_delta.py",
-          "file": "world-engine/app/runtime/state_delta.py",
+          "declared_path": "world-engine/world_engine/runtime/models.py",
+          "file": "world-engine/world_engine/runtime/models.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -690,16 +650,8 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/runtime/actor_lane.py",
-          "file": "world-engine/app/runtime/actor_lane.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Actor-Lane Enforcement"
-        },
-        {
-          "declared_path": "world-engine/app/runtime/models.py",
-          "file": "world-engine/app/runtime/models.py",
+          "declared_path": "world-engine/world_engine/runtime/models.py",
+          "file": "world-engine/world_engine/runtime/models.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -768,32 +720,24 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/runtime/models.py",
-          "file": "world-engine/app/runtime/models.py",
+          "declared_path": "world-engine/world_engine/runtime/models.py",
+          "file": "world-engine/world_engine/runtime/models.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Canonical, Typical, and Similar Environment Affordances"
         },
         {
-          "declared_path": "world-engine/app/runtime/object_admission.py",
-          "file": "world-engine/app/runtime/object_admission.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Canonical, Typical, and Similar Environment Affordances"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Canonical, Typical, and Similar Environment Affordances"
-        },
-        {
-          "declared_path": "world-engine/app/story_runtime_shell_readout.py",
-          "file": "world-engine/app/story_runtime_shell_readout.py",
+          "declared_path": "world-engine/world_engine/story_runtime_shell_readout.py",
+          "file": "world-engine/world_engine/story_runtime_shell_readout.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -912,8 +856,8 @@
           "symbol": "Minimum Agency Baseline Superseded by LDSS"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -958,17 +902,17 @@
           "symbol": "Live Dramatic Scene Simulator Contract"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
-          "kind": "python",
+          "declared_path": "world-engine/tests/test_mvp3_ldss_integration.py",
+          "file": "world-engine/tests/test_mvp3_ldss_integration.py",
+          "kind": "test",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Live Dramatic Scene Simulator Contract"
         },
         {
-          "declared_path": "world-engine/tests/test_mvp3_ldss_integration.py",
-          "file": "world-engine/tests/test_mvp3_ldss_integration.py",
-          "kind": "test",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
+          "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Live Dramatic Scene Simulator Contract"
@@ -1132,16 +1076,16 @@
           "symbol": "NPC Free Dramatic Agency"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/commit_models.py",
-          "file": "world-engine/app/story_runtime/commit_models.py",
+          "declared_path": "world-engine/world_engine/story_runtime/commit_models.py",
+          "file": "world-engine/world_engine/story_runtime/commit_models.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "NPC Free Dramatic Agency"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1232,16 +1176,16 @@
           "symbol": "Observability, Diagnostics, and Trace Infrastructure"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Observability, Diagnostics, and Trace Infrastructure"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1302,8 +1246,8 @@
           "symbol": "Langfuse Integration & Real Trace Generation"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1348,8 +1292,8 @@
           "symbol": "Evaluation Pipeline & Quality Rubric"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1402,16 +1346,16 @@
           "symbol": "Narrative Governance Health Panels & Operator Control"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Narrative Governance Health Panels & Operator Control"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1464,8 +1408,8 @@
           "symbol": "Diagnostics and Degradation Semantics"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -1556,16 +1500,16 @@
           "schema_version": "bt.source_anchor.v1"
         },
         {
-          "declared_path": "world-engine/app/api/http.py",
-          "file": "world-engine/app/api/http.py",
+          "declared_path": "world-engine/world_engine/api/http.py",
+          "file": "world-engine/world_engine/api/http.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Narrative Gov Operator Truth Surface"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -6365,7 +6309,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 676,
+        "line": 698,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangChainRetrieverBridge"
@@ -6413,7 +6357,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 619,
+        "line": 641,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "WritersRoomInvocationResult"
@@ -6437,7 +6381,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 794,
+        "line": 816,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_capability_tool_bridge"
@@ -6449,7 +6393,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 778,
+        "line": 800,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langchain_retriever_bridge"
@@ -6473,7 +6417,7 @@
       "anchor": {
         "file": "ai_stack/langchain/bridges.py",
         "kind": "python",
-        "line": 628,
+        "line": 650,
         "module": "ai_stack.langchain.bridges",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "invoke_writers_room_adapter_with_langchain"
@@ -6497,7 +6441,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 121,
+        "line": 123,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LangfuseCategoricalEvaluatorSpec"
@@ -6509,7 +6453,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1512,
+        "line": 1514,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "all_categorical_evaluator_specs"
@@ -6521,7 +6465,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1570,
+        "line": 1572,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_langfuse_sync_preview_payload"
@@ -6533,7 +6477,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1462,
+        "line": 1464,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_llm_judge_interpretation"
@@ -6545,7 +6489,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1441,
+        "line": 1443,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "category_severity"
@@ -6557,7 +6501,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1401,
+        "line": 1403,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "doc_table_evaluator_names"
@@ -6569,7 +6513,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1520,
+        "line": 1522,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "evaluator_spec_to_public_dict"
@@ -6581,7 +6525,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1516,
+        "line": 1518,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "get_categorical_evaluator_spec"
@@ -6593,7 +6537,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1406,
+        "line": 1408,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "judge_names_for_scope"
@@ -6605,7 +6549,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 112,
+        "line": 114,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "langfuse_evaluator_filter_templates"
@@ -6617,7 +6561,7 @@
       "anchor": {
         "file": "ai_stack/langfuse/langfuse_evaluator_catalog.py",
         "kind": "python",
-        "line": 1410,
+        "line": 1412,
         "module": "ai_stack.langfuse.langfuse_evaluator_catalog",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "normalize_judge_category_label"
@@ -6795,6 +6739,90 @@
     },
     {
       "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 4087,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RuntimeTurnGraphExecutor"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3698,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3859,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "complete_actor_locations_for_gathering_with_optional_w5_projection"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3971,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_actor_locations"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2662,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_w5_first_npc_context"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 3836,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_director_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+        "kind": "python",
+        "line": 2539,
+        "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "w5_ast_npc_projection_enabled"
+      },
+      "id": "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_package_output.py",
         "kind": "python",
         "line": 164,
@@ -6929,7 +6957,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 15,
+        "line": 13,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeExecutorBoundary"
@@ -6941,7 +6969,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/runtime_executor/semantic_boundaries.py",
         "kind": "python",
-        "line": 160,
+        "line": 158,
         "module": "ai_stack.langgraph.runtime_executor.semantic_boundaries",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "iter_source_module_names"
@@ -15903,914 +15931,650 @@
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 104,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "approved_result"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:approved_result",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 20,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_actor_lane_context"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:build_actor_lane_context",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 45,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_runtime_state"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:build_runtime_state",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 76,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_story_session_state"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:build_story_session_state",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 112,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "rejected_result"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:rejected_result",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 135,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_actor_lane_output"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:validate_actor_lane_output",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 261,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_npc_action_coercion"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:validate_npc_action_coercion",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/actor_lane.py",
-        "kind": "python",
-        "line": 332,
-        "module": "world-engine.app.runtime.actor_lane",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_responder_plan"
-      },
-      "id": "python:world-engine.app.runtime.actor_lane:validate_responder_plan",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/branching_turn_executor.py",
-        "kind": "python",
-        "line": 42,
-        "module": "world-engine.app.runtime.branching_turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "BranchingTurnExecutor"
-      },
-      "id": "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnExecutor",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/branching_turn_executor.py",
-        "kind": "python",
-        "line": 314,
-        "module": "world-engine.app.runtime.branching_turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "BranchingTurnExecutorFactory"
-      },
-      "id": "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnExecutorFactory",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/branching_turn_executor.py",
-        "kind": "python",
-        "line": 27,
-        "module": "world-engine.app.runtime.branching_turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "BranchingTurnResult"
-      },
-      "id": "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnResult",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/branching_turn_executor.py",
-        "kind": "python",
-        "line": 18,
-        "module": "world-engine.app.runtime.branching_turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "TurnSeam"
-      },
-      "id": "python:world-engine.app.runtime.branching_turn_executor:TurnSeam",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 26,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LastInputInterpretationRecord"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:LastInputInterpretationRecord",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:LastInputInterpretationRecord",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 45,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "PlayerMessageIngressResult"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:PlayerMessageIngressResult",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:PlayerMessageIngressResult",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 54,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "candidate_summaries_from_plan"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:candidate_summaries_from_plan",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:candidate_summaries_from_plan",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 92,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "diagnostics_explicit"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:diagnostics_explicit",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:diagnostics_explicit",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 67,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "diagnostics_from_plan"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:diagnostics_from_plan",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:diagnostics_from_plan",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 114,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "diagnostics_missing_input"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:diagnostics_missing_input",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:diagnostics_missing_input",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 198,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "merge_engine_outcome"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:merge_engine_outcome",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:merge_engine_outcome",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/command_resolution.py",
+        "file": "world-engine/world_engine/runtime/command_resolution.py",
         "kind": "python",
         "line": 141,
-        "module": "world-engine.app.runtime.command_resolution",
+        "module": "world-engine.world_engine.runtime.command_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_plan_to_command"
       },
-      "id": "python:world-engine.app.runtime.command_resolution:resolve_plan_to_command",
+      "id": "python:world-engine.world_engine.runtime.command_resolution:resolve_plan_to_command",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/engine.py",
+        "file": "world-engine/world_engine/runtime/engine.py",
         "kind": "python",
         "line": 36,
-        "module": "world-engine.app.runtime.engine",
+        "module": "world-engine.world_engine.runtime.engine",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeEngine"
       },
-      "id": "python:world-engine.app.runtime.engine:RuntimeEngine",
+      "id": "python:world-engine.world_engine.runtime.engine:RuntimeEngine",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 17,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "InputPrimaryMode"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:InputPrimaryMode",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:InputPrimaryMode",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 26,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "InterpretedCommandCandidate"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:InterpretedCommandCandidate",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:InterpretedCommandCandidate",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 33,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "InterpretedCommandPlan"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:InterpretedCommandPlan",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:InterpretedCommandPlan",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 99,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "extract_spoken_text_for_say"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:extract_spoken_text_for_say",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:extract_spoken_text_for_say",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 305,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "interpret_runtime_input"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:interpret_runtime_input",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:interpret_runtime_input",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/input_interpreter.py",
+        "file": "world-engine/world_engine/runtime/input_interpreter.py",
         "kind": "python",
         "line": 392,
-        "module": "world-engine.app.runtime.input_interpreter",
+        "module": "world-engine.world_engine.runtime.input_interpreter",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "truncate_for_diagnostics"
       },
-      "id": "python:world-engine.app.runtime.input_interpreter:truncate_for_diagnostics",
+      "id": "python:world-engine.world_engine.runtime.input_interpreter:truncate_for_diagnostics",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/json_at_rest.py",
+        "file": "world-engine/world_engine/runtime/json_at_rest.py",
         "kind": "python",
         "line": 66,
-        "module": "world-engine.app.runtime.json_at_rest",
+        "module": "world-engine.world_engine.runtime.json_at_rest",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "JsonAtRestCodec"
       },
-      "id": "python:world-engine.app.runtime.json_at_rest:JsonAtRestCodec",
+      "id": "python:world-engine.world_engine.runtime.json_at_rest:JsonAtRestCodec",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/json_at_rest.py",
+        "file": "world-engine/world_engine/runtime/json_at_rest.py",
         "kind": "python",
         "line": 62,
-        "module": "world-engine.app.runtime.json_at_rest",
+        "module": "world-engine.world_engine.runtime.json_at_rest",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "associated_data"
       },
-      "id": "python:world-engine.app.runtime.json_at_rest:associated_data",
+      "id": "python:world-engine.world_engine.runtime.json_at_rest:associated_data",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/json_at_rest.py",
+        "file": "world-engine/world_engine/runtime/json_at_rest.py",
         "kind": "python",
         "line": 32,
-        "module": "world-engine.app.runtime.json_at_rest",
+        "module": "world-engine.world_engine.runtime.json_at_rest",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "decode_aead_key"
       },
-      "id": "python:world-engine.app.runtime.json_at_rest:decode_aead_key",
+      "id": "python:world-engine.world_engine.runtime.json_at_rest:decode_aead_key",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/json_at_rest.py",
+        "file": "world-engine/world_engine/runtime/json_at_rest.py",
         "kind": "python",
         "line": 28,
-        "module": "world-engine.app.runtime.json_at_rest",
+        "module": "world-engine.world_engine.runtime.json_at_rest",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "generate_aead_key"
       },
-      "id": "python:world-engine.app.runtime.json_at_rest:generate_aead_key",
+      "id": "python:world-engine.world_engine.runtime.json_at_rest:generate_aead_key",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/manager.py",
+        "file": "world-engine/world_engine/runtime/manager.py",
         "kind": "python",
         "line": 31,
-        "module": "world-engine.app.runtime.manager",
+        "module": "world-engine.world_engine.runtime.manager",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeManager"
       },
-      "id": "python:world-engine.app.runtime.manager:RuntimeManager",
+      "id": "python:world-engine.world_engine.runtime.manager:RuntimeManager",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/manager.py",
+        "file": "world-engine/world_engine/runtime/manager.py",
         "kind": "python",
-        "line": 779,
-        "module": "world-engine.app.runtime.manager",
+        "line": 794,
+        "module": "world-engine.world_engine.runtime.manager",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "account_id_or_none"
       },
-      "id": "python:world-engine.app.runtime.manager:account_id_or_none",
+      "id": "python:world-engine.world_engine.runtime.manager:account_id_or_none",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 164,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ActorLaneContext"
       },
-      "id": "python:world-engine.app.runtime.models:ActorLaneContext",
+      "id": "python:world-engine.world_engine.runtime.models:ActorLaneContext",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 228,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ActorLaneValidationResult"
       },
-      "id": "python:world-engine.app.runtime.models:ActorLaneValidationResult",
+      "id": "python:world-engine.world_engine.runtime.models:ActorLaneValidationResult",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 154,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "CommandResult"
       },
-      "id": "python:world-engine.app.runtime.models:CommandResult",
+      "id": "python:world-engine.world_engine.runtime.models:CommandResult",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 47,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "LobbySeatState"
       },
-      "id": "python:world-engine.app.runtime.models:LobbySeatState",
+      "id": "python:world-engine.world_engine.runtime.models:LobbySeatState",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 296,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ObjectAdmissionRecord"
       },
-      "id": "python:world-engine.app.runtime.models:ObjectAdmissionRecord",
+      "id": "python:world-engine.world_engine.runtime.models:ObjectAdmissionRecord",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 20,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ParticipantState"
       },
-      "id": "python:world-engine.app.runtime.models:ParticipantState",
+      "id": "python:world-engine.world_engine.runtime.models:ParticipantState",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 59,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "PropState"
       },
-      "id": "python:world-engine.app.runtime.models:PropState",
+      "id": "python:world-engine.world_engine.runtime.models:PropState",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 109,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "PublicRunSummary"
       },
-      "id": "python:world-engine.app.runtime.models:PublicRunSummary",
+      "id": "python:world-engine.world_engine.runtime.models:PublicRunSummary",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 13,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RunStatus"
       },
-      "id": "python:world-engine.app.runtime.models:RunStatus",
+      "id": "python:world-engine.world_engine.runtime.models:RunStatus",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 77,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeEvent"
       },
-      "id": "python:world-engine.app.runtime.models:RuntimeEvent",
+      "id": "python:world-engine.world_engine.runtime.models:RuntimeEvent",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 85,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeInstance"
       },
-      "id": "python:world-engine.app.runtime.models:RuntimeInstance",
+      "id": "python:world-engine.world_engine.runtime.models:RuntimeInstance",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 126,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeSnapshot"
       },
-      "id": "python:world-engine.app.runtime.models:RuntimeSnapshot",
+      "id": "python:world-engine.world_engine.runtime.models:RuntimeSnapshot",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 191,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeState"
       },
-      "id": "python:world-engine.app.runtime.models:RuntimeState",
+      "id": "python:world-engine.world_engine.runtime.models:RuntimeState",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 244,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "StateDeltaBoundary"
       },
-      "id": "python:world-engine.app.runtime.models:StateDeltaBoundary",
+      "id": "python:world-engine.world_engine.runtime.models:StateDeltaBoundary",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 274,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "StateDeltaValidationResult"
       },
-      "id": "python:world-engine.app.runtime.models:StateDeltaValidationResult",
+      "id": "python:world-engine.world_engine.runtime.models:StateDeltaValidationResult",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 211,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "StorySessionState"
       },
-      "id": "python:world-engine.app.runtime.models:StorySessionState",
+      "id": "python:world-engine.world_engine.runtime.models:StorySessionState",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/models.py",
+        "file": "world-engine/world_engine/runtime/models.py",
         "kind": "python",
         "line": 67,
-        "module": "world-engine.app.runtime.models",
+        "module": "world-engine.world_engine.runtime.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "TranscriptEntry"
       },
-      "id": "python:world-engine.app.runtime.models:TranscriptEntry",
+      "id": "python:world-engine.world_engine.runtime.models:TranscriptEntry",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/npc_behaviors.py",
+        "file": "world-engine/world_engine/runtime/npc_behaviors.py",
         "kind": "python",
         "line": 11,
-        "module": "world-engine.app.runtime.npc_behaviors",
+        "module": "world-engine.world_engine.runtime.npc_behaviors",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeNpcDirector"
       },
-      "id": "python:world-engine.app.runtime.npc_behaviors:RuntimeNpcDirector",
+      "id": "python:world-engine.world_engine.runtime.npc_behaviors:RuntimeNpcDirector",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/object_admission.py",
-        "kind": "python",
-        "line": 44,
-        "module": "world-engine.app.runtime.object_admission",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "admit_object"
-      },
-      "id": "python:world-engine.app.runtime.object_admission:admit_object",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/object_admission.py",
-        "kind": "python",
-        "line": 159,
-        "module": "world-engine.app.runtime.object_admission",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_object_admission"
-      },
-      "id": "python:world-engine.app.runtime.object_admission:validate_object_admission",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 150,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeProfile"
       },
-      "id": "python:world-engine.app.runtime.profiles:RuntimeProfile",
+      "id": "python:world-engine.world_engine.runtime.profiles:RuntimeProfile",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 123,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeProfileError"
       },
-      "id": "python:world-engine.app.runtime.profiles:RuntimeProfileError",
+      "id": "python:world-engine.world_engine.runtime.profiles:RuntimeProfileError",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 136,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "SelectablePlayerRole"
       },
-      "id": "python:world-engine.app.runtime.profiles:SelectablePlayerRole",
+      "id": "python:world-engine.world_engine.runtime.profiles:SelectablePlayerRole",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 294,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "assert_profile_contains_no_story_truth"
       },
-      "id": "python:world-engine.app.runtime.profiles:assert_profile_contains_no_story_truth",
+      "id": "python:world-engine.world_engine.runtime.profiles:assert_profile_contains_no_story_truth",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 315,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "assert_runtime_module_contains_no_story_truth"
       },
-      "id": "python:world-engine.app.runtime.profiles:assert_runtime_module_contains_no_story_truth",
+      "id": "python:world-engine.world_engine.runtime.profiles:assert_runtime_module_contains_no_story_truth",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 266,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_actor_ownership"
       },
-      "id": "python:world-engine.app.runtime.profiles:build_actor_ownership",
+      "id": "python:world-engine.world_engine.runtime.profiles:build_actor_ownership",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 189,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_runtime_profile"
       },
-      "id": "python:world-engine.app.runtime.profiles:resolve_runtime_profile",
+      "id": "python:world-engine.world_engine.runtime.profiles:resolve_runtime_profile",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/profiles.py",
+        "file": "world-engine/world_engine/runtime/profiles.py",
         "kind": "python",
         "line": 222,
-        "module": "world-engine.app.runtime.profiles",
+        "module": "world-engine.world_engine.runtime.profiles",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "validate_selected_player_role"
       },
-      "id": "python:world-engine.app.runtime.profiles:validate_selected_player_role",
+      "id": "python:world-engine.world_engine.runtime.profiles:validate_selected_player_role",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/runtime_config_client.py",
+        "file": "world-engine/world_engine/runtime/runtime_config_client.py",
         "kind": "python",
         "line": 33,
-        "module": "world-engine.app.runtime.runtime_config_client",
+        "module": "world-engine.world_engine.runtime.runtime_config_client",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "fetch_hf_hub_token_from_backend"
       },
-      "id": "python:world-engine.app.runtime.runtime_config_client:fetch_hf_hub_token_from_backend",
+      "id": "python:world-engine.world_engine.runtime.runtime_config_client:fetch_hf_hub_token_from_backend",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/runtime_config_client.py",
+        "file": "world-engine/world_engine/runtime/runtime_config_client.py",
         "kind": "python",
         "line": 10,
-        "module": "world-engine.app.runtime.runtime_config_client",
+        "module": "world-engine.world_engine.runtime.runtime_config_client",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "fetch_resolved_runtime_config"
       },
-      "id": "python:world-engine.app.runtime.runtime_config_client:fetch_resolved_runtime_config",
+      "id": "python:world-engine.world_engine.runtime.runtime_config_client:fetch_resolved_runtime_config",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/session_manager.py",
-        "kind": "python",
-        "line": 20,
-        "module": "world-engine.app.runtime.session_manager",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "Session"
-      },
-      "id": "python:world-engine.app.runtime.session_manager:Session",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/session_manager.py",
-        "kind": "python",
-        "line": 45,
-        "module": "world-engine.app.runtime.session_manager",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "SessionManager"
-      },
-      "id": "python:world-engine.app.runtime.session_manager:SessionManager",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/state_delta.py",
-        "kind": "python",
-        "line": 109,
-        "module": "world-engine.app.runtime.state_delta",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_default_goc_boundary"
-      },
-      "id": "python:world-engine.app.runtime.state_delta:build_default_goc_boundary",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/state_delta.py",
-        "kind": "python",
-        "line": 99,
-        "module": "world-engine.app.runtime.state_delta",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "first_rejection"
-      },
-      "id": "python:world-engine.app.runtime.state_delta:first_rejection",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/state_delta.py",
-        "kind": "python",
-        "line": 34,
-        "module": "world-engine.app.runtime.state_delta",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_state_delta"
-      },
-      "id": "python:world-engine.app.runtime.state_delta:validate_state_delta",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/state_delta.py",
-        "kind": "python",
-        "line": 88,
-        "module": "world-engine.app.runtime.state_delta",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "validate_state_deltas"
-      },
-      "id": "python:world-engine.app.runtime.state_delta:validate_state_deltas",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/store.py",
+        "file": "world-engine/world_engine/runtime/store.py",
         "kind": "python",
         "line": 31,
-        "module": "world-engine.app.runtime.store",
+        "module": "world-engine.world_engine.runtime.store",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "JsonRunStore"
       },
-      "id": "python:world-engine.app.runtime.store:JsonRunStore",
+      "id": "python:world-engine.world_engine.runtime.store:JsonRunStore",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/store.py",
+        "file": "world-engine/world_engine/runtime/store.py",
         "kind": "python",
         "line": 19,
-        "module": "world-engine.app.runtime.store",
+        "module": "world-engine.world_engine.runtime.store",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RunStore"
       },
-      "id": "python:world-engine.app.runtime.store:RunStore",
+      "id": "python:world-engine.world_engine.runtime.store:RunStore",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/store.py",
+        "file": "world-engine/world_engine/runtime/store.py",
         "kind": "python",
         "line": 78,
-        "module": "world-engine.app.runtime.store",
+        "module": "world-engine.world_engine.runtime.store",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "SqlAlchemyRunStore"
       },
-      "id": "python:world-engine.app.runtime.store:SqlAlchemyRunStore",
+      "id": "python:world-engine.world_engine.runtime.store:SqlAlchemyRunStore",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/store.py",
+        "file": "world-engine/world_engine/runtime/store.py",
         "kind": "python",
         "line": 141,
-        "module": "world-engine.app.runtime.store",
+        "module": "world-engine.world_engine.runtime.store",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_run_store"
       },
-      "id": "python:world-engine.app.runtime.store:build_run_store",
+      "id": "python:world-engine.world_engine.runtime.store:build_run_store",
       "kind": "python"
     },
     {
       "anchor": {
-        "file": "world-engine/app/runtime/turn_executor.py",
-        "kind": "python",
-        "line": 24,
-        "module": "world-engine.app.runtime.turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "TurnExecutor"
-      },
-      "id": "python:world-engine.app.runtime.turn_executor:TurnExecutor",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/turn_executor.py",
-        "kind": "python",
-        "line": 15,
-        "module": "world-engine.app.runtime.turn_executor",
-        "schema_version": "bt.source_anchor.v1",
-        "symbol": "TurnResult"
-      },
-      "id": "python:world-engine.app.runtime.turn_executor:TurnResult",
-      "kind": "python"
-    },
-    {
-      "anchor": {
-        "file": "world-engine/app/runtime/visibility.py",
+        "file": "world-engine/world_engine/runtime/visibility.py",
         "kind": "python",
         "line": 9,
-        "module": "world-engine.app.runtime.visibility",
+        "module": "world-engine.world_engine.runtime.visibility",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeVisibilityPolicy"
       },
-      "id": "python:world-engine.app.runtime.visibility:RuntimeVisibilityPolicy",
+      "id": "python:world-engine.world_engine.runtime.visibility:RuntimeVisibilityPolicy",
       "kind": "python"
     }
   ],
@@ -17248,6 +17012,13 @@
     "python:ai_stack.langgraph.langgraph_orchestrator:GameOrchestrator": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_orchestrator:MockGraph": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime:ensure_langgraph_available": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:RuntimeTurnGraphExecutor": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:complete_actor_locations_for_gathering_with_optional_w5_projection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_actor_locations": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:resolve_w5_first_npc_context": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_director_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:ai_stack.langgraph.langgraph_runtime_executor_impl:w5_ast_npc_projection_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output:package_runtime_graph_output": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_dramatic_review:build_dramatic_review_section": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:ai_stack.langgraph.langgraph_runtime_package_output_repro:build_repro_metadata_and_health": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -17986,66 +17757,35 @@
     "python:frontend.app.routes_play:play_start": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:frontend.app.routes_play:play_template_to_content_module_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:frontend.app.routes_play:stream_narrator_proxy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnExecutor": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnExecutorFactory": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.branching_turn_executor:BranchingTurnResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.branching_turn_executor:TurnSeam": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:LastInputInterpretationRecord": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:PlayerMessageIngressResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:candidate_summaries_from_plan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:diagnostics_explicit": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:diagnostics_from_plan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:diagnostics_missing_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:merge_engine_outcome": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.command_resolution:resolve_plan_to_command": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.engine:RuntimeEngine": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:InputPrimaryMode": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:InterpretedCommandCandidate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:InterpretedCommandPlan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:extract_spoken_text_for_say": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:interpret_runtime_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.input_interpreter:truncate_for_diagnostics": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.json_at_rest:JsonAtRestCodec": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.json_at_rest:associated_data": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.json_at_rest:decode_aead_key": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.json_at_rest:generate_aead_key": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.manager:RuntimeManager": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.manager:account_id_or_none": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:ActorLaneContext": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:ActorLaneValidationResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:CommandResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:LobbySeatState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:ObjectAdmissionRecord": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:ParticipantState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:PropState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:PublicRunSummary": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:RunStatus": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:RuntimeEvent": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:RuntimeInstance": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:RuntimeSnapshot": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:RuntimeState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:StateDeltaBoundary": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:StateDeltaValidationResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:StorySessionState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.models:TranscriptEntry": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.npc_behaviors:RuntimeNpcDirector": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.object_admission:admit_object": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.object_admission:validate_object_admission": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.runtime_config_client:fetch_hf_hub_token_from_backend": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.runtime_config_client:fetch_resolved_runtime_config": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.session_manager:Session": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.session_manager:SessionManager": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.state_delta:build_default_goc_boundary": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.state_delta:first_rejection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.state_delta:validate_state_delta": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.state_delta:validate_state_deltas": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.store:JsonRunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.store:RunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.store:SqlAlchemyRunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.store:build_run_store": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.turn_executor:TurnExecutor": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.turn_executor:TurnResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:world-engine.app.runtime.visibility:RuntimeVisibilityPolicy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+    "python:world-engine.world_engine.runtime.command_resolution:LastInputInterpretationRecord": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:PlayerMessageIngressResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:candidate_summaries_from_plan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:diagnostics_explicit": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:diagnostics_from_plan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:diagnostics_missing_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:merge_engine_outcome": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.command_resolution:resolve_plan_to_command": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.engine:RuntimeEngine": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:InputPrimaryMode": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:InterpretedCommandCandidate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:InterpretedCommandPlan": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:extract_spoken_text_for_say": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:interpret_runtime_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.input_interpreter:truncate_for_diagnostics": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.json_at_rest:JsonAtRestCodec": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.json_at_rest:associated_data": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.json_at_rest:decode_aead_key": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.json_at_rest:generate_aead_key": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.manager:RuntimeManager": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.manager:account_id_or_none": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.npc_behaviors:RuntimeNpcDirector": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.runtime_config_client:fetch_hf_hub_token_from_backend": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.runtime_config_client:fetch_resolved_runtime_config": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.store:JsonRunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.store:RunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.store:SqlAlchemyRunStore": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.store:build_run_store": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:world-engine.world_engine.runtime.visibility:RuntimeVisibilityPolicy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {
     "python:ai_stack.live_dramatic_scene_simulator:LDSSInput": "B-mvp3-ldss",
@@ -18069,22 +17809,31 @@
     "python:ai_stack.live_dramatic_scene_simulator:validate_passivity": "B-mvp3-ldss",
     "python:ai_stack.live_dramatic_scene_simulator:validate_responder_candidates": "B-mvp3-ldss",
     "python:ai_stack.live_dramatic_scene_simulator:validate_similar_allowed_requires_reason": "B-mvp3-ldss",
-    "python:world-engine.app.runtime.actor_lane:approved_result": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:build_actor_lane_context": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:build_runtime_state": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:build_story_session_state": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:rejected_result": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:validate_actor_lane_output": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:validate_npc_action_coercion": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.actor_lane:validate_responder_plan": "B-mvp2-actor-lanes",
-    "python:world-engine.app.runtime.profiles:RuntimeProfile": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:RuntimeProfileError": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:SelectablePlayerRole": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:assert_profile_contains_no_story_truth": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:assert_runtime_module_contains_no_story_truth": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:build_actor_ownership": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:resolve_runtime_profile": "B-mvp1-identity",
-    "python:world-engine.app.runtime.profiles:validate_selected_player_role": "B-mvp1-identity"
+    "python:world-engine.world_engine.runtime.models:ActorLaneContext": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:ActorLaneValidationResult": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:CommandResult": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:LobbySeatState": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:ObjectAdmissionRecord": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:ParticipantState": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:PropState": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:PublicRunSummary": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:RunStatus": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:RuntimeEvent": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:RuntimeInstance": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:RuntimeSnapshot": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:RuntimeState": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:StateDeltaBoundary": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:StateDeltaValidationResult": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:StorySessionState": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.models:TranscriptEntry": "B-mvp2-actor-lanes",
+    "python:world-engine.world_engine.runtime.profiles:RuntimeProfile": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:RuntimeProfileError": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:SelectablePlayerRole": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:assert_profile_contains_no_story_truth": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:assert_runtime_module_contains_no_story_truth": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:build_actor_ownership": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:resolve_runtime_profile": "B-mvp1-identity",
+    "python:world-engine.world_engine.runtime.profiles:validate_selected_player_role": "B-mvp1-identity"
   },
   "required_views": [
     {
@@ -18112,9 +17861,9 @@
         "frontend/static/play_session_start.js",
         "tests/e2e/test_final_goc_annette_alain_e2e.py",
         "tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md",
-        "world-engine/app/api/story_ws.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py",
-        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+        "world-engine/world_engine/api/story_ws.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+        "world-engine/world_engine/story_runtime/narrative_commit_resolution.py"
       ],
       "concern": "Launch, semantics, agency, commit, rendering and evidence must all connect",
       "decisions": [
@@ -18137,9 +17886,9 @@
         "frontend/static/play_session_start.js",
         "tests/e2e/test_final_goc_annette_alain_e2e.py",
         "tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md",
-        "world-engine/app/api/story_ws.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py",
-        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+        "world-engine/world_engine/api/story_ws.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+        "world-engine/world_engine/story_runtime/narrative_commit_resolution.py"
       ],
       "concern": "One real turn preserves semantics and evidence to the player surface",
       "decisions": [

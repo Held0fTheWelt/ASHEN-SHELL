@@ -13,7 +13,7 @@
 | Operator | Manage content, providers, policies and diagnostics | Privileged authenticated request | [`docs/architecture/project/security-governance/architecture.md`](../../../../docs/architecture/project/security-governance/architecture.md) |
 | Administration Tool | Present operator intent | Backend proxy only | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
 | Backend | Own platform data and governed control-plane operations | Flask /api/v1 | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
-| World Engine | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+| World Engine | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 
 ## Modeled relationships
 

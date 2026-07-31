@@ -15,12 +15,12 @@ skinparam maxMessageSize 180
 state "Draft\nResponsibility: Accept author changes\nContract: Not runtime-consumable\n[[../../../../backend/app/content/module_models.py source]]" as draft
 state "Validated\nResponsibility: Record successful structural checks\nContract: All references resolve\n[[../../../../backend/app/content/module_validator.py source]]" as validated
 state "Published\nResponsibility: Expose immutable content version\nContract: Active version pointer\n[[../../../../backend/app/content/module_service.py source]]" as published
-state "Runtime Projection\nResponsibility: Serve content to a bound session\nContract: No mutation of authored truth\n[[../../../../world-engine/app/content/backend_source.py source]]" as consumed
+state "Runtime Projection\nResponsibility: Serve content to a bound session\nContract: No mutation of authored truth\n[[../../../../world-engine/world_engine/content/backend_source.py source]]" as consumed
 
 consumed --> published : "session ends\ncontract: authored version unchanged"
 draft --> validated : "validation passes\ncontract: zero blocking findings\n[[../../../../backend/app/content/module_validator.py source]]"
 [*] --> draft : "module created\ncontract: unique module id"
-published --> consumed : "session binds version\ncontract: stable content version\n[[../../../../world-engine/app/content/backend_source.py source]]"
+published --> consumed : "session binds version\ncontract: stable content version\n[[../../../../world-engine/world_engine/content/backend_source.py source]]"
 validated --> draft : "content changes\ncontract: revalidation required\n[[../../../../backend/app/content/module_service.py source]]"
 validated --> published : "version activated\ncontract: immutable version and audit\n[[../../../../backend/app/content/module_service.py source]]"
 

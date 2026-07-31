@@ -69,7 +69,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Repository Workspace (`repo`) | `node` | Provide scoped read/write targets | Configured root containment | [`tools/mcp_server/repo_dotenv.py`](../../../../tools/mcp_server/repo_dotenv.py) |
 | Backend (`backend`) | `system` | Authorize and execute platform mutations | Authenticated backend API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
 | MCP Server (`server`) | `system` | Validate protocol and dispatch registered capabilities | MCP JSON-RPC | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
-| World Engine (`world`) | `system` | Expose safe session inspection and commands | Runtime API | [`world-engine/app/api/http.py`](../../../../world-engine/app/api/http.py) |
+| World Engine (`world`) | `system` | Expose safe session inspection and commands | Runtime API | [`world-engine/world_engine/api/http.py`](../../../../world-engine/world_engine/api/http.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View

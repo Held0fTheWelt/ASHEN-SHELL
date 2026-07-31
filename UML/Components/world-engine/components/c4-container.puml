@@ -13,16 +13,16 @@ skinparam maxMessageSize 180
 ' bt-element-id: persistence
 ' bt-element-id: observability
 
-rectangle "Story API\nResponsibility: Expose health, package, session, turn and branching routes\nContract: Validated HTTP/WS envelopes\n[[../../../../world-engine/app/api/http.py source]]" as api
-rectangle "Story Runtime Manager\nResponsibility: Coordinate canonical sessions and turns\nContract: Single live authority\n[[../../../../world-engine/app/story_runtime/manager/runtime_manager.py source]]" as manager
-rectangle "Compatibility Runtime\nResponsibility: Host legacy engine profiles and transitional behavior\nContract: Explicitly non-canonical where overlapped\n[[../../../../world-engine/app/runtime/manager.py source]]" as runtime
-rectangle "Session Stores\nResponsibility: Persist committed session, branches and callbacks\nContract: Commit-versioned state\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]" as persistence
-rectangle "Runtime Observability\nResponsibility: Correlate turn lifecycle and failures\nContract: Redacted trace tree\n[[../../../../world-engine/app/observability/trace.py source]]" as observability
+rectangle "Story API\nResponsibility: Expose health, package, session, turn and branching routes\nContract: Validated HTTP/WS envelopes\n[[../../../../world-engine/world_engine/api/http.py source]]" as api
+rectangle "Story Runtime Manager\nResponsibility: Coordinate canonical sessions and turns\nContract: Single live authority\n[[../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py source]]" as manager
+rectangle "Compatibility Runtime\nResponsibility: Host legacy engine profiles and transitional behavior\nContract: Explicitly non-canonical where overlapped\n[[../../../../world-engine/world_engine/runtime/manager.py source]]" as runtime
+rectangle "Session Stores\nResponsibility: Persist committed session, branches and callbacks\nContract: Commit-versioned state\n[[../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py source]]" as persistence
+rectangle "Runtime Observability\nResponsibility: Correlate turn lifecycle and failures\nContract: Redacted trace tree\n[[../../../../world-engine/world_engine/observability/trace.py source]]" as observability
 
-api ..> manager : "delegates story operation\ncontract: validated command\n[[../../../../world-engine/app/api/http_routes/story_turn_routes.py source]]"
-manager ..> observability : "emits lifecycle evidence\ncontract: trace-correlated spans\n[[../../../../world-engine/app/observability/trace.py source]]"
-manager ..> persistence : "loads and stores session\ncontract: revision-safe transaction\n[[../../../../world-engine/app/story_runtime/story_session_store.py source]]"
-runtime ..> manager : "adapts supported legacy paths\ncontract: explicit compatibility seam\n[[../../../../world-engine/app/runtime/manager.py source]]"
+api ..> manager : "delegates story operation\ncontract: validated command\n[[../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py source]]"
+manager ..> observability : "emits lifecycle evidence\ncontract: trace-correlated spans\n[[../../../../world-engine/world_engine/observability/trace.py source]]"
+manager ..> persistence : "loads and stores session\ncontract: revision-safe transaction\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
+runtime ..> manager : "adapts supported legacy paths\ncontract: explicit compatibility seam\n[[../../../../world-engine/world_engine/runtime/manager.py source]]"
 
 legend bottom
 Viewpoint: container

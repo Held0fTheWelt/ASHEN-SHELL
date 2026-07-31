@@ -117,7 +117,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Architecture Reconciliation (`reconciliation`) | `component` | Classify claims and expose contradictions | confirmed, obsolete, conflicting or open | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
 | Authored Truth (`authored_truth`) | `container` | Supply experience identity and policy | Immutable bound module version | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Identity and Platform (`identity`) | `container` | Authenticate users and serve platform data | Backend ownership | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
-| Live Runtime (`live_runtime`) | `container` | Coordinate and commit canonical turns | World-engine ownership | [`world-engine/app/story_runtime/manager/runtime_manager.py`](../../../../world-engine/app/story_runtime/manager/runtime_manager.py) |
+| Live Runtime (`live_runtime`) | `container` | Coordinate and commit canonical turns | World-engine ownership | [`world-engine/world_engine/story_runtime/manager/runtime_manager.py`](../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py) |
 | Play Proxy (`play_proxy`) | `container` | Bridge player requests to live authority | No local story commit | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Proposal Runtime (`proposal_runtime`) | `container` | Interpret, retrieve, plan, realize and validate candidates | AI proposal only | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
 | Confirmed Current (`confirmed`) | `state` | Match current code and accepted decision | Live source anchors | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
@@ -131,7 +131,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Content Authority (`content`) | `system` | Own authored experience facts and policy | Versioned YAML modules | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Frontend (`frontend`) | `system` | Present player interaction and transient UI state | Browser shell | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
 | MCP Server (`mcp`) | `system` | Expose bounded local automation capabilities | JSON-RPC adapter | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
-| World Engine (`world`) | `system` | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+| World Engine (`world`) | `system` | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -185,11 +185,11 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | Current Code | Architecture Reconciliation | supplies present structure | source anchors | Contract-only boundary |
 | Git History | Architecture Reconciliation | supplies evolution | commit/rename chronology | Contract-only boundary |
 | Identity and Platform | Play Proxy | authorizes launch | player and run binding | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
-| Proposal Runtime | Live Runtime | returns candidate | validation evidence and no commit | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Proposal Runtime | Live Runtime | returns candidate | validation evidence and no commit | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Play Proxy | Live Runtime | forwards command | signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Architecture Reconciliation | Target Architecture | justifies target options | accepted decision and delta | Contract-only boundary |
-| Live Runtime | Proposal Runtime | requests candidate | proposal-only call | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
-| Authored Truth | Live Runtime | bounds session | immutable module version | [`world-engine/app/content/backend_loader.py`](../../../../world-engine/app/content/backend_loader.py) |
+| Live Runtime | Proposal Runtime | requests candidate | proposal-only call | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
+| Authored Truth | Live Runtime | bounds session | immutable module version | [`world-engine/world_engine/content/backend_loader.py`](../../../../world-engine/world_engine/content/backend_loader.py) |
 <!-- END BT-SEMANTIC-DEPTH:8 -->
 
 ## 9. Architecture Decisions
@@ -423,12 +423,12 @@ Multiple Vibe-Coding waves produced plausible local solutions, snapshots and rep
 
 | Drift claim | Status | Concern | Target direction |
 | --- | --- | --- | --- |
-| `DRIFT-001` | `conflicting` | Competing live-runtime structures | Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth. |
+| `DRIFT-001` | `confirmed_current` | Competing live-runtime structures | Keep live_story_session and live_run_instance as distinct resources with one sink each; retire overlapping commit authority from app/runtime into named adapters only. |
 | `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
 | `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
 | `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
 | `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
-| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-006` | `open_target` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
 | `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
 | `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
 

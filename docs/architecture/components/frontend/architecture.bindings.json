@@ -235,14 +235,6 @@
           "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
         },
         {
-          "declared_path": "world-engine/app/story_runtime/manager/",
-          "file": "world-engine/app/story_runtime/manager/__init__.py",
-          "kind": "python",
-          "line": 1,
-          "schema_version": "bt.source_anchor.v1",
-          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
-        },
-        {
           "declared_path": "world-engine/tests/test_goc_multi_speaker_actor_line_split.py",
           "file": "world-engine/tests/test_goc_multi_speaker_actor_line_split.py",
           "kind": "test",
@@ -254,6 +246,14 @@
           "declared_path": "world-engine/tests/test_goc_player_input_greeting_imperative.py",
           "file": "world-engine/tests/test_goc_player_input_greeting_imperative.py",
           "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
+        },
+        {
+          "declared_path": "world-engine/world_engine/story_runtime/manager/",
+          "file": "world-engine/world_engine/story_runtime/manager/__init__.py",
+          "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
           "symbol": "Player-Facing Narrative Shell Contract (MVP5)"
@@ -1630,7 +1630,7 @@
         "frontend/app/api_client.py",
         "frontend/app/routes.py",
         "frontend/templates/session_shell.html",
-        "world-engine/app/api/story_ws.py"
+        "world-engine/world_engine/api/story_ws.py"
       ],
       "concern": "Presentation boundary across player, backend and world-engine",
       "decisions": [

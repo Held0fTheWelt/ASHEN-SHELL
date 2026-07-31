@@ -17,7 +17,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: branching
 ' bt-element-id: delivery
 
-participant "World Engine\nResponsibility: Own and commit live story state\nContract: Calls pure shared contracts\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]" as world
+participant "World Engine\nResponsibility: Own and commit live story state\nContract: Calls pure shared contracts\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]" as world
 participant "Story Runtime Core\nResponsibility: Provide portable domain contracts and deterministic algorithms\nContract: Python package without service authority\n[[../../../../story_runtime_core/__init__.py source]]" as core
 participant "Boundary Adapters\nResponsibility: Map host-specific data to shared contracts\nContract: Anti-corruption mapping\n[[../../../../story_runtime_core/adapters.py source]]" as adapters
 participant "Domain Models\nResponsibility: Define actions, scenes, actors and outcomes\nContract: Serializable value objects\n[[../../../../story_runtime_core/models.py source]]" as models
@@ -28,7 +28,7 @@ participant "Branching\nResponsibility: Forecast alternatives without committing
 participant "Runtime Delivery\nResponsibility: Adapt portable outcomes to callbacks and web delivery\nContract: No ownership transfer\n[[../../../../story_runtime_core/runtime_delivery.py source]]" as delivery
 
 models -> intent : "constrains\ncontract: semantic action vocabulary\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]"
-world -> core : "uses contracts\ncontract: host retains authority\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
+world -> core : "uses contracts\ncontract: host retains authority\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
 adapters -> models : "maps host values\ncontract: explicit anti-corruption layer\n[[../../../../story_runtime_core/adapters.py source]]"
 intent -> truth : "is evaluated against\ncontract: confirmed facts only\n[[../../../../story_runtime_core/input_interpreter.py source]]"
 truth -> consequences : "bounds cascade\ncontract: pure deterministic input\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]"

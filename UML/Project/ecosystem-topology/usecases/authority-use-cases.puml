@@ -20,7 +20,7 @@ actor "Operator\nResponsibility: Inspect and govern the platform\nContract: Priv
 usecase "Frontend\nResponsibility: Present player interaction and transient UI state\nContract: Browser shell\n[[../../../../frontend/app/__init__.py source]]" as frontend
 usecase "Administration Tool\nResponsibility: Present governed operator workflows\nContract: Backend-delegated mutations\n[[../../../../administration-tool/app.py source]]" as admin
 usecase "MCP Server\nResponsibility: Expose bounded local automation capabilities\nContract: JSON-RPC adapter\n[[../../../../tools/mcp_server/server.py source]]" as mcp
-usecase "World Engine\nResponsibility: Own live sessions and commit story truth\nContract: Story HTTP/WebSocket API\n[[../../../../world-engine/app/main.py source]]" as world
+usecase "World Engine\nResponsibility: Own live sessions and commit story truth\nContract: Story HTTP/WebSocket API\n[[../../../../world-engine/world_engine/main.py source]]" as world
 usecase "Backend\nResponsibility: Own identity, community and control-plane truth\nContract: Flask API\n[[../../../../backend/app/factory_app.py source]]" as backend
 
 mcp --> backend : "delegates tools\ncontract: governed API\n[[../../../../tools/mcp_server/backend_client.py source]]"

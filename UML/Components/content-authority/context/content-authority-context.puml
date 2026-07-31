@@ -18,13 +18,13 @@ actor "Content Author\nResponsibility: Define experience facts, locations, objec
 rectangle "Authored Module\nResponsibility: Hold canonical versioned content truth\nContract: module.yaml plus referenced YAML documents\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as module
 component "Backend Module Compiler\nResponsibility: Load, validate and normalize authored documents\nContract: Deterministic module model or diagnostics\n[[../../../../backend/app/content/module_loader.py source]]" as compiler
 component "Module Validator\nResponsibility: Enforce schemas and cross-document references\nContract: Fail-closed validation findings\n[[../../../../backend/app/content/module_validator.py source]]" as validator
-component "World Content Loader\nResponsibility: Materialize published content for live sessions\nContract: Read-only runtime projection\n[[../../../../world-engine/app/content/backend_loader.py source]]" as world_loader
+component "World Content Loader\nResponsibility: Materialize published content for live sessions\nContract: Read-only runtime projection\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]" as world_loader
 component "AI Content Adapter\nResponsibility: Translate canonical content into proposal context\nContract: Provenance-preserving read model\n[[../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py source]]" as ai_adapter
 
 author ..> module : "authors\ncontract: reviewable YAML change\n[[../../../../content/modules/god_of_carnage/module.yaml source]]"
 module ..> compiler : "is compiled by\ncontract: complete referenced document set\n[[../../../../backend/app/content/module_loader_documents.py source]]"
 validator ..> world_loader : "releases version\ncontract: validation success only\n[[../../../../backend/app/content/module_service.py source]]"
-world_loader ..> ai_adapter : "supplies bounded facts\ncontract: session-bound content projection\n[[../../../../world-engine/app/content/backend_loader.py source]]"
+world_loader ..> ai_adapter : "supplies bounded facts\ncontract: session-bound content projection\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]"
 
 legend bottom
 Viewpoint: context

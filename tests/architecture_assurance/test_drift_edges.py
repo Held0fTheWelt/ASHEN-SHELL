@@ -77,7 +77,7 @@ def test_competing_authoritative_write_path_is_ci_failure() -> None:
         {
             "id": "legacy-runtime-authoritative-write",
             "from": "world-engine:runtime",
-            "anchor": "world-engine/app/runtime/manager.py",
+            "anchor": "world-engine/world_engine/runtime/manager.py",
         }
     )
     catalog["edges"].append(second_writer)

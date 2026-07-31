@@ -17,7 +17,7 @@ actor "Player\nResponsibility: Authenticate, browse community and start or conti
 actor "Operator\nResponsibility: Manage content, providers, policies and diagnostics\nContract: Privileged authenticated request\n[[../../../../docs/architecture/project/security-governance/architecture.md source]]" as operator
 rectangle "Administration Tool\nResponsibility: Present operator intent\nContract: Backend proxy only\n[[../../../../administration-tool/app.py source]]" as admin
 rectangle "Backend\nResponsibility: Own platform data and governed control-plane operations\nContract: Flask /api/v1\n[[../../../../backend/app/factory_app.py source]]\n[[c4-container.puml drill-down]]" as backend
-rectangle "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/app/main.py source]]" as world
+rectangle "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/world_engine/main.py source]]" as world
 
 admin ..> backend : "delegates mutations\ncontract: privileged backend API\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
 operator ..> admin : "operates\ncontract: browser control plane\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"

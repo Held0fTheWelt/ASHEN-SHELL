@@ -20,7 +20,7 @@ participant "Backend\nResponsibility: Own platform data and governed control-pla
 participant "Domain Services\nResponsibility: Implement platform and governance use cases\nContract: Transaction-scoped service operations\n[[../../../../backend/app/services/__init__.py source]]" as services
 participant "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]" as game_api
 participant "Game Service\nResponsibility: Call world-engine and map service responses\nContract: Internal HTTP and signed ticket\n[[../../../../backend/app/services/game/game_service.py source]]" as game_service
-participant "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/app/main.py source]]" as world
+participant "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/world_engine/main.py source]]" as world
 participant "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
 
 services -> observability : "emits evidence\ncontract: redacted trace correlation\n[[../../../../backend/app/observability/trace.py source]]"

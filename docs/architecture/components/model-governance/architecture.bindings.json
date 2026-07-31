@@ -1,0 +1,1905 @@
+{
+  "building_blocks": [
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/adapter_registry.py",
+          "file": "backend/app/model_governance/adapter_registry.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Adapter registry"
+        }
+      ],
+      "id": "B-adapter-registry",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Adapter registry"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/model_routing.py",
+          "file": "backend/app/model_governance/model_routing.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Model routing"
+        }
+      ],
+      "id": "B-model-routing",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Model routing"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/__init__.py",
+          "file": "backend/app/model_governance/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Package root"
+        }
+      ],
+      "id": "B-package-root",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Package root"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/model_routing_contracts.py",
+          "file": "backend/app/model_governance/model_routing_contracts.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Routing contracts"
+        }
+      ],
+      "id": "B-routing-contracts",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Routing contracts"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/runtime_models.py",
+          "file": "backend/app/model_governance/runtime_models.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Runtime models"
+        }
+      ],
+      "id": "B-runtime-models",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Runtime models"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance/session/session_persistence.py",
+          "file": "backend/app/model_governance/session/session_persistence.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Session persistence"
+        }
+      ],
+      "id": "B-session-persistence",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Session persistence"
+    }
+  ],
+  "critical": true,
+  "decisions": [
+    {
+      "anchors": [
+        {
+          "declared_path": "backend/app/model_governance",
+          "file": "backend/app/model_governance/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Model governance is routing-only, never live turn authority"
+        }
+      ],
+      "id": "D1",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Model governance is routing-only, never live turn authority"
+    }
+  ],
+  "discovered_units": [
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_decision_policy_types.py",
+        "kind": "python",
+        "line": 10,
+        "module": "backend.app.model_governance._decision_policy_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIActionType"
+      },
+      "id": "python:backend.app.model_governance._decision_policy_types:AIActionType",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_decision_policy_types.py",
+        "kind": "python",
+        "line": 59,
+        "module": "backend.app.model_governance._decision_policy_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIDecisionPolicy"
+      },
+      "id": "python:backend.app.model_governance._decision_policy_types:AIDecisionPolicy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 97,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIRoleContract"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:AIRoleContract",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 33,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DirectorSection"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:DirectorSection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 17,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InterpreterSection"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:InterpreterSection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 78,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ResponderSection"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:ResponderSection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 49,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ResponseImpulse"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:ResponseImpulse",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/_role_contract_types.py",
+        "kind": "python",
+        "line": 65,
+        "module": "backend.app.model_governance._role_contract_types",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StateChangeCandidate"
+      },
+      "id": "python:backend.app.model_governance._role_contract_types:StateChangeCandidate",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 103,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "adapter_registered"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:adapter_registered",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 122,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "adapter_without_model_spec"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:adapter_without_model_spec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 97,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "clear_registry"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:clear_registry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 71,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_adapter"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:get_adapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 85,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_model_spec"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:get_model_spec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 117,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "has_model_spec"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:has_model_spec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 92,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "iter_model_specs"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:iter_model_specs",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 29,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_adapter"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:register_adapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 47,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "register_adapter_model"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:register_adapter_model",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/adapter_registry.py",
+        "kind": "python",
+        "line": 130,
+        "module": "backend.app.model_governance.adapter_registry",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "snapshot_registry_keys"
+      },
+      "id": "python:backend.app.model_governance.adapter_registry:snapshot_registry_keys",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 30,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AdapterRequest"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:AdapterRequest",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 60,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AdapterResponse"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:AdapterResponse",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 234,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MockStoryAIAdapter"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:MockStoryAIAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 82,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StoryAIAdapter"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:StoryAIAdapter",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 117,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "generate_with_timeout"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:generate_with_timeout",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/ai_adapter.py",
+        "kind": "python",
+        "line": 167,
+        "module": "backend.app.model_governance.ai_adapter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "normalize_token_usage"
+      },
+      "id": "python:backend.app.model_governance.ai_adapter:normalize_token_usage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/input_interpreter.py",
+        "kind": "python",
+        "line": 47,
+        "module": "backend.app.model_governance.input_interpreter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InputInterpretationEnvelope"
+      },
+      "id": "python:backend.app.model_governance.input_interpreter:InputInterpretationEnvelope",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/input_interpreter.py",
+        "kind": "python",
+        "line": 36,
+        "module": "backend.app.model_governance.input_interpreter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InputPrimaryMode"
+      },
+      "id": "python:backend.app.model_governance.input_interpreter:InputPrimaryMode",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/input_interpreter.py",
+        "kind": "python",
+        "line": 231,
+        "module": "backend.app.model_governance.input_interpreter",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "interpret_operator_input"
+      },
+      "id": "python:backend.app.model_governance.input_interpreter:interpret_operator_input",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing.py",
+        "kind": "python",
+        "line": 381,
+        "module": "backend.app.model_governance.model_routing",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "route_model"
+      },
+      "id": "python:backend.app.model_governance.model_routing:route_model",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 147,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AdapterModelSpec"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:AdapterModelSpec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 58,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "Complexity"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:Complexity",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 89,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CostClass"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:CostClass",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 70,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CostSensitivity"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:CostSensitivity",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 107,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "EscalationHint"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:EscalationHint",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 76,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "LLMOrSLM"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:LLMOrSLM",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 64,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "LatencyBudget"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:LatencyBudget",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 95,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "LatencyClass"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:LatencyClass",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 81,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ModelTier"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:ModelTier",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 119,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RouteReasonCode"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:RouteReasonCode",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 182,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoutingDecision"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:RoutingDecision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 167,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoutingRequest"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:RoutingRequest",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 101,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StructuredOutputReliability"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:StructuredOutputReliability",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 26,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TaskKind"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:TaskKind",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 50,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TaskRoutingMode"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:TaskRoutingMode",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 16,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "WorkflowPhase"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:WorkflowPhase",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/model_routing_contracts.py",
+        "kind": "python",
+        "line": 141,
+        "module": "backend.app.model_governance.model_routing_contracts",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "model_tier_rank"
+      },
+      "id": "python:backend.app.model_governance.model_routing_contracts:model_tier_rank",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_contract.py",
+        "kind": "python",
+        "line": 14,
+        "module": "backend.app.model_governance.routing.model_inventory_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InventorySurface"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_contract:InventorySurface",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_contract.py",
+        "kind": "python",
+        "line": 23,
+        "module": "backend.app.model_governance.routing.model_inventory_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RequiredRoutingTuple"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_contract:RequiredRoutingTuple",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_contract.py",
+        "kind": "python",
+        "line": 90,
+        "module": "backend.app.model_governance.routing.model_inventory_contract",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "requirements_for_surface"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_contract:requirements_for_surface",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 32,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RegistryInventoryEntry"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:RegistryInventoryEntry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 40,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RegistryInventoryReport"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:RegistryInventoryReport",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 23,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SetupClassification"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:SetupClassification",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 77,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SurfaceCoverageReport"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:SurfaceCoverageReport",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 70,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TupleCoverageResult"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:TupleCoverageResult",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 112,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_no_eligible_setup"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:classify_no_eligible_setup",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 126,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_policy_degradation"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:classify_policy_degradation",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 134,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "inventory_summary_dict"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:inventory_summary_dict",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 45,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "report_registry_inventory"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:report_registry_inventory",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_inventory_report.py",
+        "kind": "python",
+        "line": 83,
+        "module": "backend.app.model_governance.routing.model_inventory_report",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "validate_surface_coverage"
+      },
+      "id": "python:backend.app.model_governance.routing.model_inventory_report:validate_surface_coverage",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_routing_evidence.py",
+        "kind": "python",
+        "line": 513,
+        "module": "backend.app.model_governance.routing.model_routing_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "attach_stage_routing_evidence"
+      },
+      "id": "python:backend.app.model_governance.routing.model_routing_evidence:attach_stage_routing_evidence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_routing_evidence.py",
+        "kind": "python",
+        "line": 405,
+        "module": "backend.app.model_governance.routing.model_routing_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_routing_evidence"
+      },
+      "id": "python:backend.app.model_governance.routing.model_routing_evidence:build_routing_evidence",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/model_routing_evidence.py",
+        "kind": "python",
+        "line": 271,
+        "module": "backend.app.model_governance.routing.model_routing_evidence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "routing_overview_for_reason_code"
+      },
+      "id": "python:backend.app.model_governance.routing.model_routing_evidence:routing_overview_for_reason_code",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/no_eligible_operator_meaning.py",
+        "kind": "python",
+        "line": 33,
+        "module": "backend.app.model_governance.routing.no_eligible_operator_meaning",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_no_eligible_operator_meaning_payload"
+      },
+      "id": "python:backend.app.model_governance.routing.no_eligible_operator_meaning:build_no_eligible_operator_meaning_payload",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 21,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "NoEligibleDiscipline"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:NoEligibleDiscipline",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 12,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "OperationalState"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:OperationalState",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 37,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_no_eligible_discipline"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:classify_no_eligible_discipline",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 65,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "classify_operational_state"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:classify_operational_state",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 98,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "collect_degradation_applied_from_traces"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:collect_degradation_applied_from_traces",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 109,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "collect_no_eligible_stages"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:collect_no_eligible_stages",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 32,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "pytest_session_active"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:pytest_session_active",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operational_state.py",
+        "kind": "python",
+        "line": 139,
+        "module": "backend.app.model_governance.routing.operational_state",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rollup_no_eligible_discipline_for_bounded_traces"
+      },
+      "id": "python:backend.app.model_governance.routing.operational_state:rollup_no_eligible_discipline_for_bounded_traces",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 364,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "apply_stage_id_alias_to_bounded_traces"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:apply_stage_id_alias_to_bounded_traces",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 213,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_audit_review_fingerprint"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:build_audit_review_fingerprint",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 88,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_audit_timeline_entry"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:build_audit_timeline_entry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 381,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_bounded_surface_operator_audit"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:build_bounded_surface_operator_audit",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 268,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_runtime_operator_audit"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:build_runtime_operator_audit",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 228,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_runtime_operator_audit_preempted"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:build_runtime_operator_audit_preempted",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 114,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "collect_audit_deviations"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:collect_audit_deviations",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 153,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "max_diagnostics_severity_across_traces"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:max_diagnostics_severity_across_traces",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 200,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "primary_concern_code"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:primary_concern_code",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 127,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rollup_diagnostics_flags"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:rollup_diagnostics_flags",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_audit.py",
+        "kind": "python",
+        "line": 56,
+        "module": "backend.app.model_governance.routing.operator_audit",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "runtime_additive_orchestration_fields"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_audit:runtime_additive_orchestration_fields",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_truth.py",
+        "kind": "python",
+        "line": 571,
+        "module": "backend.app.model_governance.routing.operator_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "bounded_traces_from_task_2a_routing"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_truth:bounded_traces_from_task_2a_routing",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_truth.py",
+        "kind": "python",
+        "line": 410,
+        "module": "backend.app.model_governance.routing.operator_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_operator_truth"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_truth:build_operator_truth",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_truth.py",
+        "kind": "python",
+        "line": 543,
+        "module": "backend.app.model_governance.routing.operator_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "enrich_operator_audit_with_operator_truth"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_truth:enrich_operator_audit_with_operator_truth",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_truth.py",
+        "kind": "python",
+        "line": 526,
+        "module": "backend.app.model_governance.routing.operator_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "merge_operator_truth"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_truth:merge_operator_truth",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/operator_truth.py",
+        "kind": "python",
+        "line": 531,
+        "module": "backend.app.model_governance.routing.operator_truth",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_routing_bootstrap_enabled"
+      },
+      "id": "python:backend.app.model_governance.routing.operator_truth:resolve_routing_bootstrap_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 22,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AuthorityLayer"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:AuthorityLayer",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 31,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "CanonicalSurface"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:CanonicalSurface",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 40,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "RoutingAuthorityEntry"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:RoutingAuthorityEntry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 185,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "assert_langgraph_not_canonical_for_task2a"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:assert_langgraph_not_canonical_for_task2a",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 178,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "assert_routing_policy_entry_is_unique_authoritative_policy"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:assert_routing_policy_entry_is_unique_authoritative_policy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/routing_authority.py",
+        "kind": "python",
+        "line": 173,
+        "module": "backend.app.model_governance.routing.routing_authority",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "authority_entries_for_surface"
+      },
+      "id": "python:backend.app.model_governance.routing.routing_authority:authority_entries_for_surface",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/startup_profiles.py",
+        "kind": "python",
+        "line": 16,
+        "module": "backend.app.model_governance.routing.startup_profiles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StartupProfile"
+      },
+      "id": "python:backend.app.model_governance.routing.startup_profiles:StartupProfile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/startup_profiles.py",
+        "kind": "python",
+        "line": 26,
+        "module": "backend.app.model_governance.routing.startup_profiles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StartupProfileFacts"
+      },
+      "id": "python:backend.app.model_governance.routing.startup_profiles:StartupProfileFacts",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/startup_profiles.py",
+        "kind": "python",
+        "line": 110,
+        "module": "backend.app.model_governance.routing.startup_profiles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "expected_operational_state_for_profile"
+      },
+      "id": "python:backend.app.model_governance.routing.startup_profiles:expected_operational_state_for_profile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/startup_profiles.py",
+        "kind": "python",
+        "line": 58,
+        "module": "backend.app.model_governance.routing.startup_profiles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "facts_for_profile"
+      },
+      "id": "python:backend.app.model_governance.routing.startup_profiles:facts_for_profile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing/startup_profiles.py",
+        "kind": "python",
+        "line": 36,
+        "module": "backend.app.model_governance.routing.startup_profiles",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_startup_profile"
+      },
+      "id": "python:backend.app.model_governance.routing.startup_profiles:resolve_startup_profile",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing_registry_bootstrap.py",
+        "kind": "python",
+        "line": 55,
+        "module": "backend.app.model_governance.routing_registry_bootstrap",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "bootstrap_routing_registry_from_config"
+      },
+      "id": "python:backend.app.model_governance.routing_registry_bootstrap:bootstrap_routing_registry_from_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing_registry_bootstrap.py",
+        "kind": "python",
+        "line": 30,
+        "module": "backend.app.model_governance.routing_registry_bootstrap",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_default_mock_story_adapter_model_spec"
+      },
+      "id": "python:backend.app.model_governance.routing_registry_bootstrap:build_default_mock_story_adapter_model_spec",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/routing_registry_bootstrap.py",
+        "kind": "python",
+        "line": 73,
+        "module": "backend.app.model_governance.routing_registry_bootstrap",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "init_routing_registry_bootstrap"
+      },
+      "id": "python:backend.app.model_governance.routing_registry_bootstrap:init_routing_registry_bootstrap",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 485,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIDecisionAction"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:AIDecisionAction",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 623,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIDecisionLog"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:AIDecisionLog",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 513,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AIValidationOutcome"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:AIValidationOutcome",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 575,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AgentInvocationRecord"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:AgentInvocationRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 597,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AgentResultRecord"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:AgentResultRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 36,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DegradedMarker"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:DegradedMarker",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 71,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DegradedSessionState"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:DegradedSessionState",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 299,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DeltaType"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:DeltaType",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 309,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DeltaValidationStatus"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:DeltaValidationStatus",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 536,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "DirectorDiagnosticSummary"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:DirectorDiagnosticSummary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 269,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "EventLogEntry"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:EventLogEntry",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 452,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ExecutionFailureReason"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:ExecutionFailureReason",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 465,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "GuardOutcome"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:GuardOutcome",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 522,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "InterpreterDiagnosticSummary"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:InterpreterDiagnosticSummary",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 607,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MergeFinalizationRecord"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:MergeFinalizationRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 394,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "MockDecision"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:MockDecision",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 424,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "NarrativeCommitRecord"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:NarrativeCommitRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 350,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ProposalSource"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:ProposalSource",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 376,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ProposedStateDelta"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:ProposedStateDelta",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 145,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SessionContextLayers"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:SessionContextLayers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 181,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SessionState"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:SessionState",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 27,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SessionStatus"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:SessionStatus",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 318,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "StateDelta"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:StateDelta",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 550,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SupervisorPlan"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:SupervisorPlan",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 563,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TokenUsageRecord"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:TokenUsageRecord",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 237,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TurnState"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:TurnState",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/runtime_models.py",
+        "kind": "python",
+        "line": 228,
+        "module": "backend.app.model_governance.runtime_models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "TurnStatus"
+      },
+      "id": "python:backend.app.model_governance.runtime_models:TurnStatus",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/session/session_persistence.py",
+        "kind": "python",
+        "line": 32,
+        "module": "backend.app.model_governance.session.session_persistence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "deserialize_session"
+      },
+      "id": "python:backend.app.model_governance.session.session_persistence:deserialize_session",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/model_governance/session/session_persistence.py",
+        "kind": "python",
+        "line": 11,
+        "module": "backend.app.model_governance.session.session_persistence",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "serialize_session"
+      },
+      "id": "python:backend.app.model_governance.session.session_persistence:serialize_session",
+      "kind": "python"
+    }
+  ],
+  "generator": "bt-architecture-assurance/1",
+  "lanes": [
+    "python"
+  ],
+  "out_of_scope": {
+    "python:backend.app.model_governance._decision_policy_types:AIActionType": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._decision_policy_types:AIDecisionPolicy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:AIRoleContract": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:DirectorSection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:InterpreterSection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:ResponderSection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:ResponseImpulse": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance._role_contract_types:StateChangeCandidate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:AdapterRequest": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:AdapterResponse": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:MockStoryAIAdapter": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:StoryAIAdapter": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:generate_with_timeout": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.ai_adapter:normalize_token_usage": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.input_interpreter:InputInterpretationEnvelope": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.input_interpreter:InputPrimaryMode": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.input_interpreter:interpret_operator_input": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_contract:InventorySurface": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_contract:RequiredRoutingTuple": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_contract:requirements_for_surface": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:RegistryInventoryEntry": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:RegistryInventoryReport": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:SetupClassification": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:SurfaceCoverageReport": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:TupleCoverageResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:classify_no_eligible_setup": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:classify_policy_degradation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:inventory_summary_dict": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:report_registry_inventory": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_inventory_report:validate_surface_coverage": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_routing_evidence:attach_stage_routing_evidence": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_routing_evidence:build_routing_evidence": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.model_routing_evidence:routing_overview_for_reason_code": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.no_eligible_operator_meaning:build_no_eligible_operator_meaning_payload": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:NoEligibleDiscipline": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:OperationalState": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:classify_no_eligible_discipline": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:classify_operational_state": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:collect_degradation_applied_from_traces": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:collect_no_eligible_stages": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:pytest_session_active": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operational_state:rollup_no_eligible_discipline_for_bounded_traces": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:apply_stage_id_alias_to_bounded_traces": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:build_audit_review_fingerprint": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:build_audit_timeline_entry": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:build_bounded_surface_operator_audit": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:build_runtime_operator_audit": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:build_runtime_operator_audit_preempted": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:collect_audit_deviations": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:max_diagnostics_severity_across_traces": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:primary_concern_code": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:rollup_diagnostics_flags": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_audit:runtime_additive_orchestration_fields": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_truth:bounded_traces_from_task_2a_routing": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_truth:build_operator_truth": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_truth:enrich_operator_audit_with_operator_truth": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_truth:merge_operator_truth": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.operator_truth:resolve_routing_bootstrap_enabled": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:AuthorityLayer": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:CanonicalSurface": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:RoutingAuthorityEntry": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:assert_langgraph_not_canonical_for_task2a": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:assert_routing_policy_entry_is_unique_authoritative_policy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.routing_authority:authority_entries_for_surface": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.startup_profiles:StartupProfile": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.startup_profiles:StartupProfileFacts": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.startup_profiles:expected_operational_state_for_profile": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.startup_profiles:facts_for_profile": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing.startup_profiles:resolve_startup_profile": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing_registry_bootstrap:bootstrap_routing_registry_from_config": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing_registry_bootstrap:build_default_mock_story_adapter_model_spec": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.model_governance.routing_registry_bootstrap:init_routing_registry_bootstrap": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  },
+  "representation_map": {
+    "python:backend.app.model_governance.adapter_registry:adapter_registered": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:adapter_without_model_spec": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:clear_registry": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:get_adapter": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:get_model_spec": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:has_model_spec": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:iter_model_specs": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:register_adapter": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:register_adapter_model": "B-adapter-registry",
+    "python:backend.app.model_governance.adapter_registry:snapshot_registry_keys": "B-adapter-registry",
+    "python:backend.app.model_governance.model_routing:route_model": "B-model-routing",
+    "python:backend.app.model_governance.model_routing_contracts:AdapterModelSpec": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:Complexity": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:CostClass": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:CostSensitivity": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:EscalationHint": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:LLMOrSLM": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:LatencyBudget": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:LatencyClass": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:ModelTier": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:RouteReasonCode": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:RoutingDecision": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:RoutingRequest": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:StructuredOutputReliability": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:TaskKind": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:TaskRoutingMode": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:WorkflowPhase": "B-routing-contracts",
+    "python:backend.app.model_governance.model_routing_contracts:model_tier_rank": "B-routing-contracts",
+    "python:backend.app.model_governance.runtime_models:AIDecisionAction": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:AIDecisionLog": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:AIValidationOutcome": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:AgentInvocationRecord": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:AgentResultRecord": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:DegradedMarker": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:DegradedSessionState": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:DeltaType": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:DeltaValidationStatus": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:DirectorDiagnosticSummary": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:EventLogEntry": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:ExecutionFailureReason": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:GuardOutcome": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:InterpreterDiagnosticSummary": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:MergeFinalizationRecord": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:MockDecision": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:NarrativeCommitRecord": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:ProposalSource": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:ProposedStateDelta": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:SessionContextLayers": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:SessionState": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:SessionStatus": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:StateDelta": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:SupervisorPlan": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:TokenUsageRecord": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:TurnState": "B-runtime-models",
+    "python:backend.app.model_governance.runtime_models:TurnStatus": "B-runtime-models",
+    "python:backend.app.model_governance.session.session_persistence:deserialize_session": "B-session-persistence",
+    "python:backend.app.model_governance.session.session_persistence:serialize_session": "B-session-persistence"
+  },
+  "required_views": [
+    {
+      "anchors": [
+        "backend/app/model_governance/__init__.py",
+        "tests/gates/test_runtime_sessions_table_absent.py",
+        "world-engine/world_engine/main.py"
+      ],
+      "concern": "Routing package versus live world-engine authority",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 3,
+      "id": "authority-context",
+      "kind": "context",
+      "level": "context",
+      "path": "UML/Components/model-governance/context/authority-context.puml",
+      "relationship_count": 2,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/model_governance/__init__.py",
+        "backend/app/model_governance/adapter_registry.py",
+        "backend/app/model_governance/model_routing.py",
+        "backend/app/model_governance/model_routing_contracts.py",
+        "backend/app/model_governance/session/session_persistence.py"
+      ],
+      "concern": "Routing, registry, contracts and governance session seams",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 5,
+      "id": "routing-components",
+      "kind": "component",
+      "level": "component",
+      "path": "UML/Components/model-governance/components/routing-components.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/model_governance/__init__.py",
+        "backend/app/model_governance/adapter_registry.py",
+        "backend/app/model_governance/model_routing.py",
+        "backend/app/model_governance/model_routing_contracts.py",
+        "backend/app/model_governance/session/session_persistence.py"
+      ],
+      "concern": "Adapter selection without live commit",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 6,
+      "id": "routing-sequence",
+      "kind": "sequence",
+      "level": "sequence",
+      "path": "UML/Components/model-governance/sequence/routing-sequence.puml",
+      "relationship_count": 5,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/model_governance/model_routing.py",
+        "backend/app/model_governance/runtime_models.py"
+      ],
+      "concern": "Governance session models and routing decisions",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 2,
+      "id": "routing-data-model",
+      "kind": "class",
+      "level": "class",
+      "path": "UML/Components/model-governance/classes/routing-data-model.puml",
+      "relationship_count": 1,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    },
+    {
+      "anchors": [
+        "backend/app/model_governance/model_routing.py",
+        "backend/app/model_governance/routing_registry_bootstrap.py",
+        "backend/app/model_governance/session/session_persistence.py"
+      ],
+      "concern": "Configure, route and persist governance snapshots only",
+      "decisions": [
+        "D1"
+      ],
+      "element_count": 3,
+      "id": "routing-lifecycle",
+      "kind": "state",
+      "level": "state",
+      "path": "UML/Components/model-governance/states/routing-lifecycle.puml",
+      "relationship_count": 4,
+      "schema_version": "bt.semantic_view_requirement.v1"
+    }
+  ],
+  "sad_path": "docs/architecture/components/model-governance/architecture.md",
+  "schema_version": "bt.architecture_bindings.v1",
+  "scope": "component",
+  "subsystem": "model-governance"
+}

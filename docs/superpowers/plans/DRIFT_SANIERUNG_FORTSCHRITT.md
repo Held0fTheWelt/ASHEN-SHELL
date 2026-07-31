@@ -2,9 +2,9 @@
 
 ## Zustand
 Aktuelle Welle: 8 complete / W9 (G3 parked post-merge) / DoD remainder open
-Aktueller Schritt: G2 executed; P-W8-ASSURE-CI + P-W8-ALIAS landed; G3 trigger = after merge+push
-Letzter grüner Commit tip (pre-G2 continuation): `de2cff5b`
-Baseline evidence (this session): see journal + `baselines/W6-G2-runtime-sessions-readers.md`
+Aktueller Schritt: Architecture-assurance path truth retargeted (`world-engine/app` → `world-engine/world_engine`); AA suite green
+Letzter grüner Commit tip: (this session; see journal)
+Baseline evidence (this session): AA suite `--quick` **30 passed**; depth gate PASS (0 failures)
 
 ## Wellen
 - [x] W0–W6 including **G2** `runtime_sessions` drop (COUNT=0; migration 049; up/down evidenced)
@@ -30,6 +30,7 @@ Authority: `docs/superpowers/plans/DRIFT_SANIERUNG_GATE_ENTSCHEIDUNGEN.md` super
 | 2026-07-31 | 8 | Direct pytest in CI | Migrated to `tests/run_tests.py` | Allowlist = 0 |
 | 2026-07-31 | 8 | Element aliasing | Distinct role-accurate anchors | Residuals cleared |
 | 2026-07-31 | 9 | fy-suites split | **Not now** | After merge+push only |
+| 2026-07-31 | DoD | AA path convention | `world-engine/world_engine` only | No dual `world-engine/app` product truth |
 
 ## Geparkte Probleme
 | ID | Welle | Problem | Warum geparkt | Auflösung |
@@ -37,9 +38,8 @@ Authority: `docs/superpowers/plans/DRIFT_SANIERUNG_GATE_ENTSCHEIDUNGEN.md` super
 | P-G3-FY | 9 | subtree split | Trigger: after merge+push | `baselines/W9-G3-fy-suites-split-prep.md` |
 | P-W7-AISTACK | 7 | ai_stack GoC package still large | YAML-backed adapters | Further shrink follow-up |
 | P-DoD-PLAYTHROUGH | 9/DoD | Full playthrough metrics refresh | Needs live stack + attribution pass | Re-run W0-B ledger when ready |
-| P-DoD-UML-SARIF | DoD | UML CI artifact / SARIF-JUnit identity | Not re-verified this session | Re-run assurance evidence publish |
+| P-DoD-UML-SARIF | DoD | UML CI artifact / SARIF-JUnit identity | Not re-verified as publish pipeline this session | Separate evidence publish pass |
 | P-DoD-SUITE-ALL | DoD | `--suite all` green | Not claimed | Full suite run |
-| P-DoD-ASSURE-GATE | DoD | architecture assurance gate PASS | Pre-existing FAIL (~3209) from `world-engine/app` vs `world_engine` path truth | Retarget catalog/config lane roots |
 
 ## Journal
 - 2026-07-31 W7: `1377486b` YAML profile + delete `goc_solo_builtin_*`.
@@ -49,3 +49,4 @@ Authority: `docs/superpowers/plans/DRIFT_SANIERUNG_GATE_ENTSCHEIDUNGEN.md` super
 - 2026-07-31 G2: COUNT(*)=0 on `backend/instance/wos.db`; migration 049 up/down/up; model deleted; `test_runtime_sessions_table_absent`.
 - 2026-07-31 P-W8-ASSURE-CI: `architecture-assurance.yml` → `tests/run_tests.py --suite architecture_assurance`; allowlist 0.
 - 2026-07-31 P-W8-ALIAS: world-engine catalog dual-role anchors separated; freeze gate now asserts zero offenders.
+- 2026-07-31 P-DoD-ASSURE-GATE: retarget product paths `world-engine/app` → `world-engine/world_engine`; retire `backend_runtime_session` write surfaces; add `model-governance` catalog/SAD; regenerate bindings/views/canon. Suite: **30 passed, 0 failed**.

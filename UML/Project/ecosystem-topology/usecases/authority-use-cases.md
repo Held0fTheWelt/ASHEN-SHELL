@@ -14,7 +14,7 @@
 | Frontend | Present player interaction and transient UI state | Browser shell | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
 | Administration Tool | Present governed operator workflows | Backend-delegated mutations | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
 | MCP Server | Expose bounded local automation capabilities | JSON-RPC adapter | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
-| World Engine | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+| World Engine | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 | Backend | Own identity, community and control-plane truth | Flask API | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
 
 ## Modeled relationships

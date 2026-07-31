@@ -69,7 +69,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Capability Claim (`claim`) | `class` | State user-observable outcome | Stable capability id | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
 | Capability Proof (`proof`) | `class` | Bind code, test, trace and demonstration | Production-path evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
 | Residual Gap (`gap`) | `class` | Explain incomplete cross-link or degraded behavior | Owner and closure criterion | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
-| Authoritative Commit (`commit`) | `component` | Apply accepted dramatic outcome to live truth | World-engine-only commit | [`world-engine/app/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/app/story_runtime/narrative_commit_resolution.py) |
+| Authoritative Commit (`commit`) | `component` | Apply accepted dramatic outcome to live truth | World-engine-only commit | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Experience Launch (`launch`) | `component` | Bind module, role, run and session | Correct experience identity | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
 | NPC Agency (`agency`) | `component` | Produce motivated autonomous reactions | Character knowledge and goal bounds | [`ai_stack/story_runtime/npc_agency/npc_agency_planner.py`](../../../../ai_stack/story_runtime/npc_agency/npc_agency_planner.py) |
 | Operational Evidence (`evidence`) | `component` | Prove the same path through tests and trace artifacts | Reproducible source-located evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
@@ -126,9 +126,9 @@ MVP scope and anti-creep policy (formerly `mvp_definition`) are defined in §2 C
 
 | From | To | Semantics | Contract | Evidence |
 | --- | --- | --- | --- | --- |
-| NPC Agency | Authoritative Commit | proposes outcome | uncommitted candidate | [`world-engine/app/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/app/story_runtime/governed_runtime_adapters.py) |
+| NPC Agency | Authoritative Commit | proposes outcome | uncommitted candidate | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Capability Claim | Capability Proof | requires | all evidence dimensions | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
-| Authoritative Commit | Player Rendering | publishes blocks | accepted result only | [`world-engine/app/api/story_ws.py`](../../../../world-engine/app/api/story_ws.py) |
+| Authoritative Commit | Player Rendering | publishes blocks | accepted result only | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 | Experience Launch | Player Semantics | opens interaction | bound role and session | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
 | Capability Proof | Residual Gap | exposes missing evidence as | no false completion | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
 | Player Rendering | Operational Evidence | is proven by | observable assertion and trace | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
@@ -296,13 +296,13 @@ In-process fallback remains acceptable outside Docker or as degraded local fallb
 
 **Implementation status.** **Implemented — all six MVP4 runtime requirements are in place.**
 
-1. Governed session-create handoff: complete `runtime_projection` with actor ownership forwarded from `backend/app/api/v1/game_routes.py` → `world-engine/app/api/http.py`; incomplete requests rejected with HTTP 400 (`StorySessionContractError`).
+1. Governed session-create handoff: complete `runtime_projection` with actor ownership forwarded from `backend/app/api/v1/game_routes.py` → `world-engine/world_engine/api/http.py`; incomplete requests rejected with HTTP 400 (`StorySessionContractError`).
 2. Truthful opening/turn execution: deterministic phases report `0` token/cost; `quality_class` distinguishes live vs. degraded.
 3. Diagnostics envelope: each committed turn carries validation outcome, quality class, route provenance, cost summary, narrator streaming state, `canonical_turn_id`, and `turn_aspect_ledger`.
 4. `can_execute` derived from real story-window entry count; `narrator_streaming` propagated through backend and frontend payloads.
 5. Operator routes: `/api/v1/admin/mvp4/` exposes session summary, cost reports, token budget, evaluations.
 6. Shared governance storage: Redis-backed JSON storage initialized in `backend/app/factory_app.py`; `REDIS_URL` in bootstrap environment.
-- `world-engine/app/story_runtime/manager/` and `world-engine/app/api/http.py` are the primary implementation files.
+- `world-engine/world_engine/story_runtime/manager/` and `world-engine/world_engine/api/http.py` are the primary implementation files.
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#adr-0032-mvp4-live-runtime-setup-requirements` (archived — see `docs/archive/adr-retired-2026/`)
 
@@ -315,7 +315,7 @@ In-process fallback remains acceptable outside Docker or as degraded local fallb
 
 **Decision.** 1. `god_of_carnage` is the canonical content module. It owns all story truth: characters, scenes, relationships, escalation axes, props, and endings. It lives at `content/modules/god_of_carnage/`.
 
-2. `god_of_carnage_solo` is a runtime profile only. It does not own story truth. It binds to `god_of_carnage` content. It is resolved by the runtime profile resolver at `world-engine/app/runtime/profiles.py`.
+2. `god_of_carnage_solo` is a runtime profile only. It does not own story truth. It binds to `god_of_carnage` content. It is resolved by the runtime profile resolver at `world-engine/world_engine/runtime/profiles.py`.
 
 3. `visitor` is removed from the live God of Carnage solo path. It must not appear as a role, actor, session participant, prompt responder, or lobby seat.
 
@@ -328,9 +328,9 @@ In-process fallback remains acceptable outside Docker or as degraded local fallb
 - Template story truth (beats, props, actions) must be empty — all derived from canonical content (FIX-002)
 
 **Affected services.** - `story_runtime_core/goc_solo_builtin_roles_rooms.py` — removed visitor, added annette/alain as HUMAN roles
-- `world-engine/app/runtime/profiles.py` — new runtime profile resolver (MVP1-P01)
-- `world-engine/app/api/http.py` — CreateRunRequest extended with runtime_profile_id, selected_player_role
-- `world-engine/app/runtime/manager.py` — _bootstrap_instance extended with preferred_role_id
+- `world-engine/world_engine/runtime/profiles.py` — new runtime profile resolver (MVP1-P01)
+- `world-engine/world_engine/api/http.py` — CreateRunRequest extended with runtime_profile_id, selected_player_role
+- `world-engine/world_engine/runtime/manager.py` — _bootstrap_instance extended with preferred_role_id
 - `backend/app/services/game/game_service.py` — create_run extended with runtime_profile_id, selected_player_role
 - `backend/app/api/v1/game_routes.py` — game_create_run and game_player_session_create extended
 
@@ -343,7 +343,7 @@ In-process fallback remains acceptable outside Docker or as degraded local fallb
 
 **Context.** No runtime profile concept existed in the codebase before MVP1. Templates (ExperienceTemplate) served as both content configuration and runtime identity. This made it impossible to distinguish "this is the content" from "this is the runtime mode".
 
-**Decision.** Create `world-engine/app/runtime/profiles.py` with a `RuntimeProfileResolver` pattern:
+**Decision.** Create `world-engine/world_engine/runtime/profiles.py` with a `RuntimeProfileResolver` pattern:
 
 - `resolve_runtime_profile(runtime_profile_id)` resolves a profile id to a `RuntimeProfile` object
 - `RuntimeProfile` contains: `runtime_profile_id`, `content_module_id`, `runtime_module_id`, `runtime_mode`, `selectable_player_roles`, `forbidden_story_truth_fields`
@@ -365,8 +365,8 @@ Error codes emitted by the resolver:
 - The resolver is currently hard-coded for `god_of_carnage_solo`; future profiles require adding cases
 - `RuntimeProfileError` is a structured ValueError subclass with `.code` and `.details`
 
-**Affected services.** - `world-engine/app/runtime/profiles.py` (NEW)
-- `world-engine/app/api/http.py` — consumes resolver in `create_run` handler
+**Affected services.** - `world-engine/world_engine/runtime/profiles.py` (NEW)
+- `world-engine/world_engine/api/http.py` — consumes resolver in `create_run` handler
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
 
@@ -385,7 +385,7 @@ Error codes emitted by the resolver:
 
 4. `build_actor_ownership()` produces the authoritative `human_actor_id`, `npc_actor_ids`, and `actor_lanes` map for MVP2 consumption.
 
-5. The `CreateRunRequest` in `world-engine/app/api/http.py` now accepts `selected_player_role`. The `world-engine/app/runtime/manager.py:_bootstrap_instance` accepts `preferred_role_id`.
+5. The `CreateRunRequest` in `world-engine/world_engine/api/http.py` now accepts `selected_player_role`. The `world-engine/world_engine/runtime/manager.py:_bootstrap_instance` accepts `preferred_role_id`.
 
 **Consequences.** - Sessions where neither annette nor alain is selected are rejected at the API level
 - `selected_player_role` remains the player-facing role slug while `human_actor_id` is the canonical runtime actor ID
@@ -393,9 +393,9 @@ Error codes emitted by the resolver:
 - MVP2 receives `human_actor_id` and `npc_actor_ids` from the `CreateRunResponse`
 
 **Affected services.** - `story_runtime_core/goc_solo_builtin_roles_rooms.py` — annette and alain are HUMAN+can_join, both start in hallway
-- `world-engine/app/runtime/manager.py` — `create_run()` and `_bootstrap_instance()` extended
-- `world-engine/app/runtime/profiles.py` — `validate_selected_player_role()`, `build_actor_ownership()`
-- `world-engine/app/api/http.py` — `create_run` handler wires profile resolution to manager
+- `world-engine/world_engine/runtime/manager.py` — `create_run()` and `_bootstrap_instance()` extended
+- `world-engine/world_engine/runtime/profiles.py` — `validate_selected_player_role()`, `build_actor_ownership()`
+- `world-engine/world_engine/api/http.py` — `create_run` handler wires profile resolution to manager
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
 
@@ -414,7 +414,7 @@ FIX-006 of the MVP1 audit cycle identified that the role IDs (`annette`, `alain`
 
 2. **`god_of_carnage_solo` ExperienceTemplate** (in `story_runtime_core/`) is runtime scaffolding only — it provides the game-engine participation model (lobby seats, room graph, action menus). It does not author story truth.
 
-3. **Runtime profile** (`world-engine/app/runtime/profiles.py`) resolves canonical actor IDs from the modular character content under `content/modules/god_of_carnage/characters/` at runtime via `_resolve_goc_content()`, not from hardcoded constants.
+3. **Runtime profile** (`world-engine/world_engine/runtime/profiles.py`) resolves canonical actor IDs from the modular character content under `content/modules/god_of_carnage/characters/` at runtime via `_resolve_goc_content()`, not from hardcoded constants.
 
 4. **Role IDs** in the ExperienceTemplate are character slugs (`annette`, `alain`, `veronique`, `michel`), not runtime actor IDs. They must resolve through `characters/index.yaml` to the canonical per-character documents in `characters/definitions/*.yaml`, where `actor_id` / `runtime_actor_id` defines the runtime actor identity. The joinable player role subset (`annette`, `alain`) must additionally resolve through the runtime profile's selectable-role mapping. This is enforced by `test_goc_solo_runtime_projection_is_derived_from_canonical_content`.
 
@@ -446,7 +446,7 @@ FIX-006 of the MVP1 audit cycle identified that the role IDs (`annette`, `alain`
 - `content/modules/god_of_carnage/canonical_path/index.yaml` and numbered `canonical_path/*.yaml` — directed story spine and beat authority
 - `content/modules/god_of_carnage/scene_graph.yaml` — runtime node index over canonical path/location IDs; not a story-truth replacement for `canonical_path/`
 - `content/modules/god_of_carnage/characters/index.yaml` and `characters/definitions/*.yaml` — canonical authority for character IDs
-- `world-engine/app/runtime/profiles.py` — `_resolve_goc_content()` reads canonical character content, produces content hash
+- `world-engine/world_engine/runtime/profiles.py` — `_resolve_goc_content()` reads canonical character content, produces content hash
 - `story_runtime_core/goc_solo_builtin_roles_rooms.py` — role IDs must match canonical character slugs
 - `world-engine/tests/test_mvp1_experience_identity.py` — `TestStoryTruthBoundary` and `TestContentResolvedRoleMapping`
 
@@ -532,7 +532,7 @@ Additionally, the runtime had no mechanism preventing state deltas from mutating
 
 **Decision.** ### NPC Coercion
 
-1. **`validate_npc_action_coercion()`** in `world-engine/app/runtime/actor_lane.py` enforces that NPC actions targeting the human actor may not constitute control. Classification uses structured fields first (coercion_type, action_type against `_COERCIVE_ACTION_TYPES`), then text-level analysis as supplementary evidence. This is not a pure string match.
+1. **`validate_npc_action_coercion()`** in `world-engine/world_engine/runtime/actor_lane.py` enforces that NPC actions targeting the human actor may not constitute control. Classification uses structured fields first (coercion_type, action_type against `_COERCIVE_ACTION_TYPES`), then text-level analysis as supplementary evidence. This is not a pure string match.
 
 2. Allowed: NPC pressures, challenges, addresses, interrupts, provokes, accuses, taunts, or appeals to the human actor. These are social influences, not outcome determinations.
 
@@ -546,9 +546,9 @@ Additionally, the runtime had no mechanism preventing state deltas from mutating
 
 ### StateDeltaBoundary
 
-7. **`StateDeltaBoundary`** in `world-engine/app/runtime/models.py` defines `protected_paths` (canonical story truth and identity fields) and `allowed_runtime_paths` (runtime-only mutable fields).
+7. **`StateDeltaBoundary`** in `world-engine/world_engine/runtime/models.py` defines `protected_paths` (canonical story truth and identity fields) and `allowed_runtime_paths` (runtime-only mutable fields).
 
-8. **`validate_state_delta()`** in `world-engine/app/runtime/state_delta.py` rejects any delta whose path matches or is under a protected path. Error codes: `protected_state_mutation_rejected`, `state_delta_boundary_violation`.
+8. **`validate_state_delta()`** in `world-engine/world_engine/runtime/state_delta.py` rejects any delta whose path matches or is under a protected path. Error codes: `protected_state_mutation_rejected`, `state_delta_boundary_violation`.
 
 9. **`run_commit_seam()`** in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py` accepts `candidate_deltas` and `state_delta_boundary`. The live executor `_commit_seam()` forwards these fields from `RuntimeTurnState`, so protected path mutations are rejected at the commit seam before any write occurs.
 
@@ -565,9 +565,9 @@ Additionally, the runtime had no mechanism preventing state deltas from mutating
 - Unknown paths are rejected by default (`reject_unknown_paths=True`) — only explicitly listed allowed paths can be mutated
 - ADR-0039 boundary: tests must assert taxonomy, error codes, ledger fields, commit flags, and capability violations, not copied prose examples
 
-**Affected services.** - `world-engine/app/runtime/models.py` — `StateDeltaBoundary`, `StateDeltaValidationResult`
-- `world-engine/app/runtime/actor_lane.py` — `validate_npc_action_coercion()`, `_COERCIVE_ACTION_TYPES`, `_ALLOWED_PRESSURE_VERBS`
-- `world-engine/app/runtime/state_delta.py` — `validate_state_delta()`, `validate_state_deltas()`, `build_default_goc_boundary()`
+**Affected services.** - `world-engine/world_engine/runtime/models.py` — `StateDeltaBoundary`, `StateDeltaValidationResult`
+- `world-engine/world_engine/runtime/actor_lane.py` — `validate_npc_action_coercion()`, `_COERCIVE_ACTION_TYPES`, `_ALLOWED_PRESSURE_VERBS`
+- `world-engine/world_engine/runtime/state_delta.py` — `validate_state_delta()`, `validate_state_deltas()`, `build_default_goc_boundary()`
 - `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py` — `run_commit_seam()` extended with `candidate_deltas`
 - `ai_stack/contracts/dramatic_capability_contracts.py` — shared NPC coercion taxonomy and forbidden capability mapping
 - `ai_stack/langgraph/langgraph_runtime_executor.py` — live authority-aspect and commit-seam wiring
@@ -586,9 +586,9 @@ Additionally, the responder nomination seam (`build_responder_and_function()` in
 
 **Decision.** 1. **ActorLaneContext** is assembled at runtime bootstrap from the MVP1 `build_actor_ownership()` handoff. It carries `human_actor_id`, `actor_lanes`, `ai_allowed_actor_ids`, and `ai_forbidden_actor_ids`. The human actor is always in `ai_forbidden_actor_ids`.
 
-2. **`validate_actor_lane_output()`** in `world-engine/app/runtime/actor_lane.py` rejects any AI candidate block (spoken line, actor action, emotional state, decision) whose `actor_id` or `speaker_id` matches `human_actor_id`. Error code: `ai_controlled_human_actor`.
+2. **`validate_actor_lane_output()`** in `world-engine/world_engine/runtime/actor_lane.py` rejects any AI candidate block (spoken line, actor action, emotional state, decision) whose `actor_id` or `speaker_id` matches `human_actor_id`. Error code: `ai_controlled_human_actor`.
 
-3. **`validate_responder_plan()`** in `world-engine/app/runtime/actor_lane.py` rejects any responder plan where the `primary_responder_id` or any `secondary_responder_ids` entry is the human actor. Error code: `human_actor_selected_as_responder`.
+3. **`validate_responder_plan()`** in `world-engine/world_engine/runtime/actor_lane.py` rejects any responder plan where the `primary_responder_id` or any `secondary_responder_ids` entry is the human actor. Error code: `human_actor_selected_as_responder`.
 
 4. **`run_validation_seam()`** in `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py` is extended with an optional `actor_lane_context` dict parameter. When provided, it scans the AI generation's structured output (spoken_lines, action_lines, emotional_shift, responder nominations) for human-actor violations **before** the dramatic-effect gate runs. This ensures enforcement happens before response packaging and before commit.
 
@@ -607,8 +607,8 @@ Additionally, the responder nomination seam (`build_responder_and_function()` in
 - `run_commit_seam()` receives a rejected `validation_outcome` when human actor enforcement fires, ensuring `commit_applied=False`
 - `run_visible_render()` emits `render_downgrade` when enforcement fires
 
-**Affected services.** - `world-engine/app/runtime/models.py` — `ActorLaneContext`, `ActorLaneValidationResult`
-- `world-engine/app/runtime/actor_lane.py` — `build_actor_lane_context()`, `validate_actor_lane_output()`, `validate_responder_plan()`
+**Affected services.** - `world-engine/world_engine/runtime/models.py` — `ActorLaneContext`, `ActorLaneValidationResult`
+- `world-engine/world_engine/runtime/actor_lane.py` — `build_actor_lane_context()`, `validate_actor_lane_output()`, `validate_responder_plan()`
 - `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py` — `_check_human_actor_violations()`, `run_validation_seam()` extended with `actor_lane_context`
 - `ai_stack/story_runtime/director/god_of_carnage_scene_director.py` — `build_responder_and_function()` (responder nomination seam — receives validation in MVP3)
 
@@ -648,14 +648,14 @@ Environment state is therefore a projection of admitted/canonical environment tr
 - The `god_of_carnage_solo` runtime template continues to own no props (`props=[]` in the template); canonical module content may still define layout/object truth that Pi15 normalizes into environment state
 - Player-visible environment projections remain projections of committed state and admitted/canonical content, not proof that narration invented a new persistent object
 
-**Affected services.** - `world-engine/app/runtime/models.py` — `ObjectAdmissionRecord`, `VALID_SOURCE_KINDS`
-- `world-engine/app/runtime/object_admission.py` — `admit_object()`, `validate_object_admission()`
+**Affected services.** - `world-engine/world_engine/runtime/models.py` — `ObjectAdmissionRecord`, `VALID_SOURCE_KINDS`
+- `world-engine/world_engine/runtime/object_admission.py` — `admit_object()`, `validate_object_admission()`
 - `ai_stack/contracts/environment_state_contracts.py` — canonical `EnvironmentModel` / durable `EnvironmentState` helpers
 - `ai_stack/story_runtime/player_action_resolution.py` — action affordance context bound to current environment state
 - `ai_stack/langgraph/langgraph_runtime_executor.py` — environment state initialization, generation context, commit-time mutation, render context
 - `ai_stack/story_runtime/turn/god_of_carnage_turn_seams.py` — render support marker for bound environment state
-- `world-engine/app/story_runtime/manager/` — `StorySession.environment_state` persistence and get-state diagnostics
-- `world-engine/app/story_runtime_shell_readout.py` — shell projection of current environment state
+- `world-engine/world_engine/story_runtime/manager/` — `StorySession.environment_state` persistence and get-state diagnostics
+- `world-engine/world_engine/story_runtime_shell_readout.py` — shell projection of current environment state
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
 
@@ -728,7 +728,7 @@ The old minimum agency baseline (passive reactivity) is insufficient. NPCs must 
 - The gate for passivity runs before commit and before response packaging
 
 **Affected services.** - `ai_stack/live_dramatic_scene_simulator.py` — `PassivityValidation`, `validate_passivity()`, `validate_dramatic_mass()`, `build_deterministic_ldss_output()`
-- `world-engine/app/story_runtime/manager/` — `_build_ldss_scene_envelope()` (LDSS entry point post-commit)
+- `world-engine/world_engine/story_runtime/manager/` — `_build_ldss_scene_envelope()` (LDSS entry point post-commit)
 - `tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py` — gates proving passivity and dramatic mass enforcement
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
@@ -750,7 +750,7 @@ MVP3 introduces LDSS as a non-optional live-path component that wraps the turn's
 
 4. **`LDSSOutput`** is the intermediate output: decision count, scene block count, visible actor response flag, NPC agency plan, and visible scene output.
 
-5. **LDSS invocation point**: `_finalize_committed_turn()` in `world-engine/app/story_runtime/manager/` calls `_build_ldss_scene_envelope()` after validation and commit. LDSS runs on committed state only.
+5. **LDSS invocation point**: `_finalize_committed_turn()` in `world-engine/world_engine/story_runtime/manager/` calls `_build_ldss_scene_envelope()` after validation and commit. LDSS runs on committed state only.
 
 6. **LDSS diagnostics status**: The diagnostics field `diagnostics.live_dramatic_scene_simulator.status` reports the active LDSS outcome. Direct canonical-step LDSS envelope builds report `"approved"` when the authored canonical path step produced valid visible blocks. Full story-turn manager routes may project that same successful LDSS evidence as `"evidenced_live_path"` in higher-level runtime diagnostics. The diagnostics include `story_session_id`, `turn_number`, `input_hash`, `output_hash`, `decision_count`, `scene_block_count`, and `legacy_blob_used=false`.
 
@@ -765,7 +765,7 @@ MVP3 introduces LDSS as a non-optional live-path component that wraps the turn's
 - A degraded LDSS fallback is valid as an error surface, not as a successful dramatic scene; gates that require NPC participation must use canonical-step or live-generated output.
 
 **Affected services.** - `ai_stack/live_dramatic_scene_simulator.py` — `SceneTurnEnvelopeV2`, `SceneBlock`, `LDSSInput`, `LDSSOutput`, `run_ldss()`, `build_deterministic_ldss_output()`, `build_scene_turn_envelope_v2()`
-- `world-engine/app/story_runtime/manager/` — `_build_ldss_scene_envelope()`, LDSS import, call in `_finalize_committed_turn`
+- `world-engine/world_engine/story_runtime/manager/` — `_build_ldss_scene_envelope()`, LDSS import, call in `_finalize_committed_turn`
 - `tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py`
 - `world-engine/tests/test_mvp3_ldss_integration.py`
 
@@ -811,8 +811,8 @@ A passive NPC that only responds when directly addressed violates the live drama
 - `ai_stack/langgraph/langgraph_runtime_executor.py` — model-visible current NPC agency simulation projection, bounded initiative directives, validation-aspect wiring, and self-correction trigger surface.
 - `ai_stack/telemetry/actor_survival_telemetry.py` — vitality telemetry projection of candidate, planned, realized, missing, required, and carry-forward NPC initiatives.
 - `ai_stack/story_runtime/narrative_runtime_agent.py` — ruhepunkt pressure analysis reads the v1 `npc_initiatives` contract.
-- `world-engine/app/story_runtime/commit_models.py` — persists `npc_agency_simulation`, long-horizon state, private plans, conflict resolution, `npc_agency_closure`, and unresolved carry-forward rows in committed planner truth.
-- `world-engine/app/story_runtime/manager/` — rehydrates carry-forward planner truth and emits Langfuse NPC agency spans and deterministic scores.
+- `world-engine/world_engine/story_runtime/commit_models.py` — persists `npc_agency_simulation`, long-horizon state, private plans, conflict resolution, `npc_agency_closure`, and unresolved carry-forward rows in committed planner truth.
+- `world-engine/world_engine/story_runtime/manager/` — rehydrates carry-forward planner truth and emits Langfuse NPC agency spans and deterministic scores.
 - `backend/app/services/story_runtime/operator_turn_history_service.py` — exposes operator-facing NPC agency breakdowns from telemetry, aspect ledger, and committed closure truth.
 - `tools/mcp_server/handlers/langfuse_verify/` — exposes NPC agency deterministic scores and matrix columns through MCP Langfuse verification.
 - `tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py` — `test_mvp3_gate_npcs_act_without_direct_address`, `test_mvp3_gate_multiple_npcs_can_participate`, `test_mvp3_gate_responder_candidates_exclude_human_and_visitor`
@@ -912,8 +912,8 @@ All three of these uses violate the player experience contract: the narrator mus
 | Service | File | Change |
 |---------|------|--------|
 | ai_stack | `ai_stack/telemetry/diagnostics_envelope.py` | Add DegradationEvent, extend DiagnosticsEnvelope, implement to_response() |
-| world-engine | `world-engine/app/story_runtime/manager/` | Collect degradation_events during turn execution |
-| world-engine | `world-engine/app/api/http.py` | Call `to_response(context="operator")` in HTTP responses |
+| world-engine | `world-engine/world_engine/story_runtime/manager/` | Collect degradation_events during turn execution |
+| world-engine | `world-engine/world_engine/api/http.py` | Call `to_response(context="operator")` in HTTP responses |
 | backend | `backend/app/observability/langfuse_adapter.py` | Phase B: fill cost_summary with real values |
 | tests | `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` | 10 Phase A tests covering degradation timeline, cost summary, tiered visibility |
 
@@ -1103,7 +1103,7 @@ Ensure same `trace_id` flows through:
 | backend | `backend/app/observability/langfuse_adapter.py` | Implement LangfuseAdapter with v4 SDK |
 | ai_stack | `ai_stack/telemetry/diagnostics_envelope.py` | Populate cost_summary with real values |
 | ai_stack | `ai_stack/langgraph/langgraph_runtime.py` | Instrument LDSS and Narrator with spans |
-| world-engine | `world-engine/app/story_runtime/manager/` | Pass token counts to build_diagnostics_envelope |
+| world-engine | `world-engine/world_engine/story_runtime/manager/` | Pass token counts to build_diagnostics_envelope |
 | backend | `backend/app/observability/logging_config.py` | Add trace_id to log context |
 | tests | `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` | 10 Phase B tests covering Langfuse spans and costs |
 
@@ -1392,7 +1392,7 @@ if pipeline.check_baseline_regression(recent_score):
 |---------|------|--------|
 | ai_stack | `ai_stack/quality_lab/evaluation_pipeline.py` | Implement EvaluationPipeline, QualityRubric, TurnScore |
 | backend | `backend/app/evaluations/storage.py` | Persist rubrics and turn scores |
-| world-engine | `world-engine/app/story_runtime/manager/` | Call record_turn_score() after turn evaluation |
+| world-engine | `world-engine/world_engine/story_runtime/manager/` | Call record_turn_score() after turn evaluation |
 | backend | `backend/app/api/evaluations.py` | HTTP endpoints for rubric CRUD and score recording |
 | tests | `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` | 6 Phase C evaluation tests |
 
@@ -1724,8 +1724,8 @@ def build_narrative_gov_summary(
 |---------|------|--------|
 | ai_stack | `ai_stack/telemetry/diagnostics_envelope.py` | Add HealthPanel and NarrativeGovSummary dataclasses |
 | ai_stack | `ai_stack/telemetry/diagnostics_envelope.py` | Implement build_narrative_gov_summary() |
-| world-engine | `world-engine/app/story_runtime/manager/` | Call build_narrative_gov_summary() after turn |
-| world-engine | `world-engine/app/api/http.py` | Add /narrative-gov endpoints |
+| world-engine | `world-engine/world_engine/story_runtime/manager/` | Call build_narrative_gov_summary() after turn |
+| world-engine | `world-engine/world_engine/api/http.py` | Add /narrative-gov endpoints |
 | backend | `backend/app/auth/admin_security.py` | Audit trail for override tracking |
 | tests | `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` | 3 Phase C governance tests |
 
@@ -1821,7 +1821,7 @@ MVP4 introduces the DiagnosticsEnvelope contract to make quality and degradation
 - The world-engine execute-turn integration oracle allows slow local backend bootstrap while still failing with an explicit timeout diagnostic if the behavioral proof stalls
 
 **Affected services.** - `ai_stack/telemetry/diagnostics_envelope.py` — `DiagnosticsEnvelope`, `validate_evidence_consistency()`, `build_diagnostics_envelope()`
-- `world-engine/app/story_runtime/manager/` — `_finalize_committed_turn` adds `diagnostics_envelope` to event
+- `world-engine/world_engine/story_runtime/manager/` — `_finalize_committed_turn` adds `diagnostics_envelope` to event
 - `tests/gates/test_goc_mvp04_observability_diagnostics_gate.py` — gate tests
 - `tests/gates/we_contract_helpers.py` — behavioral integration oracle for the world-engine diagnostics test
 
@@ -1892,8 +1892,8 @@ MVP4 introduces the DiagnosticsEnvelope contract to make quality and degradation
 - The UI degrades gracefully when play-service is unavailable
 
 **Affected services.** - `ai_stack/telemetry/diagnostics_envelope.py` — `NarrativeGovSummary`, `build_narrative_gov_summary()`
-- `world-engine/app/story_runtime/manager/` — `get_narrative_gov_summary()`
-- `world-engine/app/api/http.py` — `GET /story/runtime/narrative-gov-summary`
+- `world-engine/world_engine/story_runtime/manager/` — `get_narrative_gov_summary()`
+- `world-engine/world_engine/api/http.py` — `GET /story/runtime/narrative-gov-summary`
 - `administration-tool/templates/manage/narrative_governance/runtime.html` — 6 health panels with JS fetch
 
 **Evidence.** `docs/architecture/project/mvp-live-runtime-completion/architecture.md#9-architecture-decisions` (archived — see `docs/archive/adr-retired-2026/`)
@@ -2295,12 +2295,12 @@ Many historical MVP waves declared local completion while later audits found bro
 
 | Drift claim | Status | Concern | Target direction |
 | --- | --- | --- | --- |
-| `DRIFT-001` | `conflicting` | Competing live-runtime structures | Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth. |
+| `DRIFT-001` | `confirmed_current` | Competing live-runtime structures | Keep live_story_session and live_run_instance as distinct resources with one sink each; retire overlapping commit authority from app/runtime into named adapters only. |
 | `DRIFT-002` | `conflicting` | Proposal finalization is named and shaped like a second commit | Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-internal commit concepts to proposal finalization; reserve CommitDecision and committed state for world-engine. |
 | `DRIFT-003` | `open_target` | Dramatic planner state survival through authoritative commit | Use one versioned turn envelope from planner selection through proposal, validation, CommitDecision, committed dramatic context and player projection. Every narrowing step must be explicit and tested. |
 | `DRIFT-004` | `conflicting` | Authored content truth has several executable projections | Keep YAML modules as authored truth, generate or validate a versioned compiled content contract once, and make world-engine/AI consumers read that contract through anti-corruption adapters. |
 | `DRIFT-005` | `open_target` | Beat and canonical-path authority in the live turn | Model authored canonical constraints separately from live beat state. World-engine owns live progression; AI may propose beat effects; frontend displays only committed player-safe projections. |
-| `DRIFT-006` | `conflicting` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
+| `DRIFT-006` | `open_target` | Manager decomposition contains generated-looking and legacy shards | Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion. |
 | `DRIFT-007` | `open_target` | Player surface can flatten upstream runtime intelligence | Adopt one player-visible block schema versioned at the world-engine delivery boundary. Frontend rendering is exhaustive over block variants and may not infer missing authority fields. |
 | `DRIFT-008` | `open_target` | Observability contracts are fragmented across services | Define a minimal TurnTrace contract with propagated identity, owned spans, explicit gaps and redaction. Each service adapts locally but must satisfy the shared trace tree. |
 

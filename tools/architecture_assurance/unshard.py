@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--manager-root",
         type=Path,
-        default=Path("world-engine/app/story_runtime/manager"),
+        default=Path("world-engine/world_engine/story_runtime/manager"),
     )
     args = parser.parse_args(argv)
     manager_root: Path = args.manager_root

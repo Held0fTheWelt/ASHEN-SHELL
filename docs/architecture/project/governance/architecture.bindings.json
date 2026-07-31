@@ -185,7 +185,7 @@
         },
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -524,7 +524,7 @@
         },
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -569,7 +569,7 @@
         },
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -658,7 +658,7 @@
         },
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -676,7 +676,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 12,
+        "line": 13,
         "object": "tools/architecture_assurance/config.json#canon_manifest",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -687,7 +687,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 13,
+        "line": 14,
         "object": "tools/architecture_assurance/config.json#canonical_files",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -731,6 +731,17 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
+        "line": 11,
+        "object": "tools/architecture_assurance/config.json#drift_edge_catalog",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:tools/architecture_assurance/config.json#drift_edge_catalog",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "tools/architecture_assurance/config.json",
+        "kind": "content",
         "line": 6,
         "object": "tools/architecture_assurance/config.json#drift_evidence_json",
         "schema_version": "bt.source_anchor.v1"
@@ -753,7 +764,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 11,
+        "line": 12,
         "object": "tools/architecture_assurance/config.json#drift_reconciliation",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -764,7 +775,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 33,
+        "line": 36,
         "object": "tools/architecture_assurance/config.json#gate",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -819,7 +830,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/config.json",
         "kind": "content",
-        "line": 36,
+        "line": 39,
         "object": "tools/architecture_assurance/config.json#subsystems",
         "schema_version": "bt.source_anchor.v1"
       },
@@ -837,6 +848,7 @@
     "content:tools/architecture_assurance/config.json#drift_baseline_label": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_baseline_revision": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_claim_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:tools/architecture_assurance/config.json#drift_edge_catalog": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_evidence_json": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_evidence_markdown": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:tools/architecture_assurance/config.json#drift_reconciliation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",

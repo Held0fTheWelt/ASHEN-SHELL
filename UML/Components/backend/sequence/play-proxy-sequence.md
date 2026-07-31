@@ -14,7 +14,7 @@
 | Domain Services | Implement platform and governance use cases | Transaction-scoped service operations | [`backend/app/services/__init__.py`](../../../../backend/app/services/__init__.py) |
 | Game API | Create run bindings and proxy live play operations | No backend-local narrative commit | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
 | Game Service | Call world-engine and map service responses | Internal HTTP and signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
-| World Engine | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/app/main.py`](../../../../world-engine/app/main.py) |
+| World Engine | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 | Observability | Record platform traces, metrics and diagnostic evidence | Trace correlation with redaction | [`backend/app/observability/__init__.py`](../../../../backend/app/observability/__init__.py) |
 
 ## Modeled relationships

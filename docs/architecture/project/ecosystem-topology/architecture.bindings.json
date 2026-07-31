@@ -84,7 +84,7 @@
       "anchors": [
         {
           "declared_path": "world-engine/",
-          "file": "world-engine/app/__init__.py",
+          "file": "world-engine/diagnostics/story_runtime/create_session_runtime_template.py",
           "kind": "python",
           "line": 1,
           "schema_version": "bt.source_anchor.v1",
@@ -523,10 +523,10 @@
         "frontend/templates/session_shell.html",
         "tools/mcp_server/backend_client.py",
         "tools/mcp_server/server.py",
-        "world-engine/app/api/story_ws.py",
-        "world-engine/app/content/backend_loader.py",
-        "world-engine/app/main.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+        "world-engine/world_engine/api/story_ws.py",
+        "world-engine/world_engine/content/backend_loader.py",
+        "world-engine/world_engine/main.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py"
       ],
       "concern": "Players, operators and bounded systems with explicit authority",
       "decisions": [
@@ -548,10 +548,10 @@
         "backend/app/api/v1/game/player_turn_execution_and_flush.py",
         "backend/app/services/game/game_service.py",
         "content/modules/god_of_carnage/module.yaml",
-        "world-engine/app/content/backend_loader.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py",
-        "world-engine/app/story_runtime/manager/runtime_manager.py",
-        "world-engine/app/story_runtime/narrative_commit_resolution.py"
+        "world-engine/world_engine/content/backend_loader.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+        "world-engine/world_engine/story_runtime/manager/runtime_manager.py",
+        "world-engine/world_engine/story_runtime/narrative_commit_resolution.py"
       ],
       "concern": "Identity, proxy, authored truth, live commit and proposal runtime boundaries",
       "decisions": [
@@ -576,10 +576,10 @@
         "frontend/app/api_client.py",
         "frontend/app/routes_play.py",
         "frontend/templates/session_shell.html",
-        "world-engine/app/api/story_ws.py",
-        "world-engine/app/content/backend_loader.py",
-        "world-engine/app/main.py",
-        "world-engine/app/story_runtime/governed_runtime_adapters.py"
+        "world-engine/world_engine/api/story_ws.py",
+        "world-engine/world_engine/content/backend_loader.py",
+        "world-engine/world_engine/main.py",
+        "world-engine/world_engine/story_runtime/governed_runtime_adapters.py"
       ],
       "concern": "Whole-system player turn across all authority boundaries",
       "decisions": [
@@ -641,7 +641,7 @@
         "frontend/templates/session_shell.html",
         "tools/mcp_server/backend_client.py",
         "tools/mcp_server/server.py",
-        "world-engine/app/main.py"
+        "world-engine/world_engine/main.py"
       ],
       "concern": "Player experience, operator governance and automated inspection remain separated",
       "decisions": [

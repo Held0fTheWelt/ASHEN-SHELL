@@ -55,9 +55,34 @@ n_quality_gates_integration -[#gray]-> n_quality_gates_report : "integration-evi
 n_quality_gates_report -[#gray]-> n_quality_gates_ci : "quality-report-to-ci\npublishes deterministic gate result\neffect: evidence_flow\ncontract: CI status and JSON, JUnit, and SARIF derive from one result.\ncarries: suite_id, execution_result, disposable_state_proof"
 n_story_runtime_core_adapters -[#gray]-> n_ai_stack_ledger : "model-call-to-cost-ledger\nevery adapter.generate is ledgered at the seam\neffect: evidence_flow\ncontract: Cost attribution happens at CountingModelAdapter; unattributed is a visible state.\ncarries: phase, attempt_index, input_tokens, output_tokens"
 n_ai_stack_ledger -[#gray]-> n_observability_traceability_ai : "ledger-to-langfuse-observation\nledger rows become per-call generation observations (W0-C)\neffect: evidence_flow\ncontract: One generation observation per ledger row; path_summary is not the sole cost source.\ncarries: phase, attempt_index, call_count"
+n_world_engine_runtime -[#red,bold]-> n_world_engine_store : "runtime-manager-live-run-write\npersists lobby/run instance state\neffect: authoritative_write\ncontract: Only RuntimeManager writes live_run_instance through RunStore.\ncarries: runtime_profile_handoff"
+n_world_engine_manager -[#red,bold]-> n_world_engine_store : "manager-branching-tree-write\npersists branching tree records\neffect: authoritative_write\ncontract: Exactly one manager sink owns branching_tree persistence.\ncarries: tree_id"
+n_world_engine_manager -[#red,bold]-> n_world_engine_store : "manager-branch-timeline-write\npersists branch timeline records\neffect: authoritative_write\ncontract: Exactly one manager sink owns branch_timeline persistence.\ncarries: timeline_id"
+n_world_engine_manager -[#red,bold]-> n_world_engine_store : "manager-callback-web-write\npersists callback web records\neffect: authoritative_write\ncontract: Exactly one manager sink owns callback_web persistence.\ncarries: callback_web_id"
+n_world_engine_manager -[#red,bold]-> n_world_engine_store : "manager-consequence-cascade-write\npersists consequence cascade records\neffect: authoritative_write\ncontract: Exactly one manager sink owns consequence_cascade persistence.\ncarries: cascade_id"
 note bottom of n_world_engine_store
 Source sink guard: self._session_store.save
-Allowed callsite: world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py::_persist_session
+Allowed callsite: world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py::_persist_session
+end note
+note bottom of n_world_engine_store
+Source sink guard: self.store.save
+Allowed callsite: world-engine/world_engine/runtime/manager.py::attach_runtime_profile_handoff, world-engine/world_engine/runtime/manager.py::bind_story_session, world-engine/world_engine/runtime/manager.py::_bootstrap_instance, world-engine/world_engine/runtime/manager.py::find_or_join_run, world-engine/world_engine/runtime/manager.py::connect, world-engine/world_engine/runtime/manager.py::disconnect, world-engine/world_engine/runtime/manager.py::process_command
+end note
+note bottom of n_world_engine_store
+Source sink guard: self._branching_tree_store.save
+Allowed callsite: world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py::_persist_branching_tree_record
+end note
+note bottom of n_world_engine_store
+Source sink guard: self._branch_timeline_store.save
+Allowed callsite: world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py::_persist_branch_timeline_record
+end note
+note bottom of n_world_engine_store
+Source sink guard: self._callback_web_store.save
+Allowed callsite: world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py::_persist_callback_web_record
+end note
+note bottom of n_world_engine_store
+Source sink guard: self._consequence_cascade_store.save
+Allowed callsite: world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py::_persist_consequence_cascade_record
 end note
 
 legend bottom

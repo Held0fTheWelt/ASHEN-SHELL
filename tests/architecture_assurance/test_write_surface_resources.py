@@ -22,7 +22,7 @@ def _findings(catalog: dict) -> list[dict]:
     )
 
 
-def test_seven_persistence_resources_are_declared() -> None:
+def test_six_persistence_resources_are_declared() -> None:
     catalog = load_drift_edge_catalog(EDGE_CATALOG)
     resources = {surface["resource"] for surface in catalog["write_surfaces"]}
     assert resources == {
@@ -32,7 +32,6 @@ def test_seven_persistence_resources_are_declared() -> None:
         "branch_timeline",
         "callback_web",
         "consequence_cascade",
-        "backend_runtime_session",
     }
     assert _findings(catalog) == []
 

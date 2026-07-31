@@ -26,7 +26,7 @@ compiler -->[requests validation\ncontract: normalized module candidate] "Module
 note on link
 [[../../../../backend/app/content/module_validator.py relationship source]]
 end note
-validator -->[releases version\ncontract: validation success only] "World Content Loader\nResponsibility: Materialize published content for live sessions\nContract: Read-only runtime projection\n[[../../../../world-engine/app/content/backend_loader.py source]]" as world_loader
+validator -->[releases version\ncontract: validation success only] "World Content Loader\nResponsibility: Materialize published content for live sessions\nContract: Read-only runtime projection\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]" as world_loader
 note on link
 [[../../../../backend/app/content/module_service.py relationship source]]
 end note

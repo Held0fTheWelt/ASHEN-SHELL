@@ -15,7 +15,7 @@ skinparam maxMessageSize 180
 actor "Player\nResponsibility: Launch and interact with a story session\nContract: Authenticated browser interaction\n[[../../../../frontend/templates/session_shell.html source]]" as player
 rectangle "Frontend\nResponsibility: Render platform pages and live play shell\nContract: Flask blueprint plus browser assets\n[[../../../../frontend/app/__init__.py source]]" as frontend
 rectangle "Backend\nResponsibility: Own identity and proxy play operations\nContract: HTTP API\n[[../../../../backend/app/api/v1/__init__.py source]]" as backend
-rectangle "World Engine\nResponsibility: Stream authoritative session updates\nContract: Ticketed WebSocket/HTTP via backend\n[[../../../../world-engine/app/api/story_ws.py source]]" as world
+rectangle "World Engine\nResponsibility: Stream authoritative session updates\nContract: Ticketed WebSocket/HTTP via backend\n[[../../../../world-engine/world_engine/api/story_ws.py source]]" as world
 
 backend ..> world : "delegates live operations\ncontract: signed story request\n[[../../../../backend/app/services/game/game_service.py source]]"
 frontend ..> backend : "requests platform and play services\ncontract: authenticated HTTP\n[[../../../../frontend/app/api_client.py source]]"

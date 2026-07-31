@@ -132,6 +132,11 @@ def test_external_akdb_round_trip_is_strictly_disposable(tmp_path: Path) -> None
             "AKDB_QDRANT_URL": "",
             "AKDB_DB_URL": "",
             "PYTHONDONTWRITEBYTECODE": "1",
+            # Explicit disposable write authority (AKDB CLI is read-only by default).
+            "AKDB_CLI_WRITE": "1",
+            "AKDB_CLI_ACTOR": "human:test-harness",
+            "AKDB_CLI_CAPABILITIES": "akdb:cli:write",
+            "AKDB_CLI_PROJECTS": "better-tomorrow-it",
         }
     )
 

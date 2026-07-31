@@ -70,4 +70,4 @@ The four placeholders each carry a `contract_name` constant and a `payload: dict
 - `REQUIRED_ENVELOPE_KEYS` contains the keys listed in §3.
 - `REQUIRED_CONTRACT_PLACEHOLDER_NAMES` contains exactly the four Phase-1 contract names.
 - The envelope dataclass has the placeholder fields wired to the placeholder dataclasses.
-- The stub module is not imported by any other production module in `ai_stack/`, `backend/app/`, `world-engine/app/`, `story_runtime_core/`, `tools/mcp_server/` (no side-effects in PR-0).
+- The stub module is not imported by any other production module in `ai_stack/`, `backend/app/`, `world-engine/world_engine/`, `story_runtime_core/`, `tools/mcp_server/` (no side-effects in PR-0).

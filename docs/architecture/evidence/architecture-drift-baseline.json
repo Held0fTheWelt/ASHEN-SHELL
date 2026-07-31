@@ -1087,7 +1087,7 @@
       "history_roots": [
         "content",
         "backend/app/content",
-        "world-engine/app/content",
+        "world-engine/world_engine/content",
         "ai_stack/story_runtime/god_of_carnage"
       ],
       "lifetime_commit_count": 85,
@@ -1709,7 +1709,7 @@
     {
       "history_roots": [
         "backend/app/observability",
-        "world-engine/app/observability",
+        "world-engine/world_engine/observability",
         "ai_stack/langfuse",
         "tools/mcp_server/langfuse_tracing.py",
         "tests/test_langfuse_story_turn_trace.py"

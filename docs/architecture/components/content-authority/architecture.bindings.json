@@ -3244,6 +3244,127 @@
     },
     {
       "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 7,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#content_module_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#content_module_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 12,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#initial_beat_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#initial_beat_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 10,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#join_policy",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#join_policy",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 9,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#kind",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#kind",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 11,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#max_humans",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#max_humans",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 5,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#profile_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#profile_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 22,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#roles",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#roles",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 52,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#rooms",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#rooms",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 18,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#summary",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#summary",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 13,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#tags",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#tags",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
+        "kind": "content",
+        "line": 8,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#title",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#title",
+      "kind": "content"
+    },
+    {
+      "anchor": {
         "file": "content/modules/god_of_carnage/scene_graph.yaml",
         "kind": "content",
         "line": 4,
@@ -3257,7 +3378,7 @@
       "anchor": {
         "file": "backend/app/content/compiler/compiler.py",
         "kind": "python",
-        "line": 447,
+        "line": 520,
         "module": "backend.app.content.compiler.compiler",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "compile_loaded_module"
@@ -3269,7 +3390,7 @@
       "anchor": {
         "file": "backend/app/content/compiler/compiler.py",
         "kind": "python",
-        "line": 464,
+        "line": 540,
         "module": "backend.app.content.compiler.compiler",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "compile_module"
@@ -3281,7 +3402,19 @@
       "anchor": {
         "file": "backend/app/content/compiler/models.py",
         "kind": "python",
-        "line": 60,
+        "line": 18,
+        "module": "backend.app.content.compiler.models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "AuthoredFact"
+      },
+      "id": "python:backend.app.content.compiler.models:AuthoredFact",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/content/compiler/models.py",
+        "kind": "python",
+        "line": 79,
         "module": "backend.app.content.compiler.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "CanonicalCompileOutput"
@@ -3293,7 +3426,7 @@
       "anchor": {
         "file": "backend/app/content/compiler/models.py",
         "kind": "python",
-        "line": 35,
+        "line": 53,
         "module": "backend.app.content.compiler.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RetrievalChunk"
@@ -3305,7 +3438,7 @@
       "anchor": {
         "file": "backend/app/content/compiler/models.py",
         "kind": "python",
-        "line": 42,
+        "line": 60,
         "module": "backend.app.content.compiler.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RetrievalCorpusSeed"
@@ -3317,7 +3450,7 @@
       "anchor": {
         "file": "backend/app/content/compiler/models.py",
         "kind": "python",
-        "line": 49,
+        "line": 67,
         "module": "backend.app.content.compiler.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ReviewExportSeed"
@@ -3329,12 +3462,24 @@
       "anchor": {
         "file": "backend/app/content/compiler/models.py",
         "kind": "python",
-        "line": 9,
+        "line": 27,
         "module": "backend.app.content.compiler.models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeProjection"
       },
       "id": "python:backend.app.content.compiler.models:RuntimeProjection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/content/compiler/models.py",
+        "kind": "python",
+        "line": 9,
+        "module": "backend.app.content.compiler.models",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "SourceProvenance"
+      },
+      "id": "python:backend.app.content.compiler.models:SourceProvenance",
       "kind": "python"
     },
     {
@@ -3809,7 +3954,7 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 60,
+        "line": 39,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_apartment_confrontation_group"
@@ -3821,7 +3966,7 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 116,
+        "line": 95,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_better_tomorrow_district_open_world"
@@ -3833,19 +3978,19 @@
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 25,
+        "line": 22,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
-        "symbol": "build_god_of_carnage_content_template"
+        "symbol": "build_god_of_carnage_solo"
       },
-      "id": "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template",
+      "id": "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_solo",
       "kind": "python"
     },
     {
       "anchor": {
         "file": "story_runtime_core/builtin_experience_templates.py",
         "kind": "python",
-        "line": 47,
+        "line": 27,
         "module": "story_runtime_core.builtin_experience_templates",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "load_builtin_templates"
@@ -4066,14 +4211,27 @@
     "content:content/modules/god_of_carnage/objects/opening/bicycle_rack.yaml#object": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:content/modules/god_of_carnage/objects/opening/stick.yaml#object": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:content/modules/god_of_carnage/phase_beat_policy.yaml#phase_beat_policy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#content_module_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#initial_beat_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#join_policy": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#kind": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#max_humans": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#profile_id": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#roles": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#rooms": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#summary": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#tags": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#title": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "content:content/modules/god_of_carnage/scene_graph.yaml#scene_graph": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.compiler:compile_loaded_module": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.compiler:compile_module": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.content.compiler.models:AuthoredFact": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.models:CanonicalCompileOutput": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.models:RetrievalChunk": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.models:RetrievalCorpusSeed": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.models:ReviewExportSeed": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.models:RuntimeProjection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.content.compiler.models:SourceProvenance": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.retrieval_chunks:build_entity_retrieval_chunks": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.retrieval_chunks:chunks_from_apartment_topology": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.content.compiler.retrieval_chunks:chunks_from_canonical_steps": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
@@ -4115,7 +4273,7 @@
     "python:backend.app.content.module_validator:ValidationResult": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:build_apartment_confrontation_group": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:build_better_tomorrow_district_open_world": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_content_template": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:story_runtime_core.builtin_experience_templates:build_god_of_carnage_solo": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:story_runtime_core.builtin_experience_templates:load_builtin_templates": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {
@@ -4201,7 +4359,7 @@
         "backend/app/content/module_validator.py",
         "content/modules/_template/README.md",
         "content/modules/god_of_carnage/module.yaml",
-        "world-engine/app/content/backend_loader.py"
+        "world-engine/world_engine/content/backend_loader.py"
       ],
       "concern": "Authored truth and its validating and consuming systems",
       "decisions": [
@@ -4224,7 +4382,7 @@
         "backend/app/content/module_service.py",
         "backend/app/content/module_validator.py",
         "content/modules/god_of_carnage/module.yaml",
-        "world-engine/app/content/backend_loader.py"
+        "world-engine/world_engine/content/backend_loader.py"
       ],
       "concern": "Validation and projection seams from YAML to runtime",
       "decisions": [
@@ -4247,7 +4405,7 @@
         "backend/app/content/module_validator.py",
         "content/modules/_template/README.md",
         "content/modules/god_of_carnage/module.yaml",
-        "world-engine/app/content/backend_loader.py"
+        "world-engine/world_engine/content/backend_loader.py"
       ],
       "concern": "Fail-closed path from author change to runtime-readable version",
       "decisions": [
@@ -4286,7 +4444,7 @@
         "backend/app/content/module_models.py",
         "backend/app/content/module_service.py",
         "backend/app/content/module_validator.py",
-        "world-engine/app/content/backend_source.py"
+        "world-engine/world_engine/content/backend_source.py"
       ],
       "concern": "Validation, publication and runtime binding states",
       "decisions": [

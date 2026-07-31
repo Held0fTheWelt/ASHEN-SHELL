@@ -13,16 +13,16 @@ skinparam maxMessageSize 180
 ' bt-element-id: ai
 ' bt-element-id: content
 
-actor "Player\nResponsibility: Submit semantic intent and observe committed narrative\nContract: Ticket-bound session\n[[../../../../world-engine/app/api/story_ws.py source]]" as player
+actor "Player\nResponsibility: Submit semantic intent and observe committed narrative\nContract: Ticket-bound session\n[[../../../../world-engine/world_engine/api/story_ws.py source]]" as player
 rectangle "Backend\nResponsibility: Authenticate and proxy play operations\nContract: Signed internal request\n[[../../../../backend/app/services/game/game_service.py source]]" as backend
-rectangle "World Engine\nResponsibility: Own sessions, validate proposals and commit story truth\nContract: HTTP/WebSocket story API\n[[../../../../world-engine/app/main.py source]]" as world
+rectangle "World Engine\nResponsibility: Own sessions, validate proposals and commit story truth\nContract: HTTP/WebSocket story API\n[[../../../../world-engine/world_engine/main.py source]]" as world
 rectangle "AI Stack\nResponsibility: Produce bounded narrative proposals\nContract: Proposal and evidence, never commit\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor.py source]]" as ai
 rectangle "Content Authority\nResponsibility: Supply versioned authored facts and policy\nContract: Immutable bound content version\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as content
 
 player ..> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
 backend ..> world : "proxies turn\ncontract: signed story request\n[[../../../../backend/app/services/game/game_service.py source]]"
-content ..> world : "supplies authored truth\ncontract: bound immutable content version\n[[../../../../world-engine/app/content/backend_loader.py source]]"
-world ..> ai : "requests proposal\ncontract: bounded context and trace\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
+content ..> world : "supplies authored truth\ncontract: bound immutable content version\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]"
+world ..> ai : "requests proposal\ncontract: bounded context and trace\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
 
 legend bottom
 Viewpoint: context

@@ -601,6 +601,438 @@
     },
     {
       "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2273,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_resolved_runtime_config"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:build_resolved_runtime_config",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1240,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_model"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:create_model",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 928,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_provider"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:create_provider",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1960,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "create_route"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:create_route",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1334,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "delete_model"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:delete_model",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2455,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "delete_scope_setting"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:delete_scope_setting",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2634,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "enforce_budget_guard"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:enforce_budget_guard",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 637,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ensure_governance_baseline"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:ensure_governance_baseline",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1692,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "evaluate_runtime_readiness"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:evaluate_runtime_readiness",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2340,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_active_runtime_snapshot"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:get_active_runtime_snapshot",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 606,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_bootstrap_status"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:get_bootstrap_status",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2678,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_provider_credential_for_runtime"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:get_provider_credential_for_runtime",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2031,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "get_runtime_modes"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:get_runtime_modes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2467,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "ingest_usage_event"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:ingest_usage_event",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 751,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "initialize_bootstrap"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:initialize_bootstrap",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2629,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_audit_events"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_audit_events",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 725,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_bootstrap_presets"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_bootstrap_presets",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2539,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_budgets"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_budgets",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1177,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_models"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_models",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 851,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_providers"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_providers",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2610,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_rollups"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_rollups",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1544,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_routes"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_routes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2492,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "list_usage_events"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:list_usage_events",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2424,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "read_scope_settings"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:read_scope_settings",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2555,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rebuild_rollups"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:rebuild_rollups",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2660,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "record_operational_activity"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:record_operational_activity",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 831,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "reopen_bootstrap"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:reopen_bootstrap",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1428,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "test_model_connection"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:test_model_connection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1055,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "test_provider_connection"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:test_provider_connection",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1285,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_model"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:update_model",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 964,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_provider"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:update_provider",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1984,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_route"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:update_route",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2042,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_runtime_modes"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:update_runtime_modes",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2429,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "update_scope_settings"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:update_scope_settings",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 2515,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "upsert_budget"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:upsert_budget",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "backend/app/services/governance/governance_runtime_service_impl.py",
+        "kind": "python",
+        "line": 1013,
+        "module": "backend.app.services.governance.governance_runtime_service_impl",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "write_provider_credential"
+      },
+      "id": "python:backend.app.services.governance.governance_runtime_service_impl:write_provider_credential",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "backend/app/services/governance/governance_secret_crypto_service.py",
         "kind": "python",
         "line": 17,
@@ -2683,6 +3115,42 @@
     "python:backend.app.services.governance.governance_console_service:get_runtime_aspect_ledger_view": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.services.governance.governance_console_service:get_runtime_readiness_authority": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.services.governance.governance_console_service:get_validator_registry_status": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:build_resolved_runtime_config": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:create_model": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:create_provider": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:create_route": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:delete_model": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:delete_scope_setting": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:enforce_budget_guard": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:ensure_governance_baseline": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:evaluate_runtime_readiness": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:get_active_runtime_snapshot": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:get_bootstrap_status": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:get_provider_credential_for_runtime": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:get_runtime_modes": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:ingest_usage_event": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:initialize_bootstrap": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_audit_events": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_bootstrap_presets": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_budgets": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_models": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_providers": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_rollups": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_routes": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:list_usage_events": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:read_scope_settings": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:rebuild_rollups": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:record_operational_activity": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:reopen_bootstrap": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:test_model_connection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:test_provider_connection": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:update_model": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:update_provider": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:update_route": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:update_runtime_modes": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:update_scope_settings": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:upsert_budget": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "python:backend.app.services.governance.governance_runtime_service_impl:write_provider_credential": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.services.governance.governance_secret_crypto_service:EncryptedSecretRecord": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.services.governance.governance_secret_crypto_service:decrypt_secret": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
     "python:backend.app.services.governance.governance_secret_crypto_service:encrypt_secret": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",

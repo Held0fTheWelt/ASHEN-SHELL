@@ -1,0 +1,29 @@
+@startuml
+' bt-view-kind: state
+' bt-view-id: model-governance:routing-lifecycle
+title Model Governance - Routing Lifecycle
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 180
+
+' bt-element-id: configured
+' bt-element-id: routed
+' bt-element-id: persisted
+
+state "Configured\nResponsibility: Hold registry and policy\nContract: Ready for routing\n[[../../../../backend/app/model_governance/routing_registry_bootstrap.py source]]" as configured
+state "Routed\nResponsibility: Adapter selected for a call\nContract: No narrative commit\n[[../../../../backend/app/model_governance/model_routing.py source]]" as routed
+state "Governance Snapshot Persisted\nResponsibility: Store governance session snapshot\nContract: Non-authoritative relative to world-engine\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]" as persisted
+
+configured --> routed : "adapter chosen\ncontract: policy applied\n[[../../../../backend/app/model_governance/model_routing.py source]]"
+[*] --> configured : "registry bootstrapped\ncontract: adapters available\n[[../../../../backend/app/model_governance/routing_registry_bootstrap.py source]]"
+persisted --> [*] : "pipeline complete\ncontract: no live commit"
+routed --> persisted : "snapshot written\ncontract: governance-only persistence\n[[../../../../backend/app/model_governance/session/session_persistence.py source]]"
+
+legend bottom
+Viewpoint: state
+Concern: Configure, route and persist governance snapshots only
+Elements expose responsibility, contract and source anchor.
+Edges name the interaction or dependency contract.
+endlegend
+@enduml

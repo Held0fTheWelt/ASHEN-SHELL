@@ -19,14 +19,14 @@ actor "Player\nResponsibility: Launch and play the God of Carnage experience\nCo
 participant "Experience Launch\nResponsibility: Bind module, role, run and session\nContract: Correct experience identity\n[[../../../../frontend/static/play_session_start.js source]]" as launch
 participant "Player Semantics\nResponsibility: Preserve free player intent beyond canned choices\nContract: Semantic action intent\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]" as semantics
 participant "NPC Agency\nResponsibility: Produce motivated autonomous reactions\nContract: Character knowledge and goal bounds\n[[../../../../ai_stack/story_runtime/npc_agency/npc_agency_planner.py source]]" as agency
-participant "Authoritative Commit\nResponsibility: Apply accepted dramatic outcome to live truth\nContract: World-engine-only commit\n[[../../../../world-engine/app/story_runtime/narrative_commit_resolution.py source]]" as commit
+participant "Authoritative Commit\nResponsibility: Apply accepted dramatic outcome to live truth\nContract: World-engine-only commit\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]" as commit
 participant "Player Rendering\nResponsibility: Expose speaker, action and dramatic blocks\nContract: Committed typed blocks\n[[../../../../frontend/static/play_block_renderer.js source]]" as render
 participant "Operational Evidence\nResponsibility: Prove the same path through tests and trace artifacts\nContract: Reproducible source-located evidence\n[[../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md source]]" as evidence
 
 launch -> semantics : "opens interaction\ncontract: bound role and session\n[[../../../../frontend/static/play_session_start.js source]]"
 semantics -> agency : "triggers dramatic response\ncontract: interpreted intent and context\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]"
-agency -> commit : "proposes outcome\ncontract: uncommitted candidate\n[[../../../../world-engine/app/story_runtime/governed_runtime_adapters.py source]]"
-commit -> render : "publishes blocks\ncontract: accepted result only\n[[../../../../world-engine/app/api/story_ws.py source]]"
+agency -> commit : "proposes outcome\ncontract: uncommitted candidate\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
+commit -> render : "publishes blocks\ncontract: accepted result only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]"
 render -> evidence : "is proven by\ncontract: observable assertion and trace\n[[../../../../tests/e2e/test_final_goc_annette_alain_e2e.py source]]"
 
 legend bottom
