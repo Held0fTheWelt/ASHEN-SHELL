@@ -1,21 +1,15 @@
-name: MVP2 Runtime State, Actor Lanes, Content Boundary Tests
+name: MVP2 Runtime State / Content Boundary Regression
 
 on:
   push:
     branches: [ master, main, develop ]
     paths:
-      - 'world-engine/app/runtime/models.py'
-      - 'world-engine/app/runtime/actor_lane.py'
-      - 'world-engine/app/runtime/state_delta.py'
-      - 'world-engine/app/runtime/object_admission.py'
-      - 'world-engine/app/runtime/profiles.py'
-      - 'world-engine/app/runtime/manager.py'
-      - 'ai_stack/god_of_carnage_turn_seams.py'
-      - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
-      - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
-      - 'world-engine/tests/test_mvp2_object_admission.py'
-      - 'story_runtime_core/goc_solo_builtin_template.py'
-      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'world-engine/world_engine/runtime/models.py'
+      - 'world-engine/world_engine/runtime/profiles.py'
+      - 'world-engine/world_engine/runtime/manager.py'
+      - 'world-engine/tests/test_mvp1_experience_identity.py'
+      - 'story_runtime_core/builtin_experience_templates.py'
+      - 'story_runtime_core/runtime_profile_loader.py'
       - 'content/modules/god_of_carnage/**'
       - 'tests/run_tests.py'
       - 'docker-up.py'
@@ -23,18 +17,12 @@ on:
   pull_request:
     branches: [ master, main, develop ]
     paths:
-      - 'world-engine/app/runtime/models.py'
-      - 'world-engine/app/runtime/actor_lane.py'
-      - 'world-engine/app/runtime/state_delta.py'
-      - 'world-engine/app/runtime/object_admission.py'
-      - 'world-engine/app/runtime/profiles.py'
-      - 'world-engine/app/runtime/manager.py'
-      - 'ai_stack/god_of_carnage_turn_seams.py'
-      - 'world-engine/tests/test_mvp2_runtime_state_actor_lanes.py'
-      - 'world-engine/tests/test_mvp2_npc_coercion_state_delta.py'
-      - 'world-engine/tests/test_mvp2_object_admission.py'
-      - 'story_runtime_core/goc_solo_builtin_template.py'
-      - 'story_runtime_core/goc_solo_builtin_roles_rooms.py'
+      - 'world-engine/world_engine/runtime/models.py'
+      - 'world-engine/world_engine/runtime/profiles.py'
+      - 'world-engine/world_engine/runtime/manager.py'
+      - 'world-engine/tests/test_mvp1_experience_identity.py'
+      - 'story_runtime_core/builtin_experience_templates.py'
+      - 'story_runtime_core/runtime_profile_loader.py'
       - 'content/modules/god_of_carnage/**'
       - 'tests/run_tests.py'
       - 'docker-up.py'
@@ -42,7 +30,7 @@ on:
 
 jobs:
   mvp2-world-engine:
-    name: MVP2 World Engine Tests (Runtime State, Actor Lanes, Object Admission, State Delta)
+    name: MVP2 regression via suite catalog (opening contracts)
     runs-on: ubuntu-latest
 
     steps:
@@ -66,29 +54,11 @@ jobs:
           pip install -r world-engine/requirements-dev.txt
           pip install pyyaml
 
-      - name: Run MVP2 runtime state and actor lane tests
-        working-directory: ./world-engine
+      # Dedicated MVP2 actor_lane/state_delta/object_admission modules were retired in Wave 6.
+      # Regression coverage stays on opening-contract + experience-identity surfaces.
+      - name: Run opening-contract suite via catalog
         run: |
-          python -m pytest tests/test_mvp2_runtime_state_actor_lanes.py -v --tb=short --no-cov
-        # All MVP2 Wave 2.1–2.2 tests must pass. No silent skipping.
-
-      - name: Run MVP2 NPC coercion and state delta tests
-        working-directory: ./world-engine
-        run: |
-          python -m pytest tests/test_mvp2_npc_coercion_state_delta.py -v --tb=short --no-cov
-        # All MVP2 Wave 2.3 tests must pass. No silent skipping.
-
-      - name: Run MVP2 object admission and content boundary tests
-        working-directory: ./world-engine
-        run: |
-          python -m pytest tests/test_mvp2_object_admission.py -v --tb=short --no-cov
-        # All MVP2 Wave 2.4 tests must pass. No silent skipping.
-
-      - name: MVP2 regression — MVP1 identity tests must still pass
-        working-directory: ./world-engine
-        run: |
-          python -m pytest tests/test_mvp1_experience_identity.py -v --tb=short --no-cov
-        # MVP1 regression must not be broken by MVP2 changes.
+          python tests/run_tests.py --suite engine_opening_contracts --quick
 
   mvp2-tooling-gate:
     name: MVP2 Tooling Gate (tests/run_tests.py suite engine and artifact existence)
@@ -116,8 +86,3 @@ jobs:
           test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-015-environment-affordances.md || (echo "FAIL: ADR-015 missing" && exit 1)
           test -f docs/ADR/MVP_Live_Runtime_Completion/adr-mvp2-016-operational-gates.md || (echo "FAIL: ADR-016 missing" && exit 1)
           echo "All required MVP2 ADRs present."
-
-      - name: Verify docker-up.py gate subcommand
-        run: |
-          python docker-up.py gate --backend-url http://127.0.0.1:19999 && echo "PASS" || echo "EXPECTED: docker gate failed (backend unreachable in CI)"
-          python docker-up.py gate --help

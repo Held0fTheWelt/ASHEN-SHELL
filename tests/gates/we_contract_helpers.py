@@ -1,6 +1,6 @@
 """World-engine contract helpers for gate tests (AST + import oracles, no source substring greps).
 
-These utilities parse ``world-engine/app/api/http.py``, its package-based
+These utilities parse ``world-engine/world_engine/api/http.py``, its package-based
 ``http_routes`` imports, and the package-based ``story_runtime/manager``
 sources as structured AST instead of scanning raw source text, and validate
 import boundaries for LDSS.

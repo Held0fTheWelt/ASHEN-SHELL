@@ -78,7 +78,7 @@ surfaces:
 
   - surface_id: world_engine_story_runtime_manager
     primary_files:
-      - world-engine/app/story_runtime/manager/
+      - world-engine/world_engine/story_runtime/manager/
     symbols:
       - StoryRuntimeManager
     runtime_role: Session lifecycle, turn execution host, LDSS integration, commit packaging
@@ -96,7 +96,7 @@ surfaces:
 
   - surface_id: world_engine_commit_models
     primary_files:
-      - world-engine/app/story_runtime/commit_models.py
+      - world-engine/world_engine/story_runtime/commit_models.py
     symbols:
       - resolve_narrative_commit
     runtime_role: Narrative commit record shape and commit seam helpers

@@ -1,0 +1,3 @@
+# path|reason
+# Wave 8: reasoned exceptions for tests not yet mapped into SUITE_CONFIGS targets.
+# Keep empty when discovery heuristics + suite targets cover the tree; add rows only with a reason.

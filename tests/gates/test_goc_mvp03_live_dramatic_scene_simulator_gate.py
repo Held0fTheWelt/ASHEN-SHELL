@@ -392,7 +392,7 @@ def test_mvp3_gate_actor_lane_validation_before_commit():
     )
     assert valid_result.status == "approved"
 
-    # actor_lane_validation_too_late is enforced in world-engine/app/runtime/actor_lane.py
+    # actor_lane_validation_too_late is enforced in world-engine/world_engine/runtime/actor_lane.py
     # and proven in world-engine/tests/test_mvp2_runtime_state_actor_lanes.py.
     # LDSS validate_actor_lane_blocks does not have an _already_committed flag — it
     # runs pre-commit only. The too-late check belongs to the engine commit seam.
@@ -733,7 +733,7 @@ def test_mvp3_gate_ldss_invoked_through_finalize_committed_turn():
     repo_root = Path(__file__).resolve().parent.parent.parent
     manager_path = repo_root / "world-engine" / "app" / "story_runtime" / "manager"
     ldss_path = repo_root / "ai_stack" / "live_dramatic_scene_simulator.py"
-    assert manager_path.is_dir(), f"world-engine/app/story_runtime/manager package must exist at {manager_path}"
+    assert manager_path.is_dir(), f"world-engine/world_engine/story_runtime/manager package must exist at {manager_path}"
     assert ldss_path.exists(), f"ai_stack/live_dramatic_scene_simulator.py must exist at {ldss_path}"
 
     assert_ldss_import_and_module_wiring(manager_path, ldss_path)

@@ -1,32 +1,34 @@
 # Fortschritt Drift-Sanierung
 
 ## Zustand
-Aktuelle Welle: 7 (started — content contract provenance landed; builtins retirement open)
-Aktueller Schritt: authored_facts + deterministic compile; G2 still awaiting approval
-Letzter grüner Commit: `…` (W7 content contract) after `7d408799` (W6 retirement)
-Baseline: engine_foundation **237**; backend_runtime **89**; content compiler **5 passed**
+Aktuelle Welle: 8 (partial) / W7 complete for builtins
+Aktueller Schritt: CI suite-catalog gates + MVP workflow migration; G2/G3 still human-blocked
+Letzter grüner Commit: pending W8 partial after `1377486b` (W7 YAML builtins)
+Baseline: engine_foundation **237 passed**; W7 content tests **3 passed**; table_b **18 passed**; adr0039 **6 passed**
 
 ## Wellen
-- [x] W0–W5
-- [x] W6 Paketnamen + Retirement — **code complete except G2 table drop**
-- [ ] W7 Content-Wahrheit — **partial** (contract + tests; builtins/ai_stack still open)
-- [ ] W8–W9
+- [x] W0–W6 (G2 DB drop **blocked** — awaiting human approval)
+- [x] W7 Content-Wahrheit — builtins → YAML runtime profile; contract provenance landed
+- [ ] W8 Test-/CI-/Gate-Wahrheit — **partial** (no-direct-pytest gate + allowlist; mvp1/mvp2 workflows on catalog; suite orphan test)
+- [ ] W9 fy-suites / hygiene — G3 prep only (`baselines/W9-G3-fy-suites-split-prep.md`)
 
 ## Entscheidungen
 | Datum | Welle | Frage | Entscheidung | Begründung |
 | --- | --- | --- | --- | --- |
-| 2026-07-31 | 6 | runtime_sessions drop | Park G2 — ask operator | Audit: ORM export only, no live R/W |
-| 2026-07-31 | 7 | ReviewExportSeed.generated_at | Default `None` on compile | Deterministic byte-identical exports |
+| 2026-07-31 | 6 | runtime_sessions drop | **Blocked G2** | Awaiting explicit user approval; audit only |
+| 2026-07-31 | 7 | GoC solo builtins | YAML under `runtime_profiles/` | No hand-maintained content Python |
+| 2026-07-31 | 8 | Direct pytest in CI | Allowlist remaining workflows | Shrink until empty |
+| 2026-07-31 | 9 | fy-suites split | **Blocked G3** | Prep doc only; no external repo |
 
 ## Geparkte Probleme
 | ID | Welle | Problem | Warum geparkt | Auflösung |
 | --- | --- | --- | --- | --- |
-| P-G2-DB | 6 | Drop `runtime_sessions` | Human gate | `baselines/W6-G2-runtime-sessions-readers.md` — **needs approval** |
-| P-W7-BUILTINS | 7 | Delete `goc_solo_builtin_*` | Still wired via `builtin_experience_templates.py` | Generate from YAML or rewire loaders first |
-| P-W6-EXT-REFS | 6 | Docs/UML still say `world-engine/app` | Volume | Sweep with SAD / W8 |
-| P-W6-CONFIG | 6 | `model-governance` in working `config.json` | Mixed with G4 WIP | Commit with assurance WIP or cherry-pick |
+| P-G2-DB | 6 | Drop `runtime_sessions` | Human gate | `baselines/W6-G2-runtime-sessions-readers.md` |
+| P-G3-FY | 9 | subtree split | Human gate | `baselines/W9-G3-fy-suites-split-prep.md` |
+| P-W8-CI | 8 | Remaining direct-pytest workflows | Volume | Drain allowlist |
+| P-W7-AISTACK | 7 | ai_stack GoC package still large | Already YAML-backed adapters | Further shrink in follow-up |
 | P-G4-ASSURANCE | * | User WIP | G4 | Unstaged |
 
 ## Journal
-- 2026-07-31 W6 retirement `7d408799`.
-- 2026-07-31 W7: content_version + authored_facts + determinism tests.
+- 2026-07-31 W7: `1377486b` YAML profile + delete `goc_solo_builtin_*`.
+- 2026-07-31 W8: mvp1/mvp2 workflows → `tests/run_tests.py`; gates for catalog + no-direct-pytest; ADR0039 path fix.
