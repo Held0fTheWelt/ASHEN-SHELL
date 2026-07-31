@@ -178,6 +178,7 @@ SCENE_ENERGY_CANONICAL_SURFACES = {
     "ai_stack/capabilities/capability_validator_dispatch.py",
     "ai_stack/capabilities/capability_validator_plan.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_dramatic_review.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
@@ -189,8 +190,8 @@ SCENE_ENERGY_CANONICAL_SURFACES = {
     "ai_stack/story_runtime/story_runtime_playability.py",
     "backend/app/services/inspector_turn_projection_sections_assembly_filled.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
     # Phase 2 Pulse-MVP — Director consumes these as semantic capability inputs (ADR-0058/0059)
     "ai_stack/contracts/director_pulse_contracts.py",
     "ai_stack/story_runtime/director/director_pulse_shadow.py",
@@ -209,11 +210,12 @@ INFORMATION_DISCLOSURE_CANONICAL_SURFACES = {
     "ai_stack/contracts/information_disclosure_contracts.py",
     "ai_stack/story_runtime/narrative/information_disclosure_engine.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/manager/",
     # Phase 2 Stage M — Follow-up composition enforces information_disclosure
     # gate on generated NPC reply text (ADR-0058 §Stage M).
     "ai_stack/story_runtime/session_loop/",
@@ -223,18 +225,20 @@ EXPECTATION_VARIATION_CANONICAL_SURFACES = {
     "ai_stack/contracts/expectation_variation_contracts.py",
     "ai_stack/story_runtime/narrative/expectation_variation_engine.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/contracts/narrative_momentum_contracts.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "ai_stack/story_runtime/story_runtime_playability.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 NARRATIVE_MOMENTUM_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/contracts/narrative_momentum_contracts.py",
@@ -242,8 +246,8 @@ NARRATIVE_MOMENTUM_CANONICAL_SURFACES = {
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "ai_stack/story_runtime/story_runtime_playability.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
     # Phase 2 Pulse-MVP — Director consumes narrative_momentum as semantic input (ADR-0058/0059)
     "ai_stack/contracts/director_pulse_contracts.py",
     "ai_stack/story_runtime/director/director_pulse_shadow.py",
@@ -254,6 +258,7 @@ NARRATIVE_MOMENTUM_CANONICAL_SURFACES = {
 
 PACING_RHYTHM_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_dramatic_review.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
@@ -264,8 +269,8 @@ PACING_RHYTHM_CANONICAL_SURFACES = {
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "ai_stack/story_runtime/story_runtime_playability.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
     # Phase 2 Pulse-MVP — Director composition_inputs include pacing_rhythm (ADR-0058)
     "ai_stack/contracts/director_pulse_contracts.py",
     "ai_stack/story_runtime/director/director_pulse_shadow.py",
@@ -281,6 +286,7 @@ SENSORY_CONTEXT_CANONICAL_SURFACES = {
     "ai_stack/capabilities/capability_validator_plan.py",
     "ai_stack/langchain/bridges.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
@@ -288,8 +294,8 @@ SENSORY_CONTEXT_CANONICAL_SURFACES = {
     "ai_stack/story_runtime/narrative/sensory_context_engine.py",
     "ai_stack/story_runtime/story_runtime_playability.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 CONSEQUENCE_CASCADE_CANONICAL_SURFACES = {
@@ -298,22 +304,24 @@ CONSEQUENCE_CASCADE_CANONICAL_SURFACES = {
     "ai_stack/capabilities/capability_validator_plan.py",
     "ai_stack/contracts/consequence_cascade_contracts.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "story_runtime_core/consequences/__init__.py",
     "story_runtime_core/consequences/consequence_cascade.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/api/http.py",
-    "world-engine/app/api/http_routes/narrative_web_routes.py",
-    "world-engine/app/config.py",
-    "world-engine/app/main.py",
-    "world-engine/app/story_runtime/consequence_cascade_store.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/api/http.py",
+    "world-engine/world_engine/api/http_routes/narrative_web_routes.py",
+    "world-engine/world_engine/config.py",
+    "world-engine/world_engine/main.py",
+    "world-engine/world_engine/story_runtime/consequence_cascade_store.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 TEMPORAL_CONTROL_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
@@ -321,23 +329,25 @@ TEMPORAL_CONTROL_CANONICAL_SURFACES = {
     "ai_stack/contracts/temporal_control_contracts.py",
     "ai_stack/story_runtime/narrative/temporal_control_engine.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 IMPROVISATIONAL_COHERENCE_CANONICAL_SURFACES = {
     "ai_stack/contracts/improvisational_coherence_contracts.py",
     "ai_stack/story_runtime/narrative/improvisational_coherence_engine.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 META_NARRATIVE_AWARENESS_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/contracts/meta_narrative_awareness_contracts.py",
     "ai_stack/story_runtime/narrative/meta_narrative_awareness_engine.py",
@@ -348,14 +358,15 @@ META_NARRATIVE_AWARENESS_CANONICAL_SURFACES = {
 
 SYMBOLIC_OBJECT_RESONANCE_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "ai_stack/contracts/symbolic_object_resonance_contracts.py",
     "ai_stack/story_runtime/narrative/symbolic_object_resonance_engine.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 GENRE_AWARENESS_CANONICAL_SURFACES = {
@@ -363,17 +374,19 @@ GENRE_AWARENESS_CANONICAL_SURFACES = {
     "ai_stack/contracts/genre_awareness_contracts.py",
     "ai_stack/story_runtime/narrative/genre_awareness_engine.py",
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
     "ai_stack/module_runtime_policy.py",
     "ai_stack/story_runtime/runtime_aspect_ledger/__init__.py",
     "ai_stack/story_runtime/story_runtime_playability.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/commit_models.py",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/commit_models.py",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 TONAL_CONSISTENCY_CANONICAL_SURFACES = {
     "ai_stack/langgraph/langgraph_runtime_executor.py",
+    "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
     "ai_stack/langgraph/langgraph_runtime_package_output_sections.py",
     "ai_stack/langgraph/langgraph_runtime_state.py",
     "ai_stack/story_runtime/live_runtime_commit_semantics.py",
@@ -384,7 +397,7 @@ TONAL_CONSISTENCY_CANONICAL_SURFACES = {
     "ai_stack/contracts/tonal_consistency_contracts.py",
     "ai_stack/story_runtime/narrative/tonal_consistency_engine.py",
     "tools/mcp_server/handlers/langfuse_verify/",
-    "world-engine/app/story_runtime/manager/",
+    "world-engine/world_engine/story_runtime/manager/",
 }
 
 
@@ -397,7 +410,7 @@ RUNTIME_ASPECT_SHARED_CANONICAL_PREFIXES = (
 RUNTIME_ASPECT_SHARED_CANONICAL_FILES = frozenset(
     {
         "ai_stack/story_runtime/runtime_aspect_ledger/constants.py",
-        "world-engine/app/story_runtime/planner_truth_projection.py",
+        "world-engine/world_engine/story_runtime/planner_truth_projection.py",
     }
 )
 
@@ -421,32 +434,24 @@ KNOWN_MODULE_LITERAL_DEBT: dict[str, str] = {
     "ai_stack/research/research_fixtures.py": "Research fixture data is intentionally GoC-specific.",
     "ai_stack/contracts/visible_narrative_contract.py": "Visible sanitizer still has GoC actor fallback tokens.",
     "backend/app/api/v1/game_routes.py": "Play handoff compatibility still knows the GoC solo profile.",
+    "backend/app/api/v1/game_routes_impl.py": "Assembled play routes still know the GoC solo profile and roles.",
     "backend/app/api/v1/narrative_governance_routes.py": "Narrative governance defaults still use GoC.",
     "backend/app/content/builtins.py": "Built-in content registry exposes the GoC profile.",
     "backend/app/content/module_loader.py": "Template-to-module compatibility maps GoC solo.",
     "backend/app/content/module_service.py": "Content service doc examples still use GoC.",
     "backend/app/models/world_engine/game_experience_template.py": "Seed-template compatibility still knows GoC solo.",
     "backend/app/observability/langfuse_adapter.py": "Observability docstring example still uses GoC.",
-    "backend/app/runtime/engine.py": "Legacy mini-engine still uses fixed room flags.",
-    "backend/app/runtime/narrative/npc_behaviors.py": "Legacy mini-engine NPC behavior is GoC-specific.",
-    "backend/app/runtime/runtime_models.py": "Runtime model docstring example still uses GoC.",
-    "backend/app/runtime/session/session_start.py": "Session-start docstring example still uses GoC.",
+    "backend/app/model_governance/runtime_models.py": "Model-governance docstring example still uses GoC.",
     "backend/app/services/game/game_content_service.py": "Game content service still maps the GoC solo seed.",
     "frontend/app/routes_play.py": "Play launcher still validates GoC role/profile locally.",
     "frontend/templates/session_start.html": "Play launcher still renders GoC role choices locally.",
     "story_runtime_core/builtin_experience_templates.py": "Built-in template registry includes GoC compatibility.",
-    "story_runtime_core/goc_solo_builtin_catalog.py": "GoC-specific built-in compatibility catalog.",
-    "story_runtime_core/goc_solo_builtin_catalog_actions.py": "GoC-specific built-in compatibility actions.",
-    "story_runtime_core/goc_solo_builtin_roles_rooms.py": "GoC-specific built-in compatibility roles/rooms.",
-    "story_runtime_core/goc_solo_builtin_template.py": "GoC-specific built-in compatibility template.",
-    "world-engine/app/api/http.py": "World-engine HTTP compatibility still knows GoC solo.",
-    "world-engine/app/content/builtins.py": "World-engine built-in content registry exposes GoC.",
-    "world-engine/app/runtime/actor_lane.py": "Actor-lane helper still defaults a GoC phase id.",
-    "world-engine/app/runtime/engine.py": "Legacy mini-engine still uses fixed room flags.",
-    "world-engine/app/runtime/npc_behaviors.py": "Legacy mini-engine NPC behavior is GoC-specific.",
-    "world-engine/app/runtime/profiles.py": "Runtime profile resolver currently supports GoC solo.",
-    "world-engine/app/story_runtime/module_turn_hooks.py": "Explicit GoC compatibility shim.",
-    "world-engine/app/story_runtime_shell_readout.py": "Shell readout still contains GoC-specific pressure prose.",
+    "story_runtime_core/runtime_profile_loader.py": "Loads GoC solo runtime profile from authored YAML.",
+    "world-engine/world_engine/api/http.py": "World-engine HTTP compatibility still knows GoC solo.",
+    "world-engine/world_engine/content/builtins.py": "World-engine built-in content registry exposes GoC.",
+    "world-engine/world_engine/runtime/profiles.py": "Runtime profile resolver currently supports GoC solo.",
+    "world-engine/world_engine/story_runtime/module_turn_hooks.py": "Explicit GoC compatibility shim.",
+    "world-engine/world_engine/story_runtime_shell_readout.py": "Shell readout still contains GoC-specific pressure prose.",
 }
 
 
@@ -457,12 +462,16 @@ def _repo_rel(path: Path) -> str:
 def _known_module_literal_debt_reason(rel: str) -> str | None:
     if rel in KNOWN_MODULE_LITERAL_DEBT:
         return KNOWN_MODULE_LITERAL_DEBT[rel]
-    if rel.startswith("world-engine/app/story_runtime/manager/"):
+    if rel.startswith("world-engine/world_engine/story_runtime/manager/") or rel.startswith(
+        "world-engine/world_engine/story_runtime/manager/"
+    ):
         return (
             "Package-based StoryRuntimeManager compatibility surface; generic Table B "
             "code must remain isolated to reviewed manager modules."
         )
-    if rel.startswith("world-engine/app/shell_readout/"):
+    if rel.startswith("world-engine/world_engine/shell_readout/") or rel.startswith(
+        "world-engine/world_engine/shell_readout/"
+    ):
         return (
             "Shell readout package still contains GoC-specific pressure prose that "
             "was previously isolated in story_runtime_shell_readout.py."
@@ -493,7 +502,9 @@ def _known_module_literal_debt_reason(rel: str) -> str | None:
         return "LangGraph runtime package still embeds GoC module wiring for the live pilot path."
     if rel.startswith("backend/app/api/v1/game/"):
         return "Backend game routes still know the GoC solo profile and player roles."
-    if rel == "world-engine/app/api/http_routes/play_run_routes.py":
+    if rel == "world-engine/world_engine/api/http_routes/play_run_routes.py" or rel == (
+        "world-engine/world_engine/api/http_routes/play_run_routes.py"
+    ):
         return "World-engine play routes still validate GoC solo roles at the HTTP boundary."
     if "god_of_carnage" in rel:
         return "GoC-named implementation surface; not a generic Table B expansion path."

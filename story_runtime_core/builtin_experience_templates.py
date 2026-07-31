@@ -16,45 +16,24 @@ from .experience_template_models import (
     RoleTemplate,
     RoomTemplate,
 )
-
-from .goc_solo_builtin_catalog import goc_solo_action_templates, goc_solo_beat_templates, goc_solo_prop_templates
-from .goc_solo_builtin_roles_rooms import goc_solo_role_templates, goc_solo_room_templates_with_content
-from .goc_solo_builtin_template import build_god_of_carnage_solo
+from .runtime_profile_loader import load_runtime_profile_template
 
 
-def build_god_of_carnage_content_template() -> ExperienceTemplate:
-    """Full content template for god_of_carnage with all props, actions, beats, and rooms."""
-    return ExperienceTemplate(
-        id="god_of_carnage",
-        title="God of Carnage",
-        kind=ExperienceKind.SOLO_STORY,
-        join_policy=JoinPolicy.OWNER_ONLY,
-        summary=(
-            "A tense apartment confrontation between two couples. One human player navigates"
-            " a dramatic social conflict with fully authored props, actions, and beats."
-        ),
-        max_humans=1,
-        initial_beat_id="courtesy",
-        tags=["authored", "single-adventure", "social-drama", "better-tomorrow"],
-        roles=goc_solo_role_templates(),
-        rooms=goc_solo_room_templates_with_content(),
-        props=goc_solo_prop_templates(),
-        actions=goc_solo_action_templates(),
-        beats=goc_solo_beat_templates(),
-    )
+def build_god_of_carnage_solo() -> ExperienceTemplate:
+    """Runtime profile for GoC solo — bootstrap roles/rooms from authored YAML."""
+    return load_runtime_profile_template("god_of_carnage", "god_of_carnage_solo")
 
 
 def load_builtin_templates() -> dict[str, ExperienceTemplate]:
     # Backend builtins seed and validate authored template shapes. They are not the
     # primary runtime content authority; published backend feed remains canonical.
+    # GoC solo comes from content/modules/god_of_carnage/runtime_profiles/*.yaml (Wave 7).
     templates = [
         build_god_of_carnage_solo(),
         build_apartment_confrontation_group(),
         build_better_tomorrow_district_open_world(),
     ]
     return {template.id: template for template in templates}
-
-
 
 
 def build_apartment_confrontation_group() -> ExperienceTemplate:

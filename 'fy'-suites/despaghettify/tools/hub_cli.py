@@ -653,7 +653,15 @@ def _grep_builtins_goc_def() -> dict:
                 continue
             if needle in txt:
                 matches.append(path.relative_to(ROOT).as_posix())
-    goc_template = ROOT / "story_runtime_core" / "goc_solo_builtin_template.py"
+    goc_template = ROOT / "story_runtime_core" / "builtin_experience_templates.py"
+    goc_yaml = (
+        ROOT
+        / "content"
+        / "modules"
+        / "god_of_carnage"
+        / "runtime_profiles"
+        / "god_of_carnage_solo.yaml"
+    )
     template_has = goc_template.is_file() and needle in goc_template.read_text(
         encoding="utf-8", errors="replace"
     )
@@ -661,6 +669,7 @@ def _grep_builtins_goc_def() -> dict:
         "def_in_builtins_py_paths": matches,
         "count_in_builtins_py": len(matches),
         "goc_solo_builtin_template_has_def": template_has,
+        "goc_solo_runtime_profile_yaml_present": goc_yaml.is_file(),
     }
 
 

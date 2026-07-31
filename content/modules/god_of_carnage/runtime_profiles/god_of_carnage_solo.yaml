@@ -1,0 +1,91 @@
+# Runtime profile for god_of_carnage_solo (bootstrap structure only).
+# Authored story truth remains under content/modules/god_of_carnage/** (YAML).
+# This file is the SSOT for ExperienceTemplate roles/rooms used to start a run;
+# props/actions/beats stay empty — they come from the compiled content module.
+
+profile_id: god_of_carnage_solo
+content_module_id: god_of_carnage
+title: God of Carnage
+kind: solo_story
+join_policy: owner_only
+max_humans: 1
+initial_beat_id: ""
+tags:
+  - authored
+  - single-adventure
+  - social-drama
+  - better-tomorrow
+summary: >-
+  Runtime profile for a tense apartment confrontation. One human player enters
+  via runtime_profile_id="god_of_carnage_solo" with selected_player_role=annette|alain.
+  Story structure is provided by canonical god_of_carnage module.
+
+roles:
+  - id: annette
+    display_name: Annette
+    description: Trying to remain composed while the room tightens around her.
+    mode: human
+    initial_room_id: hallway
+    can_join: true
+    npc_voice: polite, brittle, quietly overwhelmed
+  - id: alain
+    display_name: Alain
+    description: Half in the room, half on the phone, professionally detached.
+    mode: human
+    initial_room_id: hallway
+    can_join: true
+    npc_voice: cool, dismissive, distracted by work
+  - id: veronique
+    display_name: Véronique
+    description: Sharp, articulate, morally certain until the room fractures.
+    mode: npc
+    initial_room_id: living_room
+    can_join: false
+    npc_voice: precise, literary, increasingly cutting
+  - id: michel
+    display_name: Michel
+    description: Affable on the surface, defensive underneath.
+    mode: npc
+    initial_room_id: living_room
+    can_join: false
+    npc_voice: warm, practical, increasingly irritated
+
+rooms:
+  - id: hallway
+    name: Apartment Hallway
+    description: >-
+      A narrow Parisian hallway with dark hooks, polished wood, and the hush of a meeting
+      that was already tense before anyone spoke.
+    exits:
+      - direction: inside
+        target_room_id: living_room
+        label: Enter the living room
+    artwork_prompt: >-
+      1980s point-and-click hallway, polished wood floor, apartment coats, anxious warm light,
+      cultured domestic tension, pixel art
+  - id: living_room
+    name: Living Room
+    description: >-
+      A carefully curated living room of books, tulips, glassware, and educated taste — all of it
+      increasingly unable to contain the people arranged around it.
+    exits:
+      - direction: back
+        target_room_id: hallway
+        label: Step back into the hallway
+      - direction: bathroom
+        target_room_id: bathroom
+        label: Withdraw toward the bathroom
+    artwork_prompt: >-
+      retro pixel-art paris living room, books, flowers, tasteful furniture, glassware, social
+      pressure, 1980s adventure composition
+  - id: bathroom
+    name: Bathroom
+    description: >-
+      A smaller, brighter room of tile, mirror, and temporary privacy. It is the only place in the
+      apartment that promises retreat, and even that promise feels fragile.
+    exits:
+      - direction: living_room
+        target_room_id: living_room
+        label: Return to the living room
+    artwork_prompt: >-
+      1980s adventure bathroom, ceramic sink, mirror, pale tile, private but tense, pixel art

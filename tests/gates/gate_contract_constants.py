@@ -7,7 +7,7 @@ weakening assertions (each check remains explicit against the constant).
 from __future__ import annotations
 
 from story_runtime_core.experience_template_models import ParticipantMode
-from story_runtime_core.goc_solo_builtin_roles_rooms import goc_solo_role_templates
+from story_runtime_core.runtime_profile_loader import goc_solo_role_templates
 
 # --- Actor / module identity (GoC live path) ---
 FORBIDDEN_RUNTIME_ACTOR_ID = "visitor"
