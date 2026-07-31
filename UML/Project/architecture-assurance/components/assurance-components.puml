@@ -11,6 +11,8 @@ skinparam maxMessageSize 180
 ' bt-element-id: discovery
 ' bt-element-id: manifest
 ' bt-element-id: views
+' bt-element-id: drift_edges
+' bt-element-id: drift_gate
 ' bt-element-id: audit
 ' bt-element-id: reports
 ' bt-element-id: canon
@@ -19,21 +21,31 @@ component "Semantic Model Catalog\nResponsibility: Define individualized element
 component "Repository Discovery\nResponsibility: Enumerate implementation and document evidence\nContract: Ignored/local evidence excluded\n[[../../../../tools/architecture_assurance/discovery.py source]]" as discovery
 component "Binding Manifest Builder\nResponsibility: Bind SAD declarations to source, tests and views\nContract: One deterministic manifest per scope\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]" as manifest
 component "Semantic View Builder\nResponsibility: Project catalog models into PlantUML and companion documents\nContract: No generic inferred star graphs\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as views
+class "Drift Edge Catalog\nResponsibility: Describe authority, proposal, projection and evidence flows\nContract: Resolvable model nodes, claim ids, source anchors and carried fields\n[[../../../../tools/architecture_assurance/drift_edge_catalog.json source]]" as drift_edges {
+  edges[]
+  authority_invariants[]
+  envelope_invariants[]
+  source_proofs[]
+}
+component "Authority and Envelope Gate\nResponsibility: Resolve drift edges and reject competing writers or lost envelope fields\nContract: Source-bound topology with stable CI rule identifiers\n[[../../../../tools/architecture_assurance/drift_edges.py source]]" as drift_gate
 component "Audit Engine\nResponsibility: Evaluate correspondence and model semantics\nContract: Stable findings and exit policy\n[[../../../../tools/architecture_assurance/audit.py source]]" as audit
 component "Report Exporters\nResponsibility: Emit human, JSON, JUnit and SARIF evidence\nContract: Schema-stable deterministic serialization\n[[../../../../tools/architecture_assurance/reporters.py source]]" as reports
 component "Canon Exporter\nResponsibility: Create idempotent AKDB source projection\nContract: Hash-stable destination manifest\n[[../../../../tools/architecture_assurance/canon.py source]]" as canon
 
 catalog ..> discovery : "scopes evidence\ncontract: history roots and source anchors\n[[../../../../tools/architecture_assurance/model_catalog.json source]]"
 discovery ..> manifest : "supplies inventory\ncontract: normalized repository paths\n[[../../../../tools/architecture_assurance/discovery.py source]]"
+catalog ..> drift_edges : "resolves drift topology\ncontract: subsystem and element references\n[[../../../../tools/architecture_assurance/drift_edges.py source]]"
 catalog ..> views : "projects viewpoints\ncontract: semantic elements and edge contracts\n[[../../../../tools/architecture_assurance/semantic_models.py source]]"
+drift_edges ..> drift_gate : "supplies authority and field-flow contracts\ncontract: versioned drift-edge schema\n[[../../../../tools/architecture_assurance/drift_edge_catalog.json source]]"
 manifest ..> audit : "supplies declared correspondence\ncontract: binding schema\n[[../../../../tools/architecture_assurance/audit.py source]]"
+drift_gate ..> audit : "emits hard invariant findings\ncontract: write-conflict and field-loss rules\n[[../../../../tools/architecture_assurance/drift_edges.py source]]"
 views ..> audit : "supplies analyzable models\ncontract: view requirements and source links\n[[../../../../tools/architecture_assurance/semantic_models.py source]]"
 audit ..> reports : "emits findings\ncontract: normalized result model\n[[../../../../tools/architecture_assurance/reporters.py source]]"
 reports ..> canon : "joins canonical evidence\ncontract: accepted report state\n[[../../../../tools/architecture_assurance/canon.py source]]"
 
 legend bottom
 Viewpoint: component
-Concern: Discovery, correspondence, semantic projection, audit, reporting and canon seams
+Concern: Discovery, correspondence, semantic projection, drift invariants, audit, reporting and canon seams
 Elements expose responsibility, contract and source anchor.
 Edges name the interaction or dependency contract.
 endlegend

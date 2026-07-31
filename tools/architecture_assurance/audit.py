@@ -12,6 +12,7 @@ from typing import Any
 from .canon import build_canon_manifest, verify_canon_manifest
 from .discovery import discover_subsystem
 from .drift_claims import load_claim_catalog, validate_claim_catalog
+from .drift_edges import build_drift_edge_report
 from .manifest_builder import load_config
 from .sad_parser import parse_sad
 from .semantic_models import load_model_catalog, validate_model_catalog
@@ -392,6 +393,13 @@ def build_report(config_path: Path, repo_root: Path) -> dict[str, Any]:
                 "path": config["drift_claim_catalog"],
             }
         )
+    drift_edges = build_drift_edge_report(
+        repo_root / str(config["drift_edge_catalog"]),
+        model_catalog,
+        claim_catalog,
+        repo_root,
+    )
+    global_findings.extend(drift_edges["findings"])
     view_profiles = {
         subsystem_id: tuple(
             str(view["kind"]) for view in model["views"]
@@ -462,6 +470,7 @@ def build_report(config_path: Path, repo_root: Path) -> dict[str, Any]:
         "subsystems": subsystems,
         "corpus_rollup": _rollup(subsystems),
         "canon": canon,
+        "drift_edges": drift_edges,
         "findings": findings,
     }
     report["gate"] = evaluate_gate(report, config["gate"])

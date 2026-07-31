@@ -50,11 +50,17 @@ def _all_findings(report: Mapping[str, Any]) -> list[dict[str, Any]]:
 def render_junit(report: Mapping[str, Any]) -> str:
     subsystems = list(report.get("subsystems", []))
     canon = report.get("canon", {})
+    drift_edges = report.get(
+        "drift_edges",
+        {"status": "PASS", "findings": []},
+    )
     gate = report.get("gate", {})
-    cases = len(subsystems) + 2
+    cases = len(subsystems) + 3
     failures = sum(bool(item.get("findings")) for item in subsystems) + (
         0 if canon.get("matched") else 1
-    ) + (0 if gate.get("status") == "PASS" else 1)
+    ) + (0 if drift_edges.get("status") == "PASS" else 1) + (
+        0 if gate.get("status") == "PASS" else 1
+    )
     suite = ET.Element(
         "testsuite",
         {
@@ -110,6 +116,40 @@ def render_junit(report: Mapping[str, Any]) -> str:
             {"type": "BT-CANON-DRIFT", "message": "canon projection drift"},
         )
         failure.text = json.dumps(canon, sort_keys=True)
+    drift_case = ET.SubElement(
+        suite,
+        "testcase",
+        {
+            "classname": "architecture.drift",
+            "name": "authority-and-envelope-invariants",
+        },
+    )
+    if drift_edges.get("status") != "PASS":
+        drift_findings = list(drift_edges.get("findings", []))
+        failure = ET.SubElement(
+            drift_case,
+            "failure",
+            {
+                "type": str(
+                    drift_findings[0].get("rule_id", "BT-DRIFT-EDGE")
+                    if drift_findings
+                    else "BT-DRIFT-EDGE"
+                ),
+                "message": "architecture drift-edge gate failed",
+            },
+        )
+        failure.text = json.dumps(drift_findings, sort_keys=True)
+    output = ET.SubElement(drift_case, "system-out")
+    output.text = json.dumps(
+        {
+            "edges": drift_edges.get("edges"),
+            "authority_invariants": drift_edges.get("authority_invariants"),
+            "write_surfaces": drift_edges.get("write_surfaces"),
+            "envelope_invariants": drift_edges.get("envelope_invariants"),
+            "covered_claims": drift_edges.get("covered_claims"),
+        },
+        sort_keys=True,
+    )
     gate_case = ET.SubElement(
         suite,
         "testcase",

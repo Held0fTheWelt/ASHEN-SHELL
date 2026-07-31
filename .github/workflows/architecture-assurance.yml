@@ -61,6 +61,7 @@ jobs:
             --sarif reports/architecture/architecture.sarif
 
       - name: Render source-bound UML previews
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
@@ -99,6 +100,7 @@ jobs:
             > "${preview_root}/RENDERER.txt"
 
       - name: Run Better Tomorrow architecture test set
+        if: always()
         env:
           AKDB_SOURCE_ROOT: ${{ github.workspace }}/.external/ArchitecturalKnowledgeDB
         run: |
@@ -113,6 +115,9 @@ jobs:
             reports/architecture/architecture.json
             reports/architecture/architecture.junit.xml
             reports/architecture/architecture.sarif
+            tools/architecture_assurance/drift_edge_catalog.json
+            UML/Project/architecture-drift/runtime-authority-and-envelope.puml
+            UML/Project/architecture-drift/runtime-authority-and-envelope.md
 
       - name: Upload UML previews
         if: always() && hashFiles('reports/architecture/uml-previews/**/*.svg') != ''

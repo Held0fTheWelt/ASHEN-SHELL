@@ -10,6 +10,7 @@ from typing import Any
 from .audit import build_report
 from .canon import export_canon, write_canon_manifest
 from .drift_claims import project_claim_reconciliation
+from .drift_edges import generate_drift_edge_projection
 from .drift_evidence import build_drift_evidence, write_drift_evidence
 from .manifest_builder import generate_manifests, load_config
 from .reporters import write_reports
@@ -53,6 +54,9 @@ def _parser() -> argparse.ArgumentParser:
     reconcile = subcommands.add_parser("reconcile-drift")
     reconcile.add_argument("--dry-run", action="store_true")
 
+    drift_edges = subcommands.add_parser("drift-edges")
+    drift_edges.add_argument("--dry-run", action="store_true")
+
     enrich = subcommands.add_parser("enrich-sads")
     enrich.add_argument("--dry-run", action="store_true")
 
@@ -90,6 +94,13 @@ def main(argv: list[str] | None = None) -> int:
             repo_root,
             dry_run=args.dry_run,
         )
+        drift_edges = generate_drift_edge_projection(
+            repo_root / str(config["drift_edge_catalog"]),
+            repo_root / str(config["model_catalog"]),
+            repo_root / str(config["drift_claim_catalog"]),
+            repo_root,
+            dry_run=args.dry_run,
+        )
         sads = enrich_sads(
             config_path,
             repo_root,
@@ -103,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
             "schema_version": "bt.architecture_generation_result.v1",
             "dry_run": args.dry_run,
             "drift_reconciliation": reconciliation,
+            "drift_edges": drift_edges,
             "sads": sads,
             "manifests": manifests,
             "views": views,
@@ -147,6 +159,17 @@ def main(argv: list[str] | None = None) -> int:
         result = project_claim_reconciliation(
             repo_root / str(config["drift_claim_catalog"]),
             repo_root / str(config["drift_reconciliation"]),
+            repo_root,
+            dry_run=args.dry_run,
+        )
+        _emit(result)
+        return 0
+
+    if args.command == "drift-edges":
+        result = generate_drift_edge_projection(
+            repo_root / str(config["drift_edge_catalog"]),
+            repo_root / str(config["model_catalog"]),
+            repo_root / str(config["drift_claim_catalog"]),
             repo_root,
             dry_run=args.dry_run,
         )

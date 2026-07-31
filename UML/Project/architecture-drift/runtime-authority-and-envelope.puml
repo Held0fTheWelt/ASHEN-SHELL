@@ -1,0 +1,71 @@
+@startuml
+' bt-view-kind: drift-topology
+' bt-view-id: project:runtime-authority-and-envelope
+title Better Tomorrow - Runtime authority and envelope drift edges
+left to right direction
+skinparam shadowing false
+skinparam wrapWidth 220
+
+component "Director\n[ai-stack:director]\nResponsibility: Select dramatic direction and capability plan" as n_ai_stack_director
+component "Runtime Aspect Ledger\n[ai-stack:ledger]\nResponsibility: Project aspect evidence and decision metadata" as n_ai_stack_ledger
+component "Runtime Proposal\n[ai-stack:proposal]\nResponsibility: Carry visible blocks and state-delta proposal" as n_ai_stack_proposal
+component "Proposal Validator\n[ai-stack:validator]\nResponsibility: Evaluate seams, capabilities and retry feedback" as n_ai_stack_validator
+component "AI Content Adapter\n[content-authority:ai_adapter]\nResponsibility: Translate canonical content into proposal context" as n_content_authority_ai_adapter
+component "Canonical Path\n[content-authority:canonical_path]\nResponsibility: Express authored dramatic invariants without scripting player choice" as n_content_authority_canonical_path
+component "Backend Module Compiler\n[content-authority:compiler]\nResponsibility: Load, validate and normalize authored documents" as n_content_authority_compiler
+component "Authored Module\n[content-authority:module]\nResponsibility: Hold canonical versioned content truth" as n_content_authority_module
+component "Module Validator\n[content-authority:validator]\nResponsibility: Enforce schemas and cross-document references" as n_content_authority_validator
+component "World Content Loader\n[content-authority:world_loader]\nResponsibility: Materialize published content for live sessions" as n_content_authority_world_loader
+component "Block Renderer\n[frontend:renderer]\nResponsibility: Render typed narrative blocks safely" as n_frontend_renderer
+component "Narrative Stream\n[frontend:stream]\nResponsibility: Receive ordered live events" as n_frontend_stream
+component "AI Langfuse Evidence\n[observability-traceability:ai]\nResponsibility: Record retrieval, planning, generation and validation spans" as n_observability_traceability_ai
+component "Backend Trace Start\n[observability-traceability:backend]\nResponsibility: Create or propagate player request identity" as n_observability_traceability_backend
+component "Operator Projection\n[observability-traceability:projection]\nResponsibility: Present cross-service trace tree and diagnostics" as n_observability_traceability_projection
+component "World Runtime Trace\n[observability-traceability:world]\nResponsibility: Record authoritative lifecycle spans" as n_observability_traceability_world
+component "CI Policy\n[quality-gates:ci]\nResponsibility: Apply required gates to repository changes" as n_quality_gates_ci
+component "Integration and E2E\n[quality-gates:integration]\nResponsibility: Prove real authority boundaries and user paths" as n_quality_gates_integration
+component "Evidence Reporter\n[quality-gates:report]\nResponsibility: Expose selected, executed, skipped and failed scope" as n_quality_gates_report
+component "Boundary Adapters\n[story-runtime-core:adapters]\nResponsibility: Map host-specific data to shared contracts" as n_story_runtime_core_adapters
+component "AI Proposal Bridge\n[world-engine:ai_bridge]\nResponsibility: Request and normalize AI proposal packets" as n_world_engine_ai_bridge
+component "Delivery Surfaces\n[world-engine:delivery]\nResponsibility: Publish committed blocks and state" as n_world_engine_delivery
+component "Story Runtime Manager\n[world-engine:manager]\nResponsibility: Coordinate canonical sessions and turns" as n_world_engine_manager
+component "Compatibility Runtime\n[world-engine:runtime]\nResponsibility: Host legacy engine profiles and transitional behavior" as n_world_engine_runtime
+component "Story Session Store\n[world-engine:store]\nResponsibility: Persist committed state and monotonic revision" as n_world_engine_store
+component "Commit Resolution\n[world-engine:validation]\nResponsibility: Validate proposal against world truth and policy" as n_world_engine_validation
+
+n_world_engine_runtime -[#orange,dashed]-> n_world_engine_manager : "runtime-compatibility-delegation\ndelegates legacy entry without owning truth\neffect: compatibility_delegate\ncontract: Compatibility paths may translate and delegate but never persist live-session state.\ncarries: validated_command"
+n_content_authority_module -[#darkgreen]-> n_content_authority_compiler : "authored-module-to-compiler\ncompiles authored content\neffect: content_projection\ncontract: YAML remains authored truth and compilation is deterministic.\ncarries: content_version, source_provenance"
+n_content_authority_compiler -[#darkgreen]-> n_content_authority_validator : "compiler-to-module-validator\nvalidates compiled content contract\neffect: content_projection\ncontract: Validation cannot invent or override authored facts.\ncarries: content_version, source_provenance"
+n_content_authority_validator -[#darkgreen]-> n_content_authority_world_loader : "validated-content-to-world-loader\npublishes immutable runtime projection\neffect: content_projection\ncontract: World Engine receives a version-bound compiled projection.\ncarries: content_version, source_provenance"
+n_content_authority_world_loader -[#darkgreen]-> n_content_authority_ai_adapter : "world-content-to-ai-adapter\nadapts immutable content for proposal generation\neffect: content_projection\ncontract: AI adapter is an anti-corruption projection and cannot become authored truth.\ncarries: content_version, source_provenance"
+n_content_authority_canonical_path -[#darkgreen,dashed]-> n_world_engine_manager : "canonical-constraints-to-runtime\nconstrains but does not script live progression\neffect: read_only_constraint\ncontract: Authored canonical constraints are read-only; World Engine owns actual beat progression.\ncarries: canonical_constraints, content_version"
+n_ai_stack_director -[#blue]-> n_ai_stack_proposal : "planner-to-runtime-proposal\npackages dramatic plan as uncommitted proposal\neffect: proposal_flow\ncontract: Planner output remains proposal-only and preserves modeled dramatic fields.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate"
+n_ai_stack_proposal -[#blue]-> n_ai_stack_validator : "proposal-to-ai-validation\nvalidates proposal without session write\neffect: proposal_flow\ncontract: Validation produces evidence and retry feedback only.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate"
+n_ai_stack_validator -[#purple,dashed]-> n_ai_stack_proposal : "ai-validation-to-proposal-finalization\nfinalizes proposal package\neffect: proposal_finalize\ncontract: Finalization cannot write live-session truth or advance its revision.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate"
+n_ai_stack_proposal -[#blue]-> n_world_engine_ai_bridge : "runtime-proposal-to-world-bridge\nreturns uncommitted proposal and evidence\neffect: proposal_flow\ncontract: The cross-process payload has no authoritative write capability.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate"
+n_world_engine_ai_bridge -[#blue]-> n_world_engine_validation : "world-bridge-to-commit-validation\nresolves proposal against live authority\neffect: proposal_flow\ncontract: World-owned validation produces a CommitDecision or a no-write rejection.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate"
+n_world_engine_validation -[#red,bold]-> n_world_engine_store : "world-validation-authoritative-write\ncommits one revision-safe transition\neffect: authoritative_write\ncontract: Exactly one atomic session write occurs after an accepted CommitDecision; rejection performs no write.\ncarries: selected_scene_function, primary_responder_id, continuity_impacts, dramatic_effect_gate, beat_progression, commit_contract_version"
+n_world_engine_store -[#teal]-> n_world_engine_delivery : "committed-state-to-delivery\nprojects post-commit player-visible state\neffect: visible_projection\ncontract: Delivery is derived from committed state and cannot infer a new authoritative outcome.\ncarries: selected_scene_function, primary_responder_id, beat_progression, visible_blocks, speaker_identity"
+n_world_engine_delivery -[#teal]-> n_frontend_stream : "delivery-to-frontend-stream\ndelivers committed visible blocks\neffect: visible_projection\ncontract: Transport preserves block order and speaker identity.\ncarries: visible_blocks, speaker_identity"
+n_frontend_stream -[#teal]-> n_frontend_renderer : "frontend-stream-to-renderer\nrenders every supported block variant\neffect: visible_projection\ncontract: Renderer consumes committed fields without reconstructing authority.\ncarries: visible_blocks, speaker_identity"
+n_observability_traceability_backend -[#gray]-> n_observability_traceability_world : "trace-backend-to-world\npropagates turn trace identity\neffect: evidence_flow\ncontract: Trace identity crosses the backend/world boundary with redaction.\ncarries: trace_id, session_id"
+n_observability_traceability_world -[#gray]-> n_observability_traceability_ai : "trace-world-to-ai\ncontinues trace through proposal execution\neffect: evidence_flow\ncontract: AI spans remain children of the live turn trace.\ncarries: trace_id, session_id"
+n_observability_traceability_ai -[#gray]-> n_observability_traceability_projection : "trace-ai-to-operator-projection\nprojects complete or explicitly partial trace\neffect: evidence_flow\ncontract: Missing spans are visible as gaps and never presented as complete evidence.\ncarries: trace_id, completeness, redaction_status"
+n_quality_gates_integration -[#gray]-> n_quality_gates_report : "integration-evidence-to-report\nreports real-boundary integration evidence\neffect: evidence_flow\ncontract: Integration classification requires disposable external-state equality checks.\ncarries: suite_id, execution_result, disposable_state_proof"
+n_quality_gates_report -[#gray]-> n_quality_gates_ci : "quality-report-to-ci\npublishes deterministic gate result\neffect: evidence_flow\ncontract: CI status and JSON, JUnit, and SARIF derive from one result.\ncarries: suite_id, execution_result, disposable_state_proof"
+n_story_runtime_core_adapters -[#gray]-> n_ai_stack_ledger : "model-call-to-cost-ledger\nevery adapter.generate is ledgered at the seam\neffect: evidence_flow\ncontract: Cost attribution happens at CountingModelAdapter; unattributed is a visible state.\ncarries: phase, attempt_index, input_tokens, output_tokens"
+n_ai_stack_ledger -[#gray]-> n_observability_traceability_ai : "ledger-to-langfuse-observation\nledger rows become per-call generation observations (W0-C)\neffect: evidence_flow\ncontract: One generation observation per ledger row; path_summary is not the sole cost source.\ncarries: phase, attempt_index, call_count"
+note bottom of n_world_engine_store
+Source sink guard: self._session_store.save
+Allowed callsite: world-engine/app/story_runtime/manager/session/manager_init_and_persistence.py::_persist_session
+end note
+
+legend bottom
+Red bold: the sole authoritative live-session write
+Orange dashed: compatibility delegation without write authority
+Blue/purple: proposal flow and proposal-only finalization
+Green: immutable content projection or read-only constraint
+Teal: committed player-visible projection
+Gray: evidence and quality flow
+endlegend
+@enduml

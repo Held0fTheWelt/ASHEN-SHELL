@@ -11,6 +11,8 @@ skinparam maxMessageSize 180
 ' bt-element-id: discovery
 ' bt-element-id: manifest
 ' bt-element-id: views
+' bt-element-id: drift_edges
+' bt-element-id: drift_gate
 ' bt-element-id: audit
 ' bt-element-id: reports
 
@@ -23,13 +25,25 @@ discovery -->[supplies inventory\ncontract: normalized repository paths] "Bindin
 note on link
 [[../../../../tools/architecture_assurance/discovery.py relationship source]]
 end note
+catalog -->[resolves drift topology\ncontract: subsystem and element references] "Drift Edge Catalog\nResponsibility: Describe authority, proposal, projection and evidence flows\nContract: Resolvable model nodes, claim ids, source anchors and carried fields\n[[../../../../tools/architecture_assurance/drift_edge_catalog.json source]]" as drift_edges
+note on link
+[[../../../../tools/architecture_assurance/drift_edges.py relationship source]]
+end note
 catalog -->[projects viewpoints\ncontract: semantic elements and edge contracts] "Semantic View Builder\nResponsibility: Project catalog models into PlantUML and companion documents\nContract: No generic inferred star graphs\n[[../../../../tools/architecture_assurance/view_builder.py source]]" as views
 note on link
 [[../../../../tools/architecture_assurance/semantic_models.py relationship source]]
 end note
+drift_edges -->[supplies authority and field-flow contracts\ncontract: versioned drift-edge schema] "Authority and Envelope Gate\nResponsibility: Resolve drift edges and reject competing writers or lost envelope fields\nContract: Source-bound topology with stable CI rule identifiers\n[[../../../../tools/architecture_assurance/drift_edges.py source]]" as drift_gate
+note on link
+[[../../../../tools/architecture_assurance/drift_edge_catalog.json relationship source]]
+end note
 manifest -->[supplies declared correspondence\ncontract: binding schema] "Audit Engine\nResponsibility: Evaluate correspondence and model semantics\nContract: Stable findings and exit policy\n[[../../../../tools/architecture_assurance/audit.py source]]" as audit
 note on link
 [[../../../../tools/architecture_assurance/audit.py relationship source]]
+end note
+drift_gate -->[emits hard invariant findings\ncontract: write-conflict and field-loss rules] audit
+note on link
+[[../../../../tools/architecture_assurance/drift_edges.py relationship source]]
 end note
 views -->[supplies analyzable models\ncontract: view requirements and source links] audit
 note on link
@@ -44,7 +58,7 @@ reports --> (*)
 
 legend bottom
 Viewpoint: activity
-Concern: From authored intent and source discovery to classified evidence
+Concern: From authored intent and source discovery through drift invariants to classified evidence
 Elements expose responsibility, contract and source anchor.
 Edges name the interaction or dependency contract.
 endlegend

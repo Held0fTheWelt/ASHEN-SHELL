@@ -8,6 +8,7 @@
   "drift_baseline_revision": "7466b485ab7c4c35e569750809dfe0f172ecf25a",
   "drift_baseline_label": "master before semantic-depth implementation",
   "drift_claim_catalog": "tools/architecture_assurance/drift_claim_catalog.json",
+  "drift_edge_catalog": "tools/architecture_assurance/drift_edge_catalog.json",
   "drift_reconciliation": "docs/architecture/evidence/architecture-drift-reconciliation.md",
   "canon_manifest": "docs/architecture/evidence/akdb-canon-manifest.json",
   "canonical_files": [
@@ -20,6 +21,8 @@
     "docs/architecture/project/README.md",
     "docs/architecture/evidence/2026-07-30-legacy-akdb-retirement-manifest.json",
     "UML/README.md",
+    "UML/Project/architecture-drift/*.md",
+    "UML/Project/architecture-drift/*.puml",
     "ArchitecturalKnowledgeDB/README.md",
     ".github/workflows/architecture-assurance.yml",
     "tests/architecture_assurance/*.py",
@@ -33,15 +36,15 @@
   "gate": {
     "schema_version": "bt.architecture_depth_gate.v1",
     "minimum_census": {
-      "subsystems": 16,
-      "critical_subsystems": 16,
-      "structure_complete": 16,
-      "declared": 197,
-      "bound": 197,
-      "accepted_declared": 174,
-      "accepted_bound": 174,
-      "discovered": 7451,
-      "represented": 7451,
+      "subsystems": 17,
+      "critical_subsystems": 17,
+      "structure_complete": 17,
+      "declared": 200,
+      "bound": 200,
+      "accepted_declared": 177,
+      "accepted_bound": 177,
+      "discovered": 7511,
+      "represented": 7511,
       "views": 89
     },
     "critical_floor": {
@@ -61,15 +64,34 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/administration-tool/architecture.md",
-      "lanes": ["python", "api", "web"],
+      "lanes": [
+        "python",
+        "api",
+        "web"
+      ],
       "lane_roots": {
-        "python": ["administration-tool/app.py", "administration-tool/route_registration.py", "administration-tool/route_registration_*.py"],
-        "api": ["administration-tool/app.py", "administration-tool/route_registration.py", "administration-tool/route_registration_*.py"],
-        "web": ["administration-tool/templates", "administration-tool/static"]
+        "python": [
+          "administration-tool/app.py",
+          "administration-tool/route_registration.py",
+          "administration-tool/route_registration_*.py"
+        ],
+        "api": [
+          "administration-tool/app.py",
+          "administration-tool/route_registration.py",
+          "administration-tool/route_registration_*.py"
+        ],
+        "web": [
+          "administration-tool/templates",
+          "administration-tool/static"
+        ]
       },
       "binding_overrides": {
-        "B-manage-ui": ["administration-tool/templates/manage/dashboard.html"],
-        "B-routes": ["administration-tool/route_registration.py"]
+        "B-manage-ui": [
+          "administration-tool/templates/manage/dashboard.html"
+        ],
+        "B-routes": [
+          "administration-tool/route_registration.py"
+        ]
       }
     },
     {
@@ -77,10 +99,17 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/ai-stack/architecture.md",
-      "lanes": ["python", "api"],
+      "lanes": [
+        "python",
+        "api"
+      ],
       "lane_roots": {
-        "python": ["ai_stack"],
-        "api": ["ai_stack"]
+        "python": [
+          "ai_stack"
+        ],
+        "api": [
+          "ai_stack"
+        ]
       }
     },
     {
@@ -88,25 +117,61 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/backend/architecture.md",
-      "lanes": ["python", "api", "schema"],
+      "lanes": [
+        "python",
+        "api",
+        "schema"
+      ],
       "lane_roots": {
-        "python": ["backend/app"],
-        "api": ["backend/app"],
-        "schema": ["backend/migrations", "backend/alembic"]
+        "python": [
+          "backend/app"
+        ],
+        "api": [
+          "backend/app"
+        ],
+        "schema": [
+          "backend/migrations",
+          "backend/alembic"
+        ]
       }
+    },
+    {
+      "id": "model-governance",
+      "scope": "component",
+      "critical": true,
+      "sad_path": "docs/architecture/components/backend/architecture.md",
+      "lanes": [
+        "python"
+      ],
+      "lane_roots": {
+        "python": [
+          "backend/app/model_governance"
+        ]
+      },
+      "notes": "Routing/governance only — not live turn authority (Wave 6)."
     },
     {
       "id": "content-authority",
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/content-authority/architecture.md",
-      "lanes": ["content", "python"],
+      "lanes": [
+        "content",
+        "python"
+      ],
       "lane_roots": {
-        "content": ["content"],
-        "python": ["story_runtime_core/builtin_experience_templates.py", "backend/app/content"]
+        "content": [
+          "content"
+        ],
+        "python": [
+          "story_runtime_core/builtin_experience_templates.py",
+          "backend/app/content"
+        ]
       },
       "binding_overrides": {
-        "B-canonical-path": ["content/modules/god_of_carnage/canonical_path/001_parc_montsouris_edge.yaml"]
+        "B-canonical-path": [
+          "content/modules/god_of_carnage/canonical_path/001_parc_montsouris_edge.yaml"
+        ]
       }
     },
     {
@@ -114,11 +179,22 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/frontend/architecture.md",
-      "lanes": ["python", "api", "web"],
+      "lanes": [
+        "python",
+        "api",
+        "web"
+      ],
       "lane_roots": {
-        "python": ["frontend/app"],
-        "api": ["frontend/app"],
-        "web": ["frontend/templates", "frontend/static"]
+        "python": [
+          "frontend/app"
+        ],
+        "api": [
+          "frontend/app"
+        ],
+        "web": [
+          "frontend/templates",
+          "frontend/static"
+        ]
       }
     },
     {
@@ -126,10 +202,17 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/mcp-server/architecture.md",
-      "lanes": ["python", "api"],
+      "lanes": [
+        "python",
+        "api"
+      ],
       "lane_roots": {
-        "python": ["tools/mcp_server"],
-        "api": ["tools/mcp_server"]
+        "python": [
+          "tools/mcp_server"
+        ],
+        "api": [
+          "tools/mcp_server"
+        ]
       }
     },
     {
@@ -137,10 +220,18 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/story-runtime-core/architecture.md",
-      "lanes": ["python"],
-      "lane_roots": {"python": ["story_runtime_core"]},
+      "lanes": [
+        "python"
+      ],
+      "lane_roots": {
+        "python": [
+          "story_runtime_core"
+        ]
+      },
       "binding_overrides": {
-        "B-tests": ["story_runtime_core/tests/test_adapters.py"]
+        "B-tests": [
+          "story_runtime_core/tests/test_adapters.py"
+        ]
       }
     },
     {
@@ -148,19 +239,40 @@
       "scope": "component",
       "critical": true,
       "sad_path": "docs/architecture/components/world-engine/architecture.md",
-      "lanes": ["python", "api"],
+      "lanes": [
+        "python",
+        "api"
+      ],
       "lane_roots": {
-        "python": ["world-engine/app"],
-        "api": ["world-engine/app"]
+        "python": [
+          "world-engine/app"
+        ],
+        "api": [
+          "world-engine/app"
+        ]
       },
       "binding_overrides": {
-        "B-auth-tickets": ["world-engine/app/auth/tickets.py"],
-        "B-commit-models": ["world-engine/app/story_runtime/commit_models.py"],
-        "B-http-api": ["world-engine/app/api/http.py"],
-        "B-run-runtime": ["world-engine/app/runtime/manager.py"],
-        "B-story-runtime-manager": ["world-engine/app/story_runtime/manager"],
-        "B-trace-middleware": ["world-engine/app/middleware/trace_middleware.py"],
-        "B-websocket-api": ["world-engine/app/api/ws.py"]
+        "B-auth-tickets": [
+          "world-engine/app/auth/tickets.py"
+        ],
+        "B-commit-models": [
+          "world-engine/app/story_runtime/commit_models.py"
+        ],
+        "B-http-api": [
+          "world-engine/app/api/http.py"
+        ],
+        "B-run-runtime": [
+          "world-engine/app/runtime/manager.py"
+        ],
+        "B-story-runtime-manager": [
+          "world-engine/app/story_runtime/manager"
+        ],
+        "B-trace-middleware": [
+          "world-engine/app/middleware/trace_middleware.py"
+        ],
+        "B-websocket-api": [
+          "world-engine/app/api/ws.py"
+        ]
       }
     },
     {
@@ -168,12 +280,24 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/documentation-supply-chain/architecture.md",
-      "lanes": ["content"],
-      "lane_roots": {"content": ["mkdocs.yml"]},
+      "lanes": [
+        "content"
+      ],
+      "lane_roots": {
+        "content": [
+          "mkdocs.yml"
+        ]
+      },
       "binding_overrides": {
-        "B-quality-bar": ["docs/architecture/QUALITY-STANDARD.md"],
-        "B-rollout": ["docs/architecture/project/ROLLOUT.md"],
-        "B-templates": ["docs/architecture/components/_template/architecture.template.md"]
+        "B-quality-bar": [
+          "docs/architecture/QUALITY-STANDARD.md"
+        ],
+        "B-rollout": [
+          "docs/architecture/project/ROLLOUT.md"
+        ],
+        "B-templates": [
+          "docs/architecture/components/_template/architecture.template.md"
+        ]
       }
     },
     {
@@ -181,10 +305,17 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/ecosystem-topology/architecture.md",
-      "lanes": ["deployment", "python"],
+      "lanes": [
+        "deployment",
+        "python"
+      ],
       "lane_roots": {
-        "deployment": ["docker-compose.yml"],
-        "python": ["docker-up.py"]
+        "deployment": [
+          "docker-compose.yml"
+        ],
+        "python": [
+          "docker-up.py"
+        ]
       }
     },
     {
@@ -192,14 +323,30 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/governance/architecture.md",
-      "lanes": ["content"],
-      "lane_roots": {"content": ["tools/architecture_assurance/config.json"]},
+      "lanes": [
+        "content"
+      ],
+      "lane_roots": {
+        "content": [
+          "tools/architecture_assurance/config.json"
+        ]
+      },
       "binding_overrides": {
-        "B-decision-registry-md-decision-registry-md": ["docs/architecture/project/DECISION_REGISTRY.md"],
-        "B-docs-architecture": ["docs/architecture/README.md"],
-        "B-docs-archive-adr-retired-2026": ["docs/archive/adr-retired-2026/README.md"],
-        "B-docs-governance": ["docs/governance/README.md"],
-        "B-tests-gates": ["tests/gates/test_architecture_documentation_gate.py"]
+        "B-decision-registry-md-decision-registry-md": [
+          "docs/architecture/project/DECISION_REGISTRY.md"
+        ],
+        "B-docs-architecture": [
+          "docs/architecture/README.md"
+        ],
+        "B-docs-archive-adr-retired-2026": [
+          "docs/archive/adr-retired-2026/README.md"
+        ],
+        "B-docs-governance": [
+          "docs/governance/README.md"
+        ],
+        "B-tests-gates": [
+          "tests/gates/test_architecture_documentation_gate.py"
+        ]
       }
     },
     {
@@ -207,16 +354,32 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/mvp-live-runtime-completion/architecture.md",
-      "lanes": ["python"],
+      "lanes": [
+        "python"
+      ],
       "lane_roots": {
-        "python": ["world-engine/app/runtime", "ai_stack", "frontend/app"]
+        "python": [
+          "world-engine/app/runtime",
+          "ai_stack",
+          "frontend/app"
+        ]
       },
       "binding_overrides": {
-        "B-mvp1-identity": ["world-engine/app/runtime/profiles.py"],
-        "B-mvp2-actor-lanes": ["world-engine/app/runtime/actor_lane.py"],
-        "B-mvp3-ldss": ["ai_stack/live_dramatic_scene_simulator.py"],
-        "B-mvp4-observability": ["world-engine/app/observability/trace.py"],
-        "B-mvp5-frontend-blocks": ["frontend/static/play_block_renderer.js"]
+        "B-mvp1-identity": [
+          "world-engine/app/runtime/profiles.py"
+        ],
+        "B-mvp2-actor-lanes": [
+          "world-engine/world_engine/runtime/models.py"
+        ],
+        "B-mvp3-ldss": [
+          "ai_stack/live_dramatic_scene_simulator.py"
+        ],
+        "B-mvp4-observability": [
+          "world-engine/app/observability/trace.py"
+        ],
+        "B-mvp5-frontend-blocks": [
+          "frontend/static/play_block_renderer.js"
+        ]
       }
     },
     {
@@ -224,12 +387,20 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/observability-traceability/architecture.md",
-      "lanes": ["python"],
+      "lanes": [
+        "python"
+      ],
       "lane_roots": {
-        "python": ["backend/app/observability", "world-engine/app/observability", "ai_stack"]
+        "python": [
+          "backend/app/observability",
+          "world-engine/app/observability",
+          "ai_stack"
+        ]
       },
       "binding_overrides": {
-        "D3": ["world-engine/app/observability/trace.py"]
+        "D3": [
+          "world-engine/app/observability/trace.py"
+        ]
       }
     },
     {
@@ -237,15 +408,33 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/quality-gates/architecture.md",
-      "lanes": ["python"],
-      "lane_roots": {"python": ["tools/architecture_assurance"]},
+      "lanes": [
+        "python"
+      ],
+      "lane_roots": {
+        "python": [
+          "tools/architecture_assurance"
+        ]
+      },
       "binding_overrides": {
-        "B-test-adr-live-runtime-commit-semantics-gate-py": ["tests/gates/test_adr_live_runtime_commit_semantics_gate.py"],
-        "B-test-adr0039": ["tests/gates/test_adr0039_pi_scope.py"],
-        "B-test-architecture-documentation-gate-py": ["tests/gates/test_architecture_documentation_gate.py"],
-        "B-test-goc-mvp01-mvp02-foundation-gate-py": ["tests/gates/test_goc_mvp01_mvp02_foundation_gate.py"],
-        "B-test-goc-mvp03-live-dramatic-scene-simulator-gate-py": ["tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py"],
-        "B-test-goc-mvp04-observability-diagnostics-gate-py": ["tests/gates/test_goc_mvp04_observability_diagnostics_gate.py"]
+        "B-test-adr-live-runtime-commit-semantics-gate-py": [
+          "tests/gates/test_adr_live_runtime_commit_semantics_gate.py"
+        ],
+        "B-test-adr0039": [
+          "tests/gates/test_adr0039_pi_scope.py"
+        ],
+        "B-test-architecture-documentation-gate-py": [
+          "tests/gates/test_architecture_documentation_gate.py"
+        ],
+        "B-test-goc-mvp01-mvp02-foundation-gate-py": [
+          "tests/gates/test_goc_mvp01_mvp02_foundation_gate.py"
+        ],
+        "B-test-goc-mvp03-live-dramatic-scene-simulator-gate-py": [
+          "tests/gates/test_goc_mvp03_live_dramatic_scene_simulator_gate.py"
+        ],
+        "B-test-goc-mvp04-observability-diagnostics-gate-py": [
+          "tests/gates/test_goc_mvp04_observability_diagnostics_gate.py"
+        ]
       }
     },
     {
@@ -253,16 +442,33 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/security-governance/architecture.md",
-      "lanes": ["python", "api"],
+      "lanes": [
+        "python",
+        "api"
+      ],
       "lane_roots": {
-        "python": ["backend/app/services/governance", "tools/mcp_server"],
-        "api": ["backend/app/services/governance", "tools/mcp_server"]
+        "python": [
+          "backend/app/services/governance",
+          "tools/mcp_server"
+        ],
+        "api": [
+          "backend/app/services/governance",
+          "tools/mcp_server"
+        ]
       },
       "binding_overrides": {
-        "B-admin-control-plane": ["backend/app/services/governance/security_governance_service.py"],
-        "B-browser-mutations": ["frontend/app/auth.py"],
-        "B-mcp-auth": ["tools/mcp_server/server.py"],
-        "B-provider-credentials": ["backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"]
+        "B-admin-control-plane": [
+          "backend/app/services/governance/security_governance_service.py"
+        ],
+        "B-browser-mutations": [
+          "frontend/app/auth.py"
+        ],
+        "B-mcp-auth": [
+          "tools/mcp_server/server.py"
+        ],
+        "B-provider-credentials": [
+          "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"
+        ]
       }
     },
     {
@@ -270,18 +476,39 @@
       "scope": "project",
       "critical": true,
       "sad_path": "docs/architecture/project/architecture-assurance/architecture.md",
-      "lanes": ["python", "content"],
+      "lanes": [
+        "python",
+        "content"
+      ],
       "lane_roots": {
-        "python": ["tools/architecture_assurance"],
-        "content": ["tools/architecture_assurance/config.json", "tools/architecture_assurance/akdb.lock.json"]
+        "python": [
+          "tools/architecture_assurance"
+        ],
+        "content": [
+          "tools/architecture_assurance/config.json",
+          "tools/architecture_assurance/akdb.lock.json"
+        ]
       },
       "binding_overrides": {
-        "D1": ["tools/architecture_assurance/schemas.py"],
-        "D2": ["tools/architecture_assurance/discovery.py", "tools/architecture_assurance/manifest_builder.py"],
-        "D3": ["tools/architecture_assurance/reporters.py"],
-        "D4": ["tools/architecture_assurance/cli.py"],
-        "D5": ["tools/architecture_assurance/canon.py"],
-        "D6": ["tests/architecture_assurance/test_disposable_akdb_integration.py"]
+        "D1": [
+          "tools/architecture_assurance/schemas.py"
+        ],
+        "D2": [
+          "tools/architecture_assurance/discovery.py",
+          "tools/architecture_assurance/manifest_builder.py"
+        ],
+        "D3": [
+          "tools/architecture_assurance/reporters.py"
+        ],
+        "D4": [
+          "tools/architecture_assurance/cli.py"
+        ],
+        "D5": [
+          "tools/architecture_assurance/canon.py"
+        ],
+        "D6": [
+          "tests/architecture_assurance/test_disposable_akdb_integration.py"
+        ]
       }
     }
   ]

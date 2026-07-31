@@ -9,6 +9,7 @@ skinparam maxMessageSize 180
 
 ' bt-element-id: declarations
 ' bt-element-id: bindings
+' bt-element-id: drift_edges
 ' bt-element-id: findings
 
 class "Architecture Declarations\nResponsibility: Capture decisions, qualities and constraints\nContract: Stable SAD identifiers\n[[../../../../tools/architecture_assurance/sad_parser.py source]]" as declarations {
@@ -23,6 +24,12 @@ class "Correspondence Bindings\nResponsibility: Relate declarations to implement
   document
   view
 }
+class "Drift Edge Catalog\nResponsibility: Describe authority, proposal, projection and evidence flows\nContract: Resolvable model nodes, claim ids, source anchors and carried fields\n[[../../../../tools/architecture_assurance/drift_edge_catalog.json source]]" as drift_edges {
+  edges[]
+  authority_invariants[]
+  envelope_invariants[]
+  source_proofs[]
+}
 class "Audit Findings\nResponsibility: Explain drift with stable identifiers\nContract: severity, scope, evidence and remediation\n[[../../../../tools/architecture_assurance/reporters.py source]]" as findings {
   code
   severity
@@ -32,10 +39,11 @@ class "Audit Findings\nResponsibility: Explain drift with stable identifiers\nCo
 
 bindings ..> findings : "produce gaps or proof\ncontract: traceable evidence locations\n[[../../../../tools/architecture_assurance/audit.py source]]"
 declarations ..> bindings : "are grounded by\ncontract: stable declaration ids\n[[../../../../tools/architecture_assurance/manifest_builder.py source]]"
+drift_edges ..> findings : "produce authority or envelope violations\ncontract: stable gate findings with source locations\n[[../../../../tools/architecture_assurance/drift_edges.py source]]"
 
 legend bottom
 Viewpoint: class
-Concern: Declarations, correspondence bindings and explainable findings
+Concern: Declarations, correspondence bindings, drift edges and explainable findings
 Elements expose responsibility, contract and source anchor.
 Edges name the interaction or dependency contract.
 endlegend
