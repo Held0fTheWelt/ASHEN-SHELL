@@ -9,14 +9,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = REPO_ROOT / ".github" / "workflows"
 
 # Remaining direct-pytest workflows still migrating to ``tests/run_tests.py``.
-# Shrink this allowlist until empty (W8 exit criterion).
-# architecture-assurance.yml stays until G4 user WIP on that file is cleared.
-DIRECT_PYTEST_ALLOWLIST: dict[str, str] = {
-    "architecture-assurance.yml": (
-        "G4: user WIP owns this workflow; migrate to "
-        "`python tests/run_tests.py --suite architecture_assurance` after WIP lands"
-    ),
-}
+# W8 exit criterion: this allowlist must stay empty.
+DIRECT_PYTEST_ALLOWLIST: dict[str, str] = {}
 
 # Flag shell invocations of pytest only (not pip installs, job names, or comments).
 _DIRECT_PYTEST = re.compile(
@@ -60,8 +54,8 @@ def test_direct_pytest_allowlist_entries_exist() -> None:
 
 
 def test_direct_pytest_allowlist_is_draining() -> None:
-    """Hard cap so the allowlist cannot grow during W8/W9."""
-    assert len(DIRECT_PYTEST_ALLOWLIST) <= 1, (
-        "Direct-pytest allowlist must stay at most architecture-assurance (G4) "
-        f"until empty; got {sorted(DIRECT_PYTEST_ALLOWLIST)}"
+    """Hard cap: direct pytest in workflows is forbidden (allowlist empty)."""
+    assert len(DIRECT_PYTEST_ALLOWLIST) == 0, (
+        "Direct-pytest allowlist must be empty; migrate remaining workflows to "
+        f"tests/run_tests.py — got {sorted(DIRECT_PYTEST_ALLOWLIST)}"
     )

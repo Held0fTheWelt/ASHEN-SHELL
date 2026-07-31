@@ -1,22 +1,38 @@
-# Drift-Sanierung Abschluss (running)
+# Drift-Sanierung Abschluss
 
-**Status:** IN PROGRESS — W0–W8 advanced; **G2 blocked**; **G3 blocked**; W9 safe subset only; DoD §9 not fully evidenced.  
+**Status:** WAVE WORK COMPLETE for gated items G2/G4; G3 parked with trigger; DoD §9 remainder still open.  
 **Branch:** `drift-sanierung/w6-package-retirement`  
-**No push (G1). G4 architecture_assurance WIP left unstaged.**
+**No push (G1).** Gate authority: `DRIFT_SANIERUNG_GATE_ENTSCHEIDUNGEN.md`.
 
 ## Waves (summary)
 
 | Wave | Result |
 | --- | --- |
 | W0–W5 | Cost ledger, write topology, SituationStatus, D26, E7, SOURCE unshard (prior commits) |
-| W6 | Package rename + retirement; **G2 table drop parked** |
+| W6 | Package rename + retirement; **G2 `runtime_sessions` dropped** (COUNT=0; Alembic 049) |
 | W7 | Content contract + YAML GoC solo; builtins deleted |
-| W8 | Suite-catalog CI; allowlist → G4-only; out_of_scope categories; TurnTrace gaps; alias residual freeze |
-| W9 | G3 prep only + `test_no_fy_suites_import_in_product` |
+| W8 | Suite-catalog CI; **direct-pytest allowlist = 0**; dual-role aliases resolved; out_of_scope; TurnTrace |
+| W9 | G3 prep only + `test_no_fy_suites_import_in_product`; **subtree split not now** |
+
+## Human gates
+
+| Gate | Status |
+| --- | --- |
+| G1 No push | Honored |
+| G2 Drop runtime_sessions | **DONE** — COUNT=0; no archive; migration 049 up/down evidenced; model removed; gate added |
+| G3 fy-suites subtree split | **Parked** — trigger: after this branch is **merged and pushed**, as a separate operation. Prep doc retained. No `fy-suites/**` delete/move. |
+| G4 assurance WIP | **DONE** — landed in `de2cff5b`; ASSURE-CI + ALIAS executed afterward |
 
 ## Test evidence (this continuation)
 
-### Focused W8/W9 gates
+### G2 local migration
+- `SELECT COUNT(*) FROM runtime_sessions` → **0** (`backend/instance/wos.db`)
+- `flask db upgrade` (048→049): table absent, revision 049
+- `flask db downgrade 048`: empty structure restored, revision 048, COUNT=0
+- `flask db upgrade` again: table absent, revision 049
+- Evidence: `docs/superpowers/plans/baselines/W6-G2-runtime-sessions-readers.md`
+
+### Focused W8/W9/G2 gates
 Command:
 ```bash
 python -m pytest tests/gates/test_no_direct_pytest_in_workflows.py \
@@ -24,33 +40,30 @@ python -m pytest tests/gates/test_no_direct_pytest_in_workflows.py \
   tests/gates/test_no_element_has_two_authority_roles.py \
   tests/gates/test_no_fy_suites_import_in_product.py \
   tests/gates/test_every_test_file_has_suite_or_exception.py \
-  tests/gates/test_trace_gap_is_reported_as_partial.py -v --tb=short --no-cov
+  tests/gates/test_trace_gap_is_reported_as_partial.py \
+  tests/gates/test_runtime_sessions_table_absent.py -v --tb=short --no-cov
 ```
-Result: **14 passed, 0 failed, 0 skipped, 0 errors**
+Result: **15 passed, 0 failed, 0 skipped, 0 errors**
 
-### engine_foundation
-Command: `python tests/run_tests.py --suite engine_foundation --quick`  
-Result: **237 passed, 0 failed, 0 skipped, 0 errors** (86.11s)
+### Full `gates --quick`
+Command: `python tests/run_tests.py --suite gates --quick`  
+Result: **1 failed, 100 passed** before stop-on-fail — failure is
+`test_better_tomorrow_architecture_assurance_gate` (pre-existing on HEAD `de2cff5b`:
+~3209 gate failures, dominated by missing `world-engine/app/...` anchors vs real
+`world-engine/world_engine/...` paths). **Not newly greened; not claimed fixed.**
 
-### Known non-blocking / parked failures
-- Full `gates --quick` may fail on `test_better_tomorrow_architecture_assurance_gate` when **G4 WIP** `tools/architecture_assurance/config.json` is dirty in the working tree — do not “fix” by staging that WIP.
-- Element dual-authority residuals remain frozen until G4 catalog cleanup.
+## §9 Honest remainder (still open — with reason)
 
-## Human gates
+| Item | Status | Reason |
+| --- | --- | --- |
+| G2 persistence drop | **Done** | Executed this session |
+| G3 external fy-suites repo | Open (parked) | Trigger = after merge **and** push; not now |
+| architecture-assurance.yml direct pytest | **Done** | Migrated to `tests/run_tests.py` |
+| Model-catalog dual authority roles | **Done** | Distinct anchors; gate asserts zero |
+| Full playthrough / `unattributed_call_count == 0` | Open | Needs live attribution / playthrough stack pass |
+| UML CI artifact publish / SARIF-JUnit identity | Open | Not re-verified this session |
+| Full `--suite all` green | Open | Not claimed / not run as full suite here |
+| Reconnect player-visible block ordering/dedup gate | Open | Existing `tests/e2e/test_phase5_reconnect_reentry.py` only; dedicated gate not newly added |
+| `test_better_tomorrow_architecture_assurance_gate` PASS | Open | Pre-existing FAIL (~3209) from stale `world-engine/app` path convention |
 
-| Gate | Status |
-| --- | --- |
-| G1 No push | Honored |
-| G2 Drop runtime_sessions | **BLOCKED** — needs explicit user yes |
-| G3 fy-suites subtree split | **BLOCKED** — prep only |
-| G4 Leave assurance WIP | Honored |
-
-## Honest rest list (DoD §9 — not yet fully evidenced)
-- G2 persistence drop still open (intentionally).
-- G3 external fy-suites repo not created (intentionally).
-- architecture-assurance workflow still direct pytest (G4).
-- Model-catalog dual authority roles not resolved (G4).
-- Full playthrough / `unattributed_call_count == 0` live metrics need stack re-run.
-- UML CI artifact publish / SARIF-JUnit identity not re-verified this session.
-- Full `--suite all` green not claimed.
-- Reconnect player-visible block ordering/dedup gate not newly added this session (`tests/e2e/test_phase5_reconnect_reentry.py` pre-exists).
+**Do not declare remediation complete solely from W0–W9 checkboxes while §9 open items remain.** G2 residue is cleared; remaining DoD items need their own evidence.

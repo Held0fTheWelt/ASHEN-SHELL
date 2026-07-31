@@ -104,7 +104,7 @@ jobs:
         env:
           AKDB_SOURCE_ROOT: ${{ github.workspace }}/.external/ArchitecturalKnowledgeDB
         run: |
-          python -m pytest tests/architecture_assurance -v --tb=short
+          python tests/run_tests.py --suite architecture_assurance
 
       - name: Upload architecture evidence
         if: always()
