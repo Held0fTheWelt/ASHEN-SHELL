@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+from pathlib import Path
 
 
 def test_runtime_executor_boundaries_are_semantic_and_complete() -> None:
@@ -33,7 +34,8 @@ def test_runtime_executor_boundaries_are_semantic_and_complete() -> None:
 
     for module_name in source_modules:
         module = import_module(f"ai_stack.langgraph.runtime_executor.{module_name}")
-        assert getattr(module, "SOURCE_LINES")
+        assert not hasattr(module, "SOURCE_LINES")
+        assert not hasattr(module, "SOURCE")
 
 
 def test_runtime_executor_facade_still_exports_executor_without_loader_group_map() -> None:
@@ -44,3 +46,7 @@ def test_runtime_executor_facade_still_exports_executor_without_loader_group_map
     assert not hasattr(public, "_GROUPS")
     assert hasattr(facade, "_build_dramatic_generation_packet")
     assert hasattr(facade, "resolve_w5_first_npc_context")
+    # Wave 5: no dynamic assembly on the public surface.
+    public_src = Path(public.__file__).read_text(encoding="utf-8")
+    assert "exec(compile" not in public_src
+    assert "SOURCE_LINES" not in public_src

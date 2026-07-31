@@ -59,7 +59,6 @@ def _executor(adapter: BaseModelAdapter | None = None) -> RuntimeTurnGraphExecut
 
 
 def test_translate_output_registered_between_render_and_package() -> None:
-    from ai_stack.langgraph.runtime_executor.executor_graph_build import SOURCE_LINES
     from ai_stack.langgraph.runtime_executor.semantic_boundaries import SOURCE_BOUNDARIES
 
     boundary = next(b for b in SOURCE_BOUNDARIES if b.name == "commit_render")
@@ -71,7 +70,7 @@ def test_translate_output_registered_between_render_and_package() -> None:
         "executor_package_output",
     )
 
-    source = "".join(SOURCE_LINES)
+    source = Path("ai_stack/langgraph/langgraph_runtime_executor_impl.py").read_text(encoding="utf-8")
     assert 'graph.add_node("translate_output", self._translate_output)' in source
     assert 'graph.add_edge("render_visible", "translate_output")' in source
     assert 'graph.add_edge("translate_output", "package_output")' in source
@@ -79,9 +78,7 @@ def test_translate_output_registered_between_render_and_package() -> None:
 
 
 def test_narrator_prompt_language_workarounds_are_removed() -> None:
-    from ai_stack.langgraph.runtime_executor.executor_goc_canonical_content import SOURCE_LINES
-
-    source = "".join(SOURCE_LINES)
+    source = Path("ai_stack/langgraph/langgraph_runtime_executor_impl.py").read_text(encoding="utf-8")
     assert "OUTPUT LANGUAGE" not in source
     assert "Never default to English" not in source
     assert "Do not use English" not in source

@@ -1,9 +1,7 @@
-"""Semantic boundary registry for the runtime-executor compatibility loader.
+"""Semantic boundary registry for the runtime-executor (Wave 5 documentation).
 
-DS-010 keeps the public executor facade stable while making the remaining
-``SOURCE_LINES`` chunks addressable by responsibility. The registry is data,
-not execution logic: ``public.py`` consumes it in order, and tests can assert
-the intended boundaries without reaching into the loader.
+After unshard, executable logic lives in ``langgraph_runtime_executor_impl.py``.
+Boundary module names remain as documentation stubs under ``runtime_executor/``.
 """
 
 from __future__ import annotations

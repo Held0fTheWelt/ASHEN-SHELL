@@ -1,24 +1,12 @@
-"""Runtime executor assembled from semantic source boundaries."""
+"""Runtime executor public surface (Wave 5: real assembled module, no exec)."""
 from __future__ import annotations
 
 from importlib import import_module
-import linecache
 
-from ai_stack.langgraph.runtime_executor.semantic_boundaries import (
-    iter_source_module_names,
-)
-
-_source_lines: list[str] = []
-for _part in iter_source_module_names():
-    _source_lines.extend(import_module(f"{__package__}.{_part}").SOURCE_LINES)
-
-_source = "".join(_source_lines)
-linecache.cache["ai_stack/langgraph/langgraph_runtime_executor.py"] = (
-    len(_source),
-    None,
-    _source.splitlines(keepends=True),
-    "ai_stack/langgraph/langgraph_runtime_executor.py",
-)
-exec(compile(_source, "ai_stack/langgraph/langgraph_runtime_executor.py", "exec"), globals())
-
-del import_module, iter_source_module_names, linecache, _part, _source, _source_lines
+_impl = import_module("ai_stack.langgraph.langgraph_runtime_executor_impl")
+_keep = {"__name__", "__file__", "__package__", "__loader__", "__spec__", "__doc__"}
+for _key, _value in _impl.__dict__.items():
+    if _key in _keep:
+        continue
+    globals()[_key] = _value
+del import_module, _impl, _keep, _key, _value

@@ -1,55 +1,8 @@
-"""Director selection completion.
+"""Retired SOURCE_LINES shard — logic lives in langgraph_runtime_executor_impl (Wave 5).
 
-Finalizes director selection state updates and diagnostics before aspect derivation and model-context assembly.
+Boundary registry still lists this module name for documentation; it no longer
+contributes executable string payloads.
 """
-SOURCE_LINES = [
-    '        scene_plan_dict["beat_selection_source"] = beat_selection.selection_source\n',
-    '        scene_plan_dict["selected_beat"] = {\n',
-    '            "id": selected_beat_id,\n',
-    '            "candidate_count": beat_selection.candidate_count,\n',
-    '        }\n',
-    '        scene_plan_dict["selected_capabilities"] = list(expected_realization)\n',
-    '        scene_plan_dict["authority_expectations"] = {\n',
-    '            "narrator_required": bool(interp_for_beat.get("narrator_response_expected"))\n',
-    '            or any(str(cap).startswith("narrator.") for cap in expected_realization),\n',
-    '            "npc_policy": "director_selected"\n',
-    '            if any(str(cap).startswith("npc.") for cap in expected_realization)\n',
-    '            else "none",\n',
-    '            "capability_manager_plan_applied": bool(\n',
-    '                capability_manager_plan.get("run_only_selected_capabilities")\n',
-    '                and manager_selected_capabilities\n',
-    '            ),\n',
-    '        }\n',
-    '        update["scene_plan_record"] = scene_plan_dict\n',
-    '        update["turn_aspect_ledger"] = set_aspect_record(\n',
-    '            state.get("turn_aspect_ledger") if isinstance(state.get("turn_aspect_ledger"), dict) else {},\n',
-    '            ASPECT_BEAT,\n',
-    '            make_aspect_record(\n',
-    '                applicable=True,\n',
-    '                status="partial",\n',
-    '                expected={\n',
-    '                    "prior_beat_id": prior_beat_id,\n',
-    '                    "candidate_beats": [candidate.id for candidate in beat_candidates],\n',
-    '                    "expected_realization": expected_realization,\n',
-    '                    "expected_visible_functions": expected_realization,\n',
-    '                },\n',
-    '                selected={\n',
-    '                    "selected_beat_id": selected_beat_id,\n',
-    '                    "selected_scene_function": scene_fn,\n',
-    '                    "selection_reason": beat_selection.selection_reason,\n',
-    '                    "selection_source": beat_selection.selection_source,\n',
-    '                    "transition_allowed": True,\n',
-    '                },\n',
-    '                actual={\n',
-    '                    "realized": None,\n',
-    '                    "committed": None,\n',
-    '                    "lost_at_stage": None,\n',
-    '                    "failure_classification": "observability_gap",\n',
-    '                },\n',
-    '                reasons=["beat_selected_not_yet_realized"],\n',
-    '                source="runtime",\n',
-    '                selected_beat=selected_beat_id,\n',
-    '            ),\n',
-    '        )\n',
-    '        return update\n',
-]
+from __future__ import annotations
+
+__all__: list[str] = []

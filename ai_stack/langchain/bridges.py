@@ -552,18 +552,34 @@ def invoke_runtime_adapter_with_langchain(
             Returns a value of type ``RuntimeInvocationResult``; see the function body for structure, error paths, and sentinels.
     """
     parser = _RUNTIME_OUTPUT_PARSER_THIN if parser_variant == "thin" else _RUNTIME_OUTPUT_PARSER
+    # E7: self-correction must be a *cheaper* reduced-context retry, not a grown prompt.
+    _E7_CONTEXT_CAP = 2000
+    _E7_PRIOR_CAP = 400
     correction_block = ""
+    reduced_retry = bool(rewrite_instruction)
     if rewrite_instruction:
         fb = ", ".join(str(x) for x in (feedback_codes or []) if str(x).strip()) or "(none)"
+        prior = (prior_output or "").strip() or "(none)"
+        if len(prior) > _E7_PRIOR_CAP:
+            prior = prior[:_E7_PRIOR_CAP] + "…"
+        instruction = str(rewrite_instruction)
+        if len(instruction) > _E7_PRIOR_CAP:
+            instruction = instruction[:_E7_PRIOR_CAP] + "…"
         correction_block = (
-            "Self-correction pass:\n"
-            f"Prior draft (reference only):\n{(prior_output or '').strip() or '(none)'}\n\n"
-            f"Instruction:\n{rewrite_instruction}\n\n"
+            "Self-correction pass (reduced context):\n"
+            f"Prior draft (truncated):\n{prior}\n\n"
+            f"Instruction:\n{instruction}\n\n"
             f"Feedback codes: {fb}\n\n"
         )
     if model_prompt:
         full_context = model_prompt
-        if isinstance(dramatic_generation_packet, dict) and dramatic_generation_packet:
+        if reduced_retry and len(full_context) > _E7_CONTEXT_CAP:
+            full_context = full_context[:_E7_CONTEXT_CAP] + "…"
+        elif (
+            not reduced_retry
+            and isinstance(dramatic_generation_packet, dict)
+            and dramatic_generation_packet
+        ):
             full_context = (
                 f"{full_context}\n\n"
                 "Dramatic generation packet (authoritative JSON):\n"
@@ -576,7 +592,13 @@ def invoke_runtime_adapter_with_langchain(
             f"Interpreted input:\n{interp_str}\n\n"
             f"Runtime retrieval context:\n{retrieval_context or '(none)'}"
         )
-        if isinstance(dramatic_generation_packet, dict) and dramatic_generation_packet:
+        if reduced_retry and len(full_context) > _E7_CONTEXT_CAP:
+            full_context = full_context[:_E7_CONTEXT_CAP] + "…"
+        elif (
+            not reduced_retry
+            and isinstance(dramatic_generation_packet, dict)
+            and dramatic_generation_packet
+        ):
             full_context = (
                 f"{full_context}\n\n"
                 "Dramatic generation packet (authoritative JSON):\n"

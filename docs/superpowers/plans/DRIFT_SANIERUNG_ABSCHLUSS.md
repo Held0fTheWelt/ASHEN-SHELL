@@ -1,25 +1,27 @@
 # Abschluss Drift-Sanierung (Zwischenstand)
 
-**Status:** IN PROGRESS — Waves 0–4 implemented locally; Waves 5–9 and DoD §9 open.  
-**Branch:** `drift-sanierung/w4-capability-migration`  
+**Status:** IN PROGRESS — Waves 0–4 done; Wave 5 **partial** (AI turn executor unsharded).  
+**Branch:** `drift-sanierung/w5-deshard-ai-backend`  
 **Do NOT push (G1).** User architecture-assurance WIP preserved (G4).
 
-## Completed
+## Commits (local)
 
-| Wave | Commit | Evidence |
-| --- | --- | --- |
-| W0 | `3e4b02cb` | Cost ledger / budgets |
-| W1 | `7959c848` (+ `6f6015f6`) | Manager unshard |
-| W2 | `5122b1d4` | Write topology + translation cache |
-| W3 | `fc362157` | Rich SituationStatus / partial / mapping |
-| W4 | (this wave) | D26 models, permissive MutationPolicy, E7 policies, switches |
+| SHA | Wave |
+| --- | --- |
+| `3e4b02cb` | W0 |
+| `7959c848` / `6f6015f6` | W1 |
+| `5122b1d4` | W2 |
+| `fc362157` | W3 |
+| `b6111294` | W4 |
+| (pending) | W5 partial — runtime_executor |
 
-## Remaining
+## Test counts (this session)
 
-W5 deshard (171 modules; includes P-W4-SHARD-E7) · W6 rename/retire (G2 DB) · W7 · W8 · W9 (G3) · DoD §9
+- W3 unit: **7 passed**
+- W4 focused: **10 passed** (later **12** with gate)
+- W5 ai_stack: **8 passed**, 0 failed (`test_runtime_executor_semantic_boundaries` + `test_output_language_gateway`)
+- WE `test_no_dynamic_source_assembly` + W4: **12 passed**
 
-## Latest test counts
+## Remaining for DoD §9
 
-- W4 focused: **10 passed**, 0 failed  
-  `python -m pytest world-engine/tests/test_state_delta_partial_acceptance.py world-engine/tests/test_capability_switch_defaults.py world-engine/tests/test_technical_failure_fallback_chain.py`
-- W3 unit (earlier): **7 passed**
+W5 backend game unshard · W6 rename/retire · W7–W9 · playthrough metrics · full suite green

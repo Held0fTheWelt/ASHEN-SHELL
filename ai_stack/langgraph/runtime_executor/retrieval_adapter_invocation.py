@@ -1,28 +1,8 @@
-"""Retrieval signal attachment and adapter invocation.
+"""Retired SOURCE_LINES shard — logic lives in langgraph_runtime_executor_impl (Wave 5).
 
-Attaches retrieval continuity diagnostics, invokes the runtime adapter through LangChain, and extracts realized actor order from model output.
+Boundary registry still lists this module name for documentation; it no longer
+contributes executable string payloads.
 """
-SOURCE_LINES = [
-    ') -> None:\n',
-    '    if not query_signal.get("attached"):\n',
-    '        return\n',
-    '    retrieval["continuity_query_signal"] = query_signal\n',
-    '    notes = retrieval.get("ranking_notes")\n',
-    '    if not isinstance(notes, list):\n',
-    '        notes = []\n',
-    '        retrieval["ranking_notes"] = notes\n',
-    '    if "retrieval_continuity_query=attached" not in notes:\n',
-    '        notes.append("retrieval_continuity_query=attached")\n',
-    '\n',
-    '\n',
-    'def _invoke_runtime_adapter_with_langchain(**kwargs: Any) -> Any:\n',
-    '    """Load LangChain integration only when a graph node actually invokes an adapter.\n',
-    '\n',
-    '    Keeping this import lazy lets ``ai_stack.langgraph.langgraph_runtime`` (and test collection)\n',
-    '    succeed in slim images or CI slices that ship LangGraph but omit optional\n',
-    '    ``langchain_core`` / ``langchain`` extras.\n',
-    '    """\n',
-    '    from ai_stack.langchain import invoke_runtime_adapter_with_langchain\n',
-    '\n',
-    '    return invoke_runtime_adapter_with_langchain(**kwargs)\n',
-]
+from __future__ import annotations
+
+__all__: list[str] = []

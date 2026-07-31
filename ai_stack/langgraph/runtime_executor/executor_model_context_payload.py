@@ -1,28 +1,8 @@
-"""Model context final payload.
+"""Retired SOURCE_LINES shard — logic lives in langgraph_runtime_executor_impl (Wave 5).
 
-Finishes model context with prompt rendering, packet metadata, and model invocation payload shape.
+Boundary registry still lists this module name for documentation; it no longer
+contributes executable string payloads.
 """
-SOURCE_LINES = [
-    '            if isinstance(state.get("turn_aspect_ledger"), dict)\n',
-    '            else {},\n',
-    '            ASPECT_BROAD_NLU_LISTENING,\n',
-    '            build_broad_nlu_listening_aspect_record(broad_nlu_listening),\n',
-    '        )\n',
-    '        updated_ledger = set_aspect_record(\n',
-    '            updated_ledger,\n',
-    '            ASPECT_CONVERSATIONAL_MEMORY,\n',
-    '            build_conversational_memory_aspect_record(conversational_memory),\n',
-    '        )\n',
-    '        updated_ledger = set_aspect_record(\n',
-    '            updated_ledger,\n',
-    '            ASPECT_PROMPT_AUTHORITY,\n',
-    '            build_prompt_authority_aspect_record(prompt_authority),\n',
-    '        )\n',
-    '        update["turn_aspect_ledger"] = updated_ledger\n',
-    '        if isinstance(synthesis_bundle, dict):\n',
-    '            update["context_synthesis_diagnostics"] = summarize_context_synthesis_for_diagnostics(\n',
-    '                synthesis_bundle,\n',
-    '                used_in_model_prompt=bool(synthesis_lines),\n',
-    '            )\n',
-    '        return update\n',
-]
+from __future__ import annotations
+
+__all__: list[str] = []
