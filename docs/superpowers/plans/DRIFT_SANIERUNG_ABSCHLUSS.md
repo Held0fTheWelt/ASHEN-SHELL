@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS — W0–W7 done for planned builtins/contract work; **G2 blocked**; W8 partial; W9 G3 prep only; DoD §9 open.  
 **Branch:** `drift-sanierung/w6-package-retirement`  
-**Tip:** pending after W8 partial commit  
+**Tip:** `ed981782`  
 **No push (G1). G4 assurance WIP preserved. G2 must not drop `runtime_sessions`.**
 
 ## Commits this continuation
