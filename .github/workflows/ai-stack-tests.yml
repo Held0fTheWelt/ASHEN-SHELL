@@ -8,6 +8,7 @@ on:
       - 'story_runtime_core/**'
       - 'tools/verify_goc_scene_identity_single_source.py'
       - '.github/workflows/ai-stack-tests.yml'
+      - 'tests/run_tests.py'
   pull_request:
     branches: [ master, main, develop ]
     paths:
@@ -15,10 +16,11 @@ on:
       - 'story_runtime_core/**'
       - 'tools/verify_goc_scene_identity_single_source.py'
       - '.github/workflows/ai-stack-tests.yml'
+      - 'tests/run_tests.py'
 
 jobs:
   ai-stack-pytest:
-    name: pytest ai_stack/tests
+    name: AI Stack suite catalog
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,7 +37,6 @@ jobs:
             ai_stack/pyproject.toml
             ai_stack/requirements-test.txt
 
-      # Merge bar for "ai_stack/tests green": keep in sync with scripts/install-ai-stack-test-env.* and README § Testing.
       - name: Install editable packages and test extras
         run: |
           python -m pip install --upgrade pip
@@ -58,8 +59,8 @@ jobs:
       - name: Verify sole GoC scene→guidance mapping (ADR-0003)
         run: python tools/verify_goc_scene_identity_single_source.py
 
-      # Full tree under ai_stack/tests (not a file allowlist); new test modules are always collected.
-      - name: Run ai_stack test suite
+      # Suite catalog invocation (W8): no direct pytest.
+      - name: Run ai_stack test suite via catalog
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m pytest ai_stack/tests -q --tb=short
+        run: python tests/run_tests.py --suite ai_stack

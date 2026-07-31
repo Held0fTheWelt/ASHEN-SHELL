@@ -1,0 +1,22 @@
+{
+  "schema_version": "w8.out_of_scope_share.v1",
+  "max_share_cap": 1.0,
+  "shares": {
+    "docs/architecture/components/administration-tool/architecture.bindings.json": 0.991266,
+    "docs/architecture/components/ai-stack/architecture.bindings.json": 0.475779,
+    "docs/architecture/components/backend/architecture.bindings.json": 0.352323,
+    "docs/architecture/components/content-authority/architecture.bindings.json": 0.783537,
+    "docs/architecture/components/frontend/architecture.bindings.json": 0.163043,
+    "docs/architecture/components/mcp-server/architecture.bindings.json": 0.659091,
+    "docs/architecture/components/story-runtime-core/architecture.bindings.json": 0.654676,
+    "docs/architecture/components/world-engine/architecture.bindings.json": 0.855228,
+    "docs/architecture/project/architecture-assurance/architecture.bindings.json": 0.506667,
+    "docs/architecture/project/documentation-supply-chain/architecture.bindings.json": 1.0,
+    "docs/architecture/project/ecosystem-topology/architecture.bindings.json": 1.0,
+    "docs/architecture/project/governance/architecture.bindings.json": 1.0,
+    "docs/architecture/project/mvp-live-runtime-completion/architecture.bindings.json": 0.970728,
+    "docs/architecture/project/observability-traceability/architecture.bindings.json": 0.955312,
+    "docs/architecture/project/quality-gates/architecture.bindings.json": 1.0,
+    "docs/architecture/project/security-governance/architecture.bindings.json": 0.983784
+  }
+}

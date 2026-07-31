@@ -1,4 +1,8 @@
-"""Trace ID propagation for World Engine HTTP requests (aligned with backend X-WoS-Trace-Id)."""
+"""Trace ID propagation for World Engine HTTP requests (aligned with backend X-WoS-Trace-Id).
+
+Wave 8 adds a minimal ``TurnTrace`` contract: propagated identity, owned spans,
+explicit gaps, and completeness that collapses to ``partial`` whenever a gap exists.
+"""
 
 from __future__ import annotations
 
@@ -6,9 +10,69 @@ import contextvars
 import hashlib
 import uuid
 from contextvars import Token
+from dataclasses import dataclass, field
+from typing import Literal
 
 TRACE_ID: contextvars.ContextVar[str | None] = contextvars.ContextVar("wos_we_trace_id", default=None)
-LANGFUSE_TRACE_ID: contextvars.ContextVar[str | None] = contextvars.ContextVar("wos_we_langfuse_trace_id", default=None)
+LANGFUSE_TRACE_ID: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "wos_we_langfuse_trace_id", default=None
+)
+
+TraceCompleteness = Literal["complete", "partial"]
+
+
+@dataclass(frozen=True)
+class TraceSpan:
+    """One owned observation within a turn trace."""
+
+    name: str
+    span_id: str
+    parent_span_id: str | None = None
+
+
+@dataclass
+class TurnTrace:
+    """End-to-end player-turn trace with explicit gap accounting.
+
+    Missing expected spans must be recorded in ``gaps``; completeness is never
+    reported as ``complete`` while any gap remains.
+    """
+
+    trace_id: str
+    session_id: str | None = None
+    turn_id: str | None = None
+    revision: int | None = None
+    spans: list[TraceSpan] = field(default_factory=list)
+    gaps: list[str] = field(default_factory=list)
+    redacted_fields: tuple[str, ...] = ()
+
+    @property
+    def completeness(self) -> TraceCompleteness:
+        return "partial" if self.gaps else "complete"
+
+    def record_span(
+        self,
+        name: str,
+        *,
+        span_id: str | None = None,
+        parent_span_id: str | None = None,
+    ) -> TraceSpan:
+        span = TraceSpan(
+            name=name,
+            span_id=span_id or uuid.uuid4().hex,
+            parent_span_id=parent_span_id,
+        )
+        self.spans.append(span)
+        return span
+
+    def record_gap(self, reason: str) -> None:
+        cleaned = (reason or "").strip()
+        if not cleaned:
+            raise ValueError("trace gap reason must be non-empty")
+        self.gaps.append(cleaned)
+
+    def mark_expected_span_missing(self, span_name: str) -> None:
+        self.record_gap(f"missing_span:{span_name}")
 
 
 def set_trace_id(trace_id: str) -> Token:

@@ -10,21 +10,30 @@ WORKFLOWS = REPO_ROOT / ".github" / "workflows"
 
 # Remaining direct-pytest workflows still migrating to ``tests/run_tests.py``.
 # Shrink this allowlist until empty (W8 exit criterion).
+# architecture-assurance.yml stays until G4 user WIP on that file is cleared.
 DIRECT_PYTEST_ALLOWLIST: dict[str, str] = {
-    "admin-tests.yml": "pending administration suite catalog invocation",
-    "architecture-assurance.yml": "assurance suite pending catalog wiring (G4 WIP adjacent)",
-    "ai-stack-tests.yml": "pending map to ai_stack suite family",
-    "backend-tests.yml": "pending full backend suite catalog invocation",
-    "engine-tests.yml": "pending full engine suite catalog invocation",
-    "frontend-tests.yml": "pending mvp5/frontend suite catalog invocation",
-    "pre-deployment.yml": "pending multi-suite orchestration via ALL_SUITE_SEQUENCE",
-    "quality-gate.yml": "pending gates/security marker suites via catalog",
+    "architecture-assurance.yml": (
+        "G4: user WIP owns this workflow; migrate to "
+        "`python tests/run_tests.py --suite architecture_assurance` after WIP lands"
+    ),
 }
 
+# Flag shell invocations of pytest only (not pip installs, job names, or comments).
 _DIRECT_PYTEST = re.compile(
-    r"(?:^|\s)(?:python\s+-m\s+pytest|pytest)\b",
+    r"^\s*(?:-\s+)?(?:python\s+-m\s+pytest|pytest)\s+",
     re.MULTILINE,
 )
+
+
+def _workflow_direct_pytest_lines(text: str) -> list[str]:
+    hits: list[str] = []
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        if _DIRECT_PYTEST.search(line):
+            hits.append(line.strip())
+    return hits
 
 
 def test_no_direct_pytest_in_workflows_outside_allowlist() -> None:
@@ -32,12 +41,13 @@ def test_no_direct_pytest_in_workflows_outside_allowlist() -> None:
     offenders: list[str] = []
     for path in sorted(WORKFLOWS.glob("*.yml")):
         text = path.read_text(encoding="utf-8")
-        if not _DIRECT_PYTEST.search(text):
+        hits = _workflow_direct_pytest_lines(text)
+        if not hits:
             continue
         rel = path.name
         if rel in DIRECT_PYTEST_ALLOWLIST:
             continue
-        offenders.append(rel)
+        offenders.append(f"{rel}: {hits[0]}")
     assert not offenders, (
         "Workflows still call pytest directly; route through tests/run_tests.py "
         f"or add a temporary allowlist reason:\n" + "\n".join(offenders)
@@ -47,3 +57,11 @@ def test_no_direct_pytest_in_workflows_outside_allowlist() -> None:
 def test_direct_pytest_allowlist_entries_exist() -> None:
     stale = sorted(name for name in DIRECT_PYTEST_ALLOWLIST if not (WORKFLOWS / name).is_file())
     assert not stale, f"Stale direct-pytest allowlist entries:\n" + "\n".join(stale)
+
+
+def test_direct_pytest_allowlist_is_draining() -> None:
+    """Hard cap so the allowlist cannot grow during W8/W9."""
+    assert len(DIRECT_PYTEST_ALLOWLIST) <= 1, (
+        "Direct-pytest allowlist must stay at most architecture-assurance (G4) "
+        f"until empty; got {sorted(DIRECT_PYTEST_ALLOWLIST)}"
+    )

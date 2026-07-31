@@ -64,11 +64,10 @@ jobs:
       - name: Runtime shell locale drift check
         run: python scripts/check_runtime_shell_locale_drift.py
 
-      - name: Run engine fast tests
-        working-directory: ./world-engine
+      # W8: suite catalog; --quick approximates former "not slow" CI lane.
+      - name: Run engine fast tests via suite catalog
         run: |
-          python -m pytest tests/ -m "not slow and not websocket" -v --tb=short \
-            --cov=app --cov-config=.coveragerc --cov-fail-under=90
+          python tests/run_tests.py --suite engine --quick
 
       - name: Upload test results
         if: always()
@@ -107,11 +106,9 @@ jobs:
           python -m pip install -e "./ai_stack[test]"
           pip install -r world-engine/requirements-dev.txt
 
-      - name: Run engine full tests
-        working-directory: ./world-engine
+      - name: Run engine full tests with coverage via suite catalog
         run: |
-          python -m pytest tests/ -v --tb=short \
-            --cov=app --cov-config=.coveragerc --cov-fail-under=90
+          python tests/run_tests.py --suite engine --coverage
 
       - name: Upload test results
         if: always()
@@ -148,11 +145,11 @@ jobs:
           python -m pip install -e "./ai_stack[test]"
           python -m pip install pyyaml pytest pytest-cov
 
-      - name: Run story_runtime_core tests
+      - name: Run story_runtime_core tests via suite catalog
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python -m pytest story_runtime_core/tests/ -v --tb=short --no-cov
+          python tests/run_tests.py --suite story_runtime_core --quick
 
       - name: Upload test results
         if: always()
@@ -195,12 +192,12 @@ jobs:
           python -m pip install pyyaml
           pip install -r backend/requirements-test.txt
 
-      - name: Run MVP foundation gates (visitor absence, content/profile separation)
+      - name: Run MVP foundation gates via suite catalog
         env:
           # backend/ first so ``import app`` resolves to backend Flask app; world-engine stays on path for LDSS/engine seams.
           PYTHONPATH: ${{ github.workspace }}/backend:${{ github.workspace }}:${{ github.workspace }}/world-engine
         run: |
-          python -m pytest tests/gates/ -v --tb=short --no-cov
+          python tests/run_tests.py --suite gates --quick
         # No continue-on-error — gate failures are real architecture violations.
 
       - name: Upload gate results

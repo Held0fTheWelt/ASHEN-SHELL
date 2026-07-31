@@ -142,11 +142,19 @@ def validate_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
     out_of_scope = manifest.get("out_of_scope", {})
     if not isinstance(out_of_scope, Mapping):
         raise SchemaValidationError("out_of_scope must be an object")
+    from tools.architecture_assurance.out_of_scope_policy import (
+        parse_out_of_scope_reason,
+    )
+
     for unit_id, reason in out_of_scope.items():
         if unit_id not in unit_ids or not _text(reason):
             raise SchemaValidationError(
                 "out_of_scope entries require a known unit and non-empty reason"
             )
+        try:
+            parse_out_of_scope_reason(str(reason))
+        except ValueError as exc:
+            raise SchemaValidationError(str(exc)) from exc
     overlapping = sorted(set(representation) & set(out_of_scope))
     if overlapping:
         raise SchemaValidationError(

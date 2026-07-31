@@ -282,15 +282,15 @@
     "content"
   ],
   "out_of_scope": {
-    "content:mkdocs.yml#docs_dir": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#extra": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#markdown_extensions": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#nav": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#plugins": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#site_dir": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#site_name": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#theme": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#validation": "Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+    "content:mkdocs.yml#docs_dir": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#extra": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#markdown_extensions": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#nav": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#plugins": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#site_dir": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#site_name": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#theme": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
+    "content:mkdocs.yml#validation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
   },
   "representation_map": {},
   "required_views": [

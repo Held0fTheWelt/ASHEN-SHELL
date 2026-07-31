@@ -80,7 +80,7 @@ ROOT_TESTS_DIR = PROJECT_ROOT / "tests"
 # of ``backend/app``). See ``docs/testing/COVERAGE_SEMANTICS.md``.
 BACKEND_APP_ROOT = str(BACKEND_DIR / "app")
 FRONTEND_APP_ROOT = str(FRONTEND_DIR / "app")
-WORLD_ENGINE_APP_ROOT = str(WORLD_ENGINE_DIR / "app")
+WORLD_ENGINE_APP_ROOT = str(WORLD_ENGINE_DIR / "world_engine")
 AI_STACK_ROOT = str(PROJECT_ROOT / "ai_stack")
 
 BACKEND_BLOCK_SUITES: tuple[str, ...] = (

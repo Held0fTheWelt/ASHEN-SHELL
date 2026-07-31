@@ -41,10 +41,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r administration-tool/requirements-dev.txt
 
-      - name: Run admin fast tests
-        working-directory: ./administration-tool
+      # W8: suite catalog; full administration suite (no separate "not slow" scope in catalog).
+      - name: Run admin fast tests via suite catalog
         run: |
-          python -m pytest tests/ -m "not slow" -v --tb=short
+          python tests/run_tests.py --suite administration --quick
 
       - name: Upload test results
         if: always()
@@ -77,10 +77,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r administration-tool/requirements-dev.txt
 
-      - name: Run admin full tests
-        working-directory: ./administration-tool
+      - name: Run admin full tests via suite catalog
         run: |
-          python -m pytest tests/ -v --tb=short
+          python tests/run_tests.py --suite administration
 
       - name: Upload test results
         if: always()

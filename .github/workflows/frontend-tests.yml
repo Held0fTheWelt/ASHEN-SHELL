@@ -51,14 +51,7 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: Run frontend Python tests
-        working-directory: ./frontend
-        run: python -m pytest tests -v --tb=short --no-cov
-
-      - name: Run frontend Jest tests
-        working-directory: ./frontend
-        run: npm test -- --ci
-
+      # Suite catalog (W8): frontend/mvp5 Python + Jest lanes via tests/run_tests.py
       - name: Run frontend suite with test runner
         run: |
           python tests/run_tests.py --mvp5 --quick --stats

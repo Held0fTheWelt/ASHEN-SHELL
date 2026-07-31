@@ -179,9 +179,14 @@ def build_manifest(
         if owner:
             representation[str(unit["id"])] = owner
         else:
-            out_of_scope[str(unit["id"])] = (
+            from tools.architecture_assurance.out_of_scope_policy import (
+                format_out_of_scope_reason,
+            )
+
+            out_of_scope[str(unit["id"])] = format_out_of_scope_reason(
+                "archived",
                 "Discovered inside the subsystem scan boundary but no declared "
-                "building block owns its path; retained as an explicit architecture backlog item."
+                "building block owns its path; retained as an explicit architecture backlog item.",
             )
 
     manifest = {

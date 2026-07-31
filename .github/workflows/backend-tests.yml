@@ -6,8 +6,8 @@ on:
     paths:
       - 'backend/**'
       # Drift guard: builtins/models SSOT vs world-engine (story_runtime_core).
-      - 'world-engine/app/content/builtins.py'
-      - 'world-engine/app/content/models.py'
+      - 'world-engine/world_engine/content/builtins.py'
+      - 'world-engine/world_engine/content/models.py'
       # Backend tests under tests/ import ai_stack (e.g. test_goc_evidence_retrieval_governance, test_goc_semantic_parity).
       - 'ai_stack/**'
       - 'story_runtime_core/**'
@@ -28,8 +28,8 @@ on:
     branches: [ master, main, develop ]
     paths:
       - 'backend/**'
-      - 'world-engine/app/content/builtins.py'
-      - 'world-engine/app/content/models.py'
+      - 'world-engine/world_engine/content/builtins.py'
+      - 'world-engine/world_engine/content/models.py'
       - 'ai_stack/**'
       - 'story_runtime_core/**'
       - 'tests/requirements_hygiene/**'
@@ -59,10 +59,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install 'pytest>=7,<9'
-      - name: Static requirements chain (repo root)
-        run: python -m pytest tests/requirements_hygiene/ -q
-      - name: G9 threshold validator CLI tests (repo root, no backend install)
-        run: python -m pytest tests/experience_scoring_cli/ -q --tb=short
+      - name: Static requirements chain via suite catalog
+        run: python tests/run_tests.py --suite root_requirements_hygiene --quick
+      - name: G9 threshold validator CLI tests via suite catalog
+        run: python tests/run_tests.py --suite root_experience_scoring --quick
 
   backend-fast-tests:
     name: Backend Fast Tests (Unit Tests)
@@ -91,11 +91,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
 
-      # Collects all of backend/tests (pytest.ini testpaths); no per-file allowlist — new modules are always included.
-      - name: Run backend fast tests
-        working-directory: ./backend
+      # W8: suite catalog (full backend under --quick; catalog has no "not slow" scope).
+      - name: Run backend fast tests via suite catalog
         run: |
-          python -m pytest tests/ -m "not slow" -v --tb=short
+          python tests/run_tests.py --suite backend --quick
 
       - name: Upload test results
         if: always()
@@ -120,9 +119,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "./tools/mcp_server[test]"
-      - name: Run tools/mcp_server tests
+      - name: Run tools/mcp_server tests via suite catalog
         run: |
-          python -m pytest tools/mcp_server/tests -q --tb=short --capture=no
+          python tests/run_tests.py --suite tools_mcp_server --quick
 
   database-tests:
     name: Database schema and migration tests
@@ -142,14 +141,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
-      - name: Run database tests
-        working-directory: ./database
+      - name: Run database tests via suite catalog
         run: |
-          python -m pytest tests/ -q --tb=short --no-cov
+          python tests/run_tests.py --suite database --quick
 
-  # Explicit path proves Gate G7 Writers' Room tests execute in CI (not only via broad `pytest tests/`).
+  # Explicit suite proves Gate G7 Writers' Room tests execute in CI.
   writers-room-g7-contract-tests:
-    name: Writers' Room G7 contract tests (explicit pytest path)
+    name: Writers' Room G7 contract tests (suite catalog)
     runs-on: ubuntu-latest
     needs: [ requirements-test-hygiene ]
     steps:
@@ -166,14 +164,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
-      - name: Run tests/writers_room (G7 operating contract)
-        working-directory: ./backend
+      - name: Run writers_room suite (G7 operating contract)
         run: |
-          python -m pytest tests/writers_room/ -q --tb=short --no-cov
+          python tests/run_tests.py --suite writers_room --quick
 
-  # Explicit path proves Gate G8 Improvement tests execute in CI (not only via broad `pytest tests/`).
+  # Explicit suite proves Gate G8 Improvement tests execute in CI.
   improvement-g8-contract-tests:
-    name: Improvement G8 contract tests (explicit pytest path)
+    name: Improvement G8 contract tests (suite catalog)
     runs-on: ubuntu-latest
     needs: [ requirements-test-hygiene ]
     steps:
@@ -190,16 +187,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
-      - name: Run tests/improvement (G8 operating contract)
-        working-directory: ./backend
+      - name: Run improvement suite (G8 operating contract)
         run: |
-          python -m pytest tests/improvement/ -q --tb=short --no-cov
+          python tests/run_tests.py --suite improvement --quick
 
-  # Explicit pytest path for E2E god of carnage tests. Validates full lifecycle gameplay and integration.
-  # Note: Legacy test files (test_bootstrap_staged_runtime_integration.py, test_runtime_validation_commands_orchestration.py)
-  # were removed as they are no longer part of the test suite.
+  # Gate G10 evidence path via backend suite (includes e2e lifecycle modules).
   g10-backend-e2e-evidence-path:
-    name: Gate G10 evidence path (backend E2E, explicit pytest)
+    name: Gate G10 evidence path (backend E2E via suite catalog)
     runs-on: ubuntu-latest
     needs: [ requirements-test-hygiene ]
     steps:
@@ -216,10 +210,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
-      - name: Run E2E god of carnage full lifecycle test
-        working-directory: ./backend
+      - name: Run backend E2E scope via suite catalog
         run: |
-          python -m pytest tests/test_e2e_god_of_carnage_full_lifecycle.py -q --tb=short --no-cov
+          python tests/run_tests.py --suite backend --scope e2e --quick
 
   backend-coverage-tests:
     name: Backend Coverage Tests (85% Gate)
@@ -254,12 +247,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements-dev.txt
 
-      - name: Run backend full tests with coverage
-        working-directory: ./backend
+      - name: Run backend full tests with coverage via suite catalog
         run: |
-          python -m pytest tests/ -v --tb=short \
-            --cov=app --cov-report=xml --cov-report=term-missing \
-            --cov-fail-under=85
+          python tests/run_tests.py --suite backend --coverage
 
       - name: Upload coverage to codecov
         uses: codecov/codecov-action@v4
