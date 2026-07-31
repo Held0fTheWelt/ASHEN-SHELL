@@ -95,7 +95,7 @@ def build_finalize_package_out(
             "retrieval": "wos.context_pack.build",
             "orchestration": "langgraph_seed_writers_room_graph",
             "capabilities": ["wos.context_pack.build", "wos.review_bundle.build"],
-            "model_routing": "app.runtime.model_routing.route_model + writers_room_model_route_specs",
+            "model_routing": "app.model_governance.model_routing.route_model + writers_room_model_route_specs",
             "langchain_integration": {
                 "enabled": True,
                 "runtime_turn_bridge": "invoke_runtime_adapter_with_langchain",

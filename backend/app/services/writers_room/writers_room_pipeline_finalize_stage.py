@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.runtime.model_routing_contracts import AdapterModelSpec
+from app.model_governance.model_routing_contracts import AdapterModelSpec
 from app.services.writers_room.writers_room_pipeline_finalize_audits import build_finalize_audits_and_governance_truth
 from app.services.writers_room.writers_room_pipeline_finalize_package_out import (
     build_finalize_package_out,

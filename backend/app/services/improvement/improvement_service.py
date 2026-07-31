@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from app.runtime.input_interpreter import interpret_player_input
+from app.model_governance.input_interpreter import interpret_player_input
 from app.contracts.improvement_entry_class import (
     coalesce_improvement_entry_class_from_stored_record,
     parse_improvement_entry_class,

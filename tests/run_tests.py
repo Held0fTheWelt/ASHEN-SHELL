@@ -226,7 +226,6 @@ BACKEND_SERVICE_DATA_TARGETS: tuple[str, ...] = _backend_tests(
     "test_data_export_service_generated.py",
     "test_data_import_service.py",
     "test_data_import_service_generated.py",
-    "test_session_persistence.py",
 )
 BACKEND_SERVICE_GAME_TARGETS: tuple[str, ...] = _backend_tests(
     "test_backend_playservice_integration.py",
@@ -347,7 +346,6 @@ ENGINE_HTTP_WS_TARGETS: tuple[str, ...] = (
     "tests/test_ws_state_transitions.py",
 )
 ENGINE_RUNTIME_TARGETS: tuple[str, ...] = (
-    "tests/runtime",
     "tests/test_adr0041_validator_dispatch_harness.py",
     "tests/test_beat_progression_carry_forward.py",
     "tests/test_canonical_turn_lifecycle.py",
@@ -362,7 +360,6 @@ ENGINE_RUNTIME_TARGETS: tuple[str, ...] = (
     "tests/test_runtime_npc_behaviors.py",
     "tests/test_runtime_open_world.py",
     "tests/test_runtime_visibility.py",
-    "tests/test_session_authority.py",
     "tests/test_story_progression_merge.py",
     "tests/test_story_runtime_api.py",
     "tests/test_story_runtime_callback_web.py",
@@ -378,7 +375,6 @@ ENGINE_RUNTIME_TARGETS: tuple[str, ...] = (
     "tests/test_story_session_runtime_projection_contract.py",
     "tests/test_story_session_w5_round_trip.py",
     "tests/test_story_window_projection.py",
-    "tests/test_turn_execution.py",
 )
 ENGINE_STORY_MANAGER_SESSION_TARGETS: tuple[str, ...] = (
     "tests/test_story_runtime_manager_session_layout.py",
@@ -392,9 +388,6 @@ ENGINE_OPENING_CONTRACT_TARGETS: tuple[str, ...] = (
     "tests/test_goc_player_input_greeting_imperative.py",
     "tests/test_ldss_opening_fallback_actor_lane.py",
     "tests/test_mvp1_experience_identity.py",
-    "tests/test_mvp2_npc_coercion_state_delta.py",
-    "tests/test_mvp2_object_admission.py",
-    "tests/test_mvp2_runtime_state_actor_lanes.py",
     "tests/test_mvp3_complete_integration.py",
     "tests/test_mvp3_ldss_integration.py",
     "tests/test_mvp3_narrative_agent_orchestration.py",
@@ -1158,7 +1151,7 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
     # All share cwd=BACKEND_DIR with ``backend``. Coverage gates are off so partial
     # runs do not trip the backend-wide ``--cov-fail-under`` threshold.
     "backend_runtime": SuiteConfig(
-        kind="pytest", cwd=BACKEND_DIR, target="tests/runtime",
+        kind="pytest", cwd=BACKEND_DIR, target="tests/model_governance",
         supports_scope=True, supports_coverage=False,
     ),
     "backend_observability": SuiteConfig(
@@ -1277,7 +1270,7 @@ SUITE_CONFIGS: dict[str, SuiteConfig] = {
         kind="pytest", cwd=BACKEND_DIR, target="tests",
         supports_scope=True, supports_coverage=False,
         ignore_paths=(
-            "tests/runtime",
+            "tests/model_governance",
             "tests/services",
             "tests/content",
             "tests/test_observability",

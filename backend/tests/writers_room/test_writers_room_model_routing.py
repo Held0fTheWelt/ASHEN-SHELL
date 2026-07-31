@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pytest
 from story_runtime_core.model_registry import ModelRegistry, ModelSpec
 
-from app.runtime.model_routing_contracts import (
+from app.model_governance.model_routing_contracts import (
     CostClass,
     LatencyClass,
     LLMOrSLM,

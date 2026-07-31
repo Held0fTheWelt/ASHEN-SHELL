@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from app.runtime.model_routing_contracts import AdapterModelSpec
+from app.model_governance.model_routing_contracts import AdapterModelSpec
 from app.services.governance.governed_provider_adapter_service import build_governed_provider_adapters
 from app.services.writers_room.writers_room_model_routing import build_writers_room_model_route_specs
 from ai_stack import (

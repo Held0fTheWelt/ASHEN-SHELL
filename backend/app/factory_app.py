@@ -51,7 +51,7 @@ def create_app(config_object=None, *, testing: bool | None = None):
     app.register_blueprint(web_bp)
     register_api(app)
 
-    from app.runtime.routing_registry_bootstrap import init_routing_registry_bootstrap
+    from app.model_governance.routing_registry_bootstrap import init_routing_registry_bootstrap
 
     init_routing_registry_bootstrap(app)
 

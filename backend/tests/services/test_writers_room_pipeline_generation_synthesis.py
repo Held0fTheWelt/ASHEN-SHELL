@@ -9,7 +9,7 @@ from app.services.writers_room.writers_room_pipeline_generation_synthesis import
     apply_generation_mock_fallback,
     attach_synthesis_routing_evidence,
 )
-from app.runtime.model_routing_contracts import (
+from app.model_governance.model_routing_contracts import (
     AdapterModelSpec,
     TaskKind,
     WorkflowPhase,

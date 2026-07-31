@@ -173,7 +173,10 @@ def test_frontend_room_alias_warning_is_fallback_only() -> None:
 
 def test_runtime_snapshot_viewer_room_id_has_compatibility_alias_comment() -> None:
     """Phase 6B-9: RuntimeSnapshot.viewer_room_id must be annotated as a compat alias."""
-    src = (Path(__file__).resolve().parents[1] / "app/runtime/models.py").read_text(encoding="utf-8")
+    src = (
+        Path(__file__).resolve().parents[2]
+        / "world-engine/world_engine/runtime/models.py"
+    ).read_text(encoding="utf-8")
     assert "viewer_room_id" in src
     assert "compat alias" in src
     assert "ADR-0069" in src
@@ -182,7 +185,10 @@ def test_runtime_snapshot_viewer_room_id_has_compatibility_alias_comment() -> No
 
 def test_runtime_snapshot_current_room_has_compatibility_alias_comment() -> None:
     """Phase 6B-9: RuntimeSnapshot.current_room must be annotated as a compat alias."""
-    src = (Path(__file__).resolve().parents[1] / "app/runtime/models.py").read_text(encoding="utf-8")
+    src = (
+        Path(__file__).resolve().parents[2]
+        / "world-engine/world_engine/runtime/models.py"
+    ).read_text(encoding="utf-8")
     assert "current_room" in src
     assert "compat alias" in src
     assert "ADR-0069" in src
@@ -193,16 +199,16 @@ def test_world_engine_static_currentroom_is_w5_first_with_fallback() -> None:
     as backend/app/web/static/app.js and frontend/static/play_live_ws.js."""
     source = (
         Path(__file__).resolve().parents[2]
-        / "world-engine/app/web/static/app.js"
+        / "world-engine/world_engine/web/static/app.js"
     ).read_text(encoding="utf-8")
     assert "function w5FrontendPlayerViewEnabled(snapshot)" in source, (
-        "world-engine/app/web/static/app.js must declare w5FrontendPlayerViewEnabled()"
+        "world-engine static app.js must declare w5FrontendPlayerViewEnabled()"
     )
     assert "function w5PlayerViewLocation(snapshot)" in source, (
-        "world-engine/app/web/static/app.js must declare w5PlayerViewLocation()"
+        "world-engine static app.js must declare w5PlayerViewLocation()"
     )
     assert "function currentRoomFromSnapshot(snapshot)" in source, (
-        "world-engine/app/web/static/app.js must declare currentRoomFromSnapshot()"
+        "world-engine static app.js must declare currentRoomFromSnapshot()"
     )
     assert "if (w5FrontendPlayerViewEnabled(snapshot))" in source, (
         "currentRoomFromSnapshot must gate on the feature flag"
@@ -231,8 +237,8 @@ def test_ws_runtime_snapshot_carries_w5_player_view_when_enabled() -> None:
     """Phase 6B-10: RuntimeSnapshot carries w5_player_view and feature_flags and
     model_dump (the WS serialization path) exposes them to connected clients.
     """
-    from app.content.models import ExperienceKind, JoinPolicy
-    from app.runtime.models import RuntimeSnapshot, RunStatus
+    from world_engine.content.models import ExperienceKind, JoinPolicy
+    from world_engine.runtime.models import RuntimeSnapshot, RunStatus
 
     w5_view = {
         "target_consumer": "player_shell",
@@ -277,8 +283,8 @@ def test_ws_runtime_snapshot_preserves_current_room_aliases() -> None:
     """Phase 6B-10: WS RuntimeSnapshot retains viewer_room_id and current_room
     as compatibility aliases even when w5_player_view is also present (ADR-0069).
     """
-    from app.content.models import ExperienceKind, JoinPolicy
-    from app.runtime.models import RuntimeSnapshot, RunStatus
+    from world_engine.content.models import ExperienceKind, JoinPolicy
+    from world_engine.runtime.models import RuntimeSnapshot, RunStatus
 
     snap = RuntimeSnapshot(
         run_id="run-ws-2",
@@ -315,8 +321,8 @@ def test_ws_payload_current_room_helper_uses_w5_player_view_first() -> None:
     This test verifies the payload carries the necessary keys for the
     frontend helper to make the right choice without additional logic changes.
     """
-    from app.content.models import ExperienceKind, JoinPolicy
-    from app.runtime.models import RuntimeSnapshot, RunStatus
+    from world_engine.content.models import ExperienceKind, JoinPolicy
+    from world_engine.runtime.models import RuntimeSnapshot, RunStatus
 
     snap = RuntimeSnapshot(
         run_id="run-ws-3",
@@ -365,8 +371,8 @@ def test_ws_payload_falls_back_to_legacy_when_w5_missing() -> None:
     """Phase 6B-10: when w5_player_view is None the WS payload still carries
     viewer_room_id and current_room so legacy frontend logic continues to work.
     """
-    from app.content.models import ExperienceKind, JoinPolicy
-    from app.runtime.models import RuntimeSnapshot, RunStatus
+    from world_engine.content.models import ExperienceKind, JoinPolicy
+    from world_engine.runtime.models import RuntimeSnapshot, RunStatus
 
     snap = RuntimeSnapshot(
         run_id="run-ws-4",

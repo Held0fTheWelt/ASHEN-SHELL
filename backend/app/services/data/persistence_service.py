@@ -6,8 +6,8 @@ with full state recovery, enabling pause/resume workflows.
 
 import json
 from pathlib import Path
-from app.runtime.session.session_persistence import serialize_session, deserialize_session
-from app.runtime.runtime_models import SessionState
+from app.model_governance.session.session_persistence import serialize_session, deserialize_session
+from app.model_governance.runtime_models import SessionState
 
 
 def save_session(session: SessionState, file_path: str) -> None:

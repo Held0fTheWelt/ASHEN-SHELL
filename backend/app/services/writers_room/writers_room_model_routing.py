@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from story_runtime_core.model_registry import ModelRegistry, ModelSpec, build_default_registry
 
-from app.runtime.model_routing_contracts import (
+from app.model_governance.model_routing_contracts import (
     AdapterModelSpec,
     CostClass,
     LatencyClass,

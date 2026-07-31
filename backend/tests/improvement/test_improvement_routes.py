@@ -570,7 +570,7 @@ def test_governance_accessibility_lists_recommendation_packages(client, auth_hea
 def test_improvement_experiment_task2a_routing_calls_route_model_twice(client, auth_headers, monkeypatch):
     """Task 2A enrichment must invoke route_model exactly twice (preflight + synthesis)."""
     import app.services.improvement.improvement_task2a_routing as improvement_task2a_routing
-    from app.runtime import model_routing as runtime_model_routing
+    from app.model_governance import model_routing as runtime_model_routing
 
     calls = {"n": 0}
     real_route_model = runtime_model_routing.route_model

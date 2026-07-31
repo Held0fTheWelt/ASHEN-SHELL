@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.runtime.model_routing import route_model
-from app.runtime.model_routing_contracts import (
+from app.model_governance.model_routing import route_model
+from app.model_governance.model_routing_contracts import (
     AdapterModelSpec,
     LatencyBudget,
     RoutingRequest,
     TaskKind,
     WorkflowPhase,
 )
-from app.runtime.routing.model_routing_evidence import attach_stage_routing_evidence
+from app.model_governance.routing.model_routing_evidence import attach_stage_routing_evidence
 
 
 def run_writers_room_generation_preflight(

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.runtime.validation.decision_policy import AIActionType
-from app.runtime.model_routing_contracts import LLMOrSLM, RouteReasonCode, TaskKind
+from app.model_governance._decision_policy_types import AIActionType
+from app.model_governance.model_routing_contracts import LLMOrSLM, RouteReasonCode, TaskKind
 
 from ai_stack.story_runtime.semantic_planner.god_of_carnage_roadmap_semantic_surface import (
     DECISION_CLASSES,

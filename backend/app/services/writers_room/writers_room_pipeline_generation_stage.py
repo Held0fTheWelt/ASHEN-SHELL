@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from app.runtime.model_routing_contracts import AdapterModelSpec
+from app.model_governance.model_routing_contracts import AdapterModelSpec
 from app.services.writers_room.writers_room_pipeline_generation_preflight import run_writers_room_generation_preflight
 from app.services.writers_room.writers_room_pipeline_generation_synthesis import (
     _norm_wr_adapter,

@@ -207,7 +207,7 @@ class TestingConfig(Config):
     PASSWORD_COMPLEXITY_MIN_LENGTH = 8  # Relaxed requirement for testing (normally 12)
     ROUTING_REGISTRY_BOOTSTRAP = False  # keep process-global registry isolated across tests
 
-# Module-level defaults for runtime configuration (used by app.runtime.manager)
+# Module-level defaults for runtime configuration (legacy; live authority is World-Engine).
 RUN_STORE_BACKEND = os.environ.get("RUN_STORE_BACKEND", "json")
 RUN_STORE_URL = os.environ.get("RUN_STORE_URL")
 
