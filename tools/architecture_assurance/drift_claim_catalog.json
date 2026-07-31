@@ -21,10 +21,10 @@
       "current_evidence": [
         "world-engine/app/story_runtime/manager/runtime_manager.py",
         "world-engine/app/runtime/manager.py",
-        "world-engine/app/story_runtime/manager/_legacy_methods.py"
+        "world-engine/app/story_runtime/manager/commit_finalization.py"
       ],
       "status": "conflicting",
-      "diagnosis": "Two runtime package generations and an explicit legacy-method seam remain in executable source. Their allowed responsibilities are not yet enforced as one dependency direction.",
+      "diagnosis": "Two runtime package generations remain in executable source. Their allowed responsibilities are not yet enforced as one dependency direction.",
       "target": "Make app/story_runtime the only live-session authority. Reduce app/runtime to named infrastructure/profile adapters or retire each overlapping behavior. No compatibility path may commit session truth.",
       "acceptance_evidence": [
         "A dependency gate rejects app/story_runtime imports of overlapping app/runtime behavior.",
@@ -144,17 +144,17 @@
         "WOS_FOUNDATION_STABILIZATION_REPAIR_PROMPT.md"
       ],
       "current_evidence": [
-        "world-engine/app/story_runtime/manager/_legacy_sources/manifest.py",
-        "world-engine/app/story_runtime/manager/_legacy_loader.py",
+        "world-engine/app/story_runtime/manager/commit_finalization.py",
+        "world-engine/app/story_runtime/manager/runtime_manager.py",
         "world-engine/app/story_runtime/manager/turn_execution.py",
-        "world-engine/app/story_runtime/manager/runtime_manager.py"
+        "ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py"
       ],
-      "status": "conflicting",
-      "diagnosis": "The manager is decomposed, but executable legacy loaders and numbered source shards obscure ownership and make static comprehension difficult. This is a characteristic Vibe-Coding accretion seam.",
+      "status": "open_target",
+      "diagnosis": "World-engine manager SOURCE/exec shards are removed (Wave 1). Remaining dynamic SOURCE assembly lives in ai_stack/backend/tools (Waves 5/9).",
       "target": "Replace dynamic legacy assembly with explicit cohesive modules organized by session lifecycle, turn execution, commit, projection and observability. Preserve behavior through characterization tests before each deletion.",
       "acceptance_evidence": [
-        "No runtime import executes _legacy_loader or numbered _legacy_sources.",
-        "The manager dependency graph is acyclic and documented.",
+        "No SOURCE/SOURCE_LINES or exec(compile under world-engine/app (gate test green).",
+        "No SOURCE modules remain under ai_stack, backend/app, or tools production roots.",
         "Primary and degraded turn traces remain behaviorally equivalent."
       ]
     },

@@ -1,9 +1,9 @@
 {
   "files": [
     {
-      "bytes": 4766,
+      "bytes": 5029,
       "path": ".github/workflows/architecture-assurance.yml",
-      "sha256": "845de45af12c5181755a28177c5a1c57f0f098f81ac8eb931a8f764255ad876e"
+      "sha256": "72f2f599960e0be153f2e593e36d6a71af2e10e5c24194c361bb1de8de3ce696"
     },
     {
       "bytes": 2514,
@@ -566,44 +566,44 @@
       "sha256": "b305142da8574f1519aca7c078bf06eae016ed62b222160888661bb2702601b7"
     },
     {
-      "bytes": 1730,
+      "bytes": 1835,
       "path": "UML/Project/architecture-assurance/README.md",
-      "sha256": "cd0d502522b54a4b6a4e0f420efcd3e164b63a2d7779f14992d97ad2fc98ea2d"
+      "sha256": "45044c1feec8c6fbac1207f62eb71de730cb2f425395a6a4ae32d00acf4d3cae"
     },
     {
-      "bytes": 2432,
+      "bytes": 2753,
       "path": "UML/Project/architecture-assurance/TRACEABILITY.md",
-      "sha256": "834e42dc4f859a11ce973f35ceb89994cf51acd3b72c3a911fe090aa5e24aa2b"
+      "sha256": "3ff1dda8291abde6291e2d11712642e73ec6c5d4507193e6cce9b5990479adf9"
     },
     {
-      "bytes": 3068,
+      "bytes": 4338,
       "path": "UML/Project/architecture-assurance/activity/audit-flow.md",
-      "sha256": "6bdebb33b07d9125d43a543efe8a1f505697ea05b6238ff70915f2c45f92df4a"
+      "sha256": "6919ebc7b9e81bf5a0c4a1c3a561ea6fad3a399ea8c7dc10dd9e705628c4ce45"
     },
     {
-      "bytes": 2996,
+      "bytes": 4210,
       "path": "UML/Project/architecture-assurance/activity/audit-flow.puml",
-      "sha256": "c8c1749c3e5350c9144351b0db766f42bcec7923a24c44161b85d09d56184023"
+      "sha256": "ddd732420ade5c775cc8cc6c6f3293c924e319f5a9adb63e460da655a8ae2c89"
     },
     {
-      "bytes": 1553,
+      "bytes": 2082,
       "path": "UML/Project/architecture-assurance/classes/evidence-model.md",
-      "sha256": "9142f4ab83a3c93861ea0684ce6d73e91b784f20cae4c3b9ccbea24e4daafc5b"
+      "sha256": "c6dfdbc4d1b8f1871b96b27b2f3c85a04b0572d63b75bf5ba4054afcf7e76922"
     },
     {
-      "bytes": 1642,
+      "bytes": 2233,
       "path": "UML/Project/architecture-assurance/classes/evidence-model.puml",
-      "sha256": "4dfe638a9b1ef616265d50542c53eea59ff8aa78170199b13a0d8534482413c0"
+      "sha256": "ed98bc16302421857f4f3c9b064c6ed03fe88eeb039e69a243ba1ef357e915d9"
     },
     {
-      "bytes": 3471,
+      "bytes": 4734,
       "path": "UML/Project/architecture-assurance/components/assurance-components.md",
-      "sha256": "ab9e4576cf598c699ecbb6f53ff21635fb706d6eb720ad66b1b41057b040c22f"
+      "sha256": "4245afb96d92bb7e5cfb1065f62147d46f8934d3b483476adaae8c4878dab4ad"
     },
     {
-      "bytes": 3278,
+      "bytes": 4512,
       "path": "UML/Project/architecture-assurance/components/assurance-components.puml",
-      "sha256": "5b82fa589b8581cfef2461d0c7986e2c0b8f07714f940296be393fbda75fc3f5"
+      "sha256": "787553c3b965dbb7245a222f391ff18dd5b3b4d6ef2777b37df10e5e36d40d1f"
     },
     {
       "bytes": 2080,
@@ -634,6 +634,21 @@
       "bytes": 1938,
       "path": "UML/Project/architecture-assurance/states/evidence-lifecycle.puml",
       "sha256": "36a5aea53dee6899f77760bd6e4131cdaf589138f99efec1d73280ca71937014"
+    },
+    {
+      "bytes": 9001,
+      "path": "UML/Project/architecture-drift/runtime-authority-and-envelope.md",
+      "sha256": "b6448c48a0200ebc4f832bc66fae24a780ff62a58b7896c66330dab2d8ff9288"
+    },
+    {
+      "bytes": 11580,
+      "path": "UML/Project/architecture-drift/runtime-authority-and-envelope.puml",
+      "sha256": "80c24ecdc3a4ae5011efe3163ed5dc57eed17813ec95a1e8e966b6a981485eed"
+    },
+    {
+      "bytes": 1097,
+      "path": "UML/Project/architecture-drift/turn-cost-ledger.puml",
+      "sha256": "7a47fe5e5996cb724142c7a6b1230210dfb40287c9507d38f721699281b4dca8"
     },
     {
       "bytes": 1293,
@@ -1103,12 +1118,12 @@
     {
       "bytes": 764251,
       "path": "docs/architecture/components/ai-stack/architecture.bindings.json",
-      "sha256": "52366d5ef82558f1ede75977c8bc420afd7cf347177b75fc8be32064f0bf5103"
+      "sha256": "074953473baa5c3546ad3556e2fac1784ee4ebe4e587a00b7dc8ee5570853c3c"
     },
     {
-      "bytes": 93182,
+      "bytes": 93505,
       "path": "docs/architecture/components/ai-stack/architecture.md",
-      "sha256": "6f8b06e7809424bd6a0213f2793e015f3494bb1493c871256f4b12ede5b02b08"
+      "sha256": "5824928373a154769e712527de8121f7de1e5c695fc7d653e466ccda20c96407"
     },
     {
       "bytes": 1362179,
@@ -1151,9 +1166,9 @@
       "sha256": "756d92ae333e9e249973d95a1344200aed6392b945d4c1d25721fe4d0260491b"
     },
     {
-      "bytes": 101396,
+      "bytes": 108357,
       "path": "docs/architecture/components/story-runtime-core/architecture.bindings.json",
-      "sha256": "c35d06e4683f97986ac04d6cdf1dda255299d62d624acd18df9fcd6c8b5f51a7"
+      "sha256": "5aff4431c32c1b54b5ca06b6278df6b410bbc6b1d70b3216242ec2196b48009a"
     },
     {
       "bytes": 21822,
@@ -1161,14 +1176,14 @@
       "sha256": "a0ced03a7be4f5549b8a4a73ff4dc7e714e7c9b6f26d8f6e16152bee9ad62bc7"
     },
     {
-      "bytes": 283453,
+      "bytes": 284363,
       "path": "docs/architecture/components/world-engine/architecture.bindings.json",
-      "sha256": "c0a026b5210c56e820d2729e87ec50bce4413f6d6761d8b7a6b2016b5e856a52"
+      "sha256": "9a655e1cc46661c3a9d524d8d0d5bdaa704abd15d53a0d4cc55e8771d2c3fe9a"
     },
     {
       "bytes": 63183,
       "path": "docs/architecture/components/world-engine/architecture.md",
-      "sha256": "05f9a0534aa5ef632c99abb5960d72379823eca01f2fd9fd1f471ecaa9c7c438"
+      "sha256": "975af2be41277029d94d5c0bd67c6e5edb38b7d5a8e44975ed4ad158e17cd809"
     },
     {
       "bytes": 43509,
@@ -1191,9 +1206,9 @@
       "sha256": "ecbc1d0e012bf949bb8f25877c2b3f14cb845e08108a21608032f90c2ad9cab1"
     },
     {
-      "bytes": 20253,
+      "bytes": 20228,
       "path": "docs/architecture/evidence/architecture-drift-reconciliation.md",
-      "sha256": "2391f5d7e89f04335cfe0eabbd769ec9c8ac6ab3a26812c66de11eb878632476"
+      "sha256": "80d53d2516a04c4c797e14244244ef7f74640f3d1cc0af437062301ff6ee8013"
     },
     {
       "bytes": 821,
@@ -1201,14 +1216,14 @@
       "sha256": "ec4cba01d3707e547658b80cf4e94e8bc027dd4a239ea5d94b0bfd79300a52d0"
     },
     {
-      "bytes": 53134,
+      "bytes": 63462,
       "path": "docs/architecture/project/architecture-assurance/architecture.bindings.json",
-      "sha256": "093f3969f53d8c0350aee33e54601bd5b181059644bb3b2ffdc3156d127eae0b"
+      "sha256": "190fbfa6d491b29065c3e9fb4646c062a3ce9d6461bfd27d73802a78a880af1f"
     },
     {
-      "bytes": 19963,
+      "bytes": 23563,
       "path": "docs/architecture/project/architecture-assurance/architecture.md",
-      "sha256": "15fc5aa1a4f724f39dc04c5e463eacacd79952e6ef7284519a166cc4580a886f"
+      "sha256": "7a03c12f744fb100a543e5119864c63685aabc216707fb7e4691a7c517d7e546"
     },
     {
       "bytes": 12350,
@@ -1228,12 +1243,12 @@
     {
       "bytes": 30441,
       "path": "docs/architecture/project/ecosystem-topology/architecture.md",
-      "sha256": "9f87fea5755442549785b5974c3a3895611eccf04a179cb051cbafb2bb869ae6"
+      "sha256": "175a3550ec7fdd33e2608d805bd91e34dbcafbbbd1151d3d5122ef905fd4f518"
     },
     {
-      "bytes": 35859,
+      "bytes": 36463,
       "path": "docs/architecture/project/governance/architecture.bindings.json",
-      "sha256": "e36721c9b96d281c48616fc37cb62dfd2f8c9dea90c9764e749e0d7206c474e3"
+      "sha256": "5573776d2204a686d0ff9b9ad0d668af481ec74b8ad9f157852af5413fb5d083"
     },
     {
       "bytes": 54690,
@@ -1243,27 +1258,27 @@
     {
       "bytes": 927758,
       "path": "docs/architecture/project/mvp-live-runtime-completion/architecture.bindings.json",
-      "sha256": "b2db16371a9027f131b1395668ff91290f2c006820940b4554893a931473b030"
+      "sha256": "8483092ab8a272595aee9b4cae2311969a5174a62a2920023cbb9ec4c504745f"
     },
     {
       "bytes": 133010,
       "path": "docs/architecture/project/mvp-live-runtime-completion/architecture.md",
-      "sha256": "d924360a44c580ee09c32162a4d1f388565b771bfa4065c32ce60e27e6aa5e35"
+      "sha256": "5699e9d9183a9b7dcd74f969fcbebd7bc7f88a9284231c5dfcdacd6b62c5a3bd"
     },
     {
-      "bytes": 825200,
+      "bytes": 825962,
       "path": "docs/architecture/project/observability-traceability/architecture.bindings.json",
-      "sha256": "64ce0065f44328cdcd3ee2adcd65fca0ded18094adb1333a213f58f5a962460d"
+      "sha256": "5416448b4eff2e086661dbf5d711a47dc3e6b3f1881dee7a46e38802c5af7c74"
     },
     {
-      "bytes": 24689,
+      "bytes": 25053,
       "path": "docs/architecture/project/observability-traceability/architecture.md",
-      "sha256": "9e34d0ebdd5a1b50dd47cf7cded1bcc82096c5ca3b811b131cd01d48ca8fb22f"
+      "sha256": "aac592c249f6965e215e247e52040a75407767fa90f9ac5d217f3be8897f06ca"
     },
     {
-      "bytes": 48717,
+      "bytes": 56898,
       "path": "docs/architecture/project/quality-gates/architecture.bindings.json",
-      "sha256": "efd5d269d68dd8aa97a854d2c20279bd82191966b546e1904cdaf73975b5102e"
+      "sha256": "6a6ffd2b25c68cc93e52f15d95948c05d57cd18fdd669e8414470fe1b9c11564"
     },
     {
       "bytes": 28065,
@@ -1296,14 +1311,19 @@
       "sha256": "3d72d4353f49ea2fa052c63621903cee0eee1474d58ba5d01a733d84dee6fc60"
     },
     {
-      "bytes": 2665,
-      "path": "tests/architecture_assurance/test_reporters.py",
-      "sha256": "3bcf072cda2b5046508c0e04e95b8a6f87d8ab1bd74bdd665abeeec7d059b057"
+      "bytes": 7043,
+      "path": "tests/architecture_assurance/test_drift_edges.py",
+      "sha256": "1a3274c0963e56b460fad732944557475ce5ddf7cea516374ca2ee99e2a7242f"
     },
     {
-      "bytes": 1065,
+      "bytes": 4132,
+      "path": "tests/architecture_assurance/test_reporters.py",
+      "sha256": "d7c322403bd62beb220fb7799cf84dbd0528bbeb9b4046220d04b3f8cbc05b32"
+    },
+    {
+      "bytes": 1730,
       "path": "tests/architecture_assurance/test_repository_gate.py",
-      "sha256": "a36e2031611100b5b149a067aaa3bcdb40dada139d4e015aff67662f71b1bf12"
+      "sha256": "2af4fefd6640f5ddf4f1d0036ca5eb8c667841a9d88fd5567694c95a6106d4e1"
     },
     {
       "bytes": 4136,
@@ -1336,9 +1356,9 @@
       "sha256": "43572b3706da3a4f194e5386c1bf2e1ac83741c7d7ae0e19e8d3acf3a915b422"
     },
     {
-      "bytes": 19713,
+      "bytes": 20019,
       "path": "tools/architecture_assurance/audit.py",
-      "sha256": "ea62bcc254cd92c320ec0af3203a7c2a51507749d3f553c80ba211d6c58acde5"
+      "sha256": "d9db585aeedcb08bc8f378bce646b7847a3e92b4401653fed0acc03a1f11ad70"
     },
     {
       "bytes": 7009,
@@ -1346,14 +1366,14 @@
       "sha256": "8012196a8250b3d7c88f8d1fa20ce94e886a586b6101f59a6c3de3082612113a"
     },
     {
-      "bytes": 6907,
+      "bytes": 7784,
       "path": "tools/architecture_assurance/cli.py",
-      "sha256": "a55baae870fbe98f300e43a2ab8b8a8487c830a93db59e9a70851ee300aab174"
+      "sha256": "a9e43e0b67ac7f0b84097ece4b3674531ed29702ab72e9423c1ae775c6454ef5"
     },
     {
-      "bytes": 11585,
+      "bytes": 11753,
       "path": "tools/architecture_assurance/config.json",
-      "sha256": "968c48af51023de4c6a20d3fb4f00714e5a64c212149e124fe748ae28b8c51e0"
+      "sha256": "1d739a7dd43501fb96d3f7adaf3e5870206253b6a95f5750265f850e15225334"
     },
     {
       "bytes": 18389,
@@ -1361,14 +1381,24 @@
       "sha256": "a6a22e641cb8c6e814197e7a1c82da78de77cd2c44d83e425b01991905df89c1"
     },
     {
-      "bytes": 17136,
+      "bytes": 17096,
       "path": "tools/architecture_assurance/drift_claim_catalog.json",
-      "sha256": "04e9b714029941f1e290ca82096113e9f5a68c14b436f5353bd3eedec383bc18"
+      "sha256": "ef991e82b9b4ae8e804781f4c1353cc70d90821915fc1fb5076298dcb7153833"
     },
     {
       "bytes": 5503,
       "path": "tools/architecture_assurance/drift_claims.py",
       "sha256": "efe678fa30f0ecff11480848f7a716e145b6d3e1c9597eadc4f22284a302f4ce"
+    },
+    {
+      "bytes": 25097,
+      "path": "tools/architecture_assurance/drift_edge_catalog.json",
+      "sha256": "56eea4d3910fc6bcc05964b3dffc09c5eb6ef7b958ca591a5b9c80169458349a"
+    },
+    {
+      "bytes": 36157,
+      "path": "tools/architecture_assurance/drift_edges.py",
+      "sha256": "2ecf3cf9d6402526d2f96564de2b19d8dd7c09196696f9e660ba5d106403c80f"
     },
     {
       "bytes": 14703,
@@ -1381,14 +1411,14 @@
       "sha256": "a1a0b6cd460000c2d21e3ff237b1783968560c098d8f8333d5a9a9ef4996a8cc"
     },
     {
-      "bytes": 171792,
+      "bytes": 173775,
       "path": "tools/architecture_assurance/model_catalog.json",
-      "sha256": "cfcd043d1b5111290e144586ee93e3d68523ce555d94a4f70a28760e76f2ef75"
+      "sha256": "365ee61bfa0d65a05a69b7aa8ff4bba6f27ca52546872f748341df61ab5613d3"
     },
     {
-      "bytes": 7160,
+      "bytes": 8545,
       "path": "tools/architecture_assurance/reporters.py",
-      "sha256": "efe96526649f647f200c03e787774ac14e5e4768402e15c10427806c3f922669"
+      "sha256": "4633fe704d33be42915a7a26f274cf6067167370046cd6cdfb8e7a5f2f7319a8"
     },
     {
       "bytes": 14857,
@@ -1409,6 +1439,11 @@
       "bytes": 23318,
       "path": "tools/architecture_assurance/semantic_models.py",
       "sha256": "7a4d8a29f8bf7598a5fd5476af500b3642ef00fb358d86bd81b90c355648d8cd"
+    },
+    {
+      "bytes": 6521,
+      "path": "tools/architecture_assurance/unshard.py",
+      "sha256": "a5d4bf4dfcfbd678f26a2a228bc424376b318739aff92d594421ad38dcd239d0"
     },
     {
       "bytes": 4238,

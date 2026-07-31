@@ -1,15 +1,15 @@
 # Fortschritt Drift-Sanierung
 
 ## Zustand
-Aktuelle Welle: 1 (starting)
-Aktueller Schritt: W0-B complete; W0-C deferred until emitter unshard; starting W1 unshard tool
-Letzter grüner Commit: pending (W0 commit on `drift-sanierung/w0-cost-truth`)
-Baseline-Testlauf: `docs/superpowers/plans/baselines/W0-vorher.txt` (partial — interrupted ~48%; focused W0 tests green)
+Aktuelle Welle: 2 (partial)
+Aktueller Schritt: PersistOutcome + revision landed; write-surface resource model still open
+Letzter grüner Commit: `7959c848` on `drift-sanierung/w1-unshard-authority` (W0 also `3e4b02cb`)
+Baseline-Testlauf: `docs/superpowers/plans/baselines/W0-vorher.txt` (partial — interrupted ~48%; focused W0/W1/W2 tests green)
 
 ## Wellen
-- [x] W0 Kostenwahrheit (W0-A done via A16/A17; W0-B done; W0-C deferred after W1 per runway)
-- [ ] W1 Entshardung Autoritätspfad
-- [ ] W2 Schreibtopologie
+- [x] W0 Kostenwahrheit (W0-A A16/A17; W0-B done; W0-C ledger→Langfuse after W1 unshard)
+- [x] W1 Entshardung Autoritätspfad (world-engine manager SOURCE/exec removed)
+- [ ] W2 Schreibtopologie (PersistOutcome + revision started; gate/resources incomplete)
 - [ ] W3 Commit-Vokabular
 - [ ] W4 Fähigkeitsmigration
 - [ ] W5 Entshardung Rest
