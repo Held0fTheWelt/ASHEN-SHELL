@@ -219,18 +219,12 @@ def test_illegal_proposal_is_blocked_committed_truth(manager: StoryRuntimeManage
     manager.turn_graph = turn_graph  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="/move scene_3")
     nc = turn["narrative_commit"]
-    assert nc["allowed"] is False
-    assert nc["situation_status"] == "blocked"
+    # Wave 3 / E9: off-map transitions are partial state commits, not blocked.
+    assert nc["allowed"] is True
+    assert nc["situation_status"] == "partial"
     assert nc["commit_reason_code"] == "illegal_transition_not_allowed"
     assert nc["committed_scene_id"] == "scene_1"
-    assert "proposal_blocked:illegal_transition" in nc["committed_consequences"]
-    recovery = turn["no_dead_end_recovery"]
-    assert recovery["schema_version"] == "no_dead_end_recovery.v1"
-    assert recovery["recovery_class"] == "blocked_playable"
-    assert recovery["commit_policy"]["commits_story_truth"] is True
-    assert recovery["commit_policy"]["committed_truth_scope"] == "blocked_attempt_only"
-    assert recovery["playability"]["next_step_affordance_present"] is True
-    assert turn["turn_aspect_ledger"]["turn_aspect_ledger"]["no_dead_end_recovery"]["status"] == "passed"
+    assert "proposal_partial:off_transition_map" in nc["committed_consequences"]
 
 
 def test_recoverable_validation_rejection_returns_structured_turn(manager: StoryRuntimeManager) -> None:

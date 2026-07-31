@@ -24,7 +24,15 @@ from app.story_runtime.narrative_commit_resolution import (
     prepare_open_pressures,
 )
 
-SituationStatus = Literal["continue", "transitioned", "blocked", "terminal"]
+SituationStatus = Literal[
+    "continue",
+    "transitioned",
+    "partial",
+    "prevented",
+    "allowed_offscreen",
+    "blocked",
+    "terminal",
+]
 
 # Stable codes for programmatic checks (aligned with former progression_commit.reason).
 CommitReasonCode = Literal[
@@ -522,6 +530,15 @@ def _resolve_beat_progression(
             prior_beat_id=prior_beat.beat_id if prior_beat else None,
         )
 
+    def _status_advance_tag(base: str) -> str:
+        if situation_status == "partial":
+            return "partial_effect_advance"
+        if situation_status == "prevented":
+            return "prevented_but_witnessed"
+        if situation_status == "allowed_offscreen":
+            return "allowed_offscreen_advance"
+        return base
+
     if prior_beat is None:
         return BeatProgression(
             beat_id=beat_id,
@@ -530,7 +547,7 @@ def _resolve_beat_progression(
             pacing_carry_forward=pacing_carry,
             responder_focus_carry_forward=responder_focus,
             advanced=True,
-            advancement_reason="initial_beat",
+            advancement_reason=_status_advance_tag("initial_beat"),
             continuity_carry_forward_reason=None,
             prior_beat_id=None,
         )
@@ -539,6 +556,20 @@ def _resolve_beat_progression(
         carry_reason = pressure or (
             "pacing_continuity" if pacing_carry else "no_signal"
         )
+        # Partial / prevented / offscreen still tick the beat slot (E9) — they
+        # are not frozen like blocked.
+        if situation_status in {"partial", "prevented", "allowed_offscreen"}:
+            return BeatProgression(
+                beat_id=beat_id,
+                beat_slot=max(0, int(prior_beat.beat_slot) + 1),
+                pressure_state=pressure,
+                pacing_carry_forward=pacing_carry,
+                responder_focus_carry_forward=responder_focus,
+                advanced=True,
+                advancement_reason=_status_advance_tag("continuity_carry_forward"),
+                continuity_carry_forward_reason=carry_reason,
+                prior_beat_id=prior_beat.beat_id,
+            )
         return BeatProgression(
             beat_id=beat_id,
             beat_slot=max(0, int(prior_beat.beat_slot) + 1),
@@ -568,7 +599,7 @@ def _resolve_beat_progression(
         pacing_carry_forward=pacing_carry,
         responder_focus_carry_forward=responder_focus,
         advanced=True,
-        advancement_reason=reason,
+        advancement_reason=_status_advance_tag(reason),
         continuity_carry_forward_reason=None,
         prior_beat_id=prior_beat.beat_id,
     )

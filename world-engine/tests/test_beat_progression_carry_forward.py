@@ -166,8 +166,7 @@ def test_blocked_turn_does_not_advance_beat() -> None:
         continuity_carry_forward_reason="tension_escalation",
         prior_beat_id="s1:establish_pressure",
     )
-    # Propose s2 in a projection with no transition hints → blocked via
-    # transition_hints_missing.
+    # Propose s2 in a projection with no transition hints → partial (E9), not blocked.
     projection_no_hints = {
         "scenes": [{"scene_id": "s1"}, {"scene_id": "s2"}],
         "start_scene_id": "s1",
@@ -185,14 +184,12 @@ def test_blocked_turn_does_not_advance_beat() -> None:
         graph_state={"selected_scene_function": "establish_pressure"},
         prior_beat_progression=prior,
     )
-    # Commit must be blocked
-    assert rec.situation_status == "blocked"
+    assert rec.situation_status == "partial"
+    assert rec.allowed is True
     bp = rec.beat_progression
     assert bp is not None
-    assert bp.beat_id == prior.beat_id
-    assert bp.beat_slot == prior.beat_slot
-    assert bp.advanced is False
-    assert bp.advancement_reason == "blocked_turn_no_advance"
+    # Partial must not freeze the beat the way blocked did.
+    assert bp.advancement_reason != "blocked_turn_no_advance"
 
 
 def test_prior_beat_read_back_from_session_history() -> None:

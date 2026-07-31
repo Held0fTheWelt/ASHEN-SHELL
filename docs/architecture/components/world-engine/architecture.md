@@ -104,6 +104,24 @@ Exactly one declared sink per resource. Routes must not call store sinks directl
 
 Gate: `tools/architecture_assurance/drift_edge_catalog.json` `write_surfaces` + `validate_authoritative_write_surfaces` (alias-aware).
 
+### 4.2 Action-outcome vocabulary (Wave 3)
+
+Authority commit vocabulary is at least as rich as AI affordance resolution. Scene transitions are a
+special case of state change; missing transition-card edges yield `partial`, not `blocked`.
+
+| `SituationStatus` | Meaning | Beat behavior |
+| --- | --- | --- |
+| `continue` | No scene change; state may still update | Continuity carry / advance as usual |
+| `transitioned` | Legal scene transition committed | New beat identity |
+| `partial` | Action accepted without scene change (e.g. off transition map) | `partial_effect_advance` |
+| `prevented` | Narratively prevented but witnessed | `prevented_but_witnessed` |
+| `allowed_offscreen` | Offscreen-allowed effect | `allowed_offscreen_advance` |
+| `blocked` | Situatively impossible (e.g. unknown target scene) | Frozen (`blocked_turn_no_advance`) |
+| `terminal` | Session at terminal scene | Overlay after non-block |
+
+AI affordance → situation mapping: `app/story_runtime/situation_status_mapping.py`
+(`AI_TO_SITUATION_STATUS`). Mapping to a poorer status than the AI resolved is a contract failure.
+
 ## 5. Building Block View
 
 | Block | Location | Role |

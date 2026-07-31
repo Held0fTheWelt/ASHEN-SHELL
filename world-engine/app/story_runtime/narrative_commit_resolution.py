@@ -67,24 +67,38 @@ def eval_core_transition_rules(
         auth_reason = "A scene was proposed but it matches the current scene; no transition applies."
         consequences.append(f"scene_continue:{prior_scene_id}")
     elif known_scene_ids and proposed_scene_id not in known_scene_ids:
+        # Situationally impossible: target scene does not exist in projection.
         code = "unknown_target_scene"
         situation = "blocked"
-        auth_reason = "The proposed target scene is unknown to this runtime projection; progression is blocked."
+        auth_reason = (
+            "The proposed target scene is unknown to this runtime projection; "
+            "progression is blocked as situatively impossible."
+        )
         consequences.append("proposal_blocked:unknown_target_scene")
     elif not has_transition_rules:
+        # Free role-play: missing transition card must not freeze the beat (E9 / D31).
         code = "transition_hints_missing"
-        situation = "blocked"
-        auth_reason = "Transition hints are missing in the runtime projection; progression is blocked."
-        consequences.append("proposal_blocked:transition_hints_missing")
+        situation = "partial"
+        allowed = True
+        auth_reason = (
+            "Transition hints are missing; the action is accepted as a partial state "
+            "change without a scene transition."
+        )
+        consequences.append("proposal_partial:transition_hints_missing")
+        consequences.append(f"scene_continue:{prior_scene_id}")
     else:
         allowed_targets = transition_map.get(prior_scene_id, set())
         if proposed_scene_id not in allowed_targets:
+            # Not on the authored transition card → partial, not blocked (E9).
             code = "illegal_transition_not_allowed"
-            situation = "blocked"
+            situation = "partial"
+            allowed = True
             auth_reason = (
-                "The proposed transition is not allowed by runtime transition hints; progression is blocked."
+                "The proposed scene transition is not on the authored transition map; "
+                "the action is accepted as a partial state change without changing scene."
             )
-            consequences.append("proposal_blocked:illegal_transition")
+            consequences.append("proposal_partial:off_transition_map")
+            consequences.append(f"scene_continue:{prior_scene_id}")
         else:
             committed_scene_id = proposed_scene_id
             allowed = True
@@ -110,7 +124,7 @@ def overlay_terminal_scene(
 ) -> None:
     """Adjust situation / reason when the committed scene is terminal (non-blocked only)."""
     at_terminal_scene = work.committed_scene_id in terminal_ids
-    if at_terminal_scene and work.situation_status != "blocked":
+    if at_terminal_scene and work.situation_status not in {"blocked", "prevented"}:
         work.situation_status = "terminal"
         if work.commit_reason_code == "legal_transition_committed":
             work.authoritative_reason = (
