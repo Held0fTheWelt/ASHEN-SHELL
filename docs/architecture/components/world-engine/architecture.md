@@ -122,6 +122,22 @@ special case of state change; missing transition-card edges yield `partial`, not
 AI affordance → situation mapping: `app/story_runtime/situation_status_mapping.py`
 (`AI_TO_SITUATION_STATUS`). Mapping to a poorer status than the AI resolved is a contract failure.
 
+### 4.3 Capability migration switches (Wave 4 / D26)
+
+Five models migrated into live story-runtime (not copied 1:1 from dormant backend). Defaults are
+**on** because the gap was absence, not a proven intentional disable (E5).
+
+| Switch | Default | Purpose when on | When off |
+| --- | --- | --- | --- |
+| `capability_state_deltas` | on | Accept/reject deltas + `GuardOutcome` | Ignore proposed deltas |
+| `capability_mutation_policy` | on | Permissive forbid-list (E9) | Skip path checks |
+| `capability_source_gate` | on | Reject disallowed proposal sources | Skip source checks |
+| `capability_failure_recovery` | on | E7 reduced retry + deterministic continue | Legacy degraded commit only |
+| `capability_scene_legality` | on | Projection ending/transition helpers | Skip legality overlay |
+
+Modules: `state_deltas.py`, `mutation_policy.py`, `source_gate.py`, `failure_recovery.py`,
+`scene_legality.py`, `delta_evaluation.py`. Surfaces via `runtime_config_status()["capability_switches"]`.
+
 ## 5. Building Block View
 
 | Block | Location | Role |

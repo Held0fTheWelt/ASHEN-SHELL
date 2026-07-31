@@ -1,27 +1,25 @@
 # Abschluss Drift-Sanierung (Zwischenstand)
 
-**Status:** IN PROGRESS — Waves 0–3 landed (W3 commit pending at write time); Waves 4–9 open.  
-**Branch tip (before W3 commit):** `drift-sanierung/w3-commit-vocabulary`  
+**Status:** IN PROGRESS — Waves 0–4 implemented locally; Waves 5–9 and DoD §9 open.  
+**Branch:** `drift-sanierung/w4-capability-migration`  
 **Do NOT push (G1).** User architecture-assurance WIP preserved (G4).
 
 ## Completed
 
-| Wave | Evidence |
-| --- | --- |
-| W0 | Turn call ledger, budgets, counting adapter; Langfuse history unusable (401) → A16/A17 |
-| W1 | world-engine manager unsharded; no SOURCE/exec loader |
-| W2 | PersistOutcome + revision; 7-resource write gate; play_run bypass removed; translation cache; D18 characterization |
-| W3 | Rich `SituationStatus`; off-map → `partial`; mapping table; beat advance reasons; unit tests green |
+| Wave | Commit | Evidence |
+| --- | --- | --- |
+| W0 | `3e4b02cb` | Cost ledger / budgets |
+| W1 | `7959c848` (+ `6f6015f6`) | Manager unshard |
+| W2 | `5122b1d4` | Write topology + translation cache |
+| W3 | `fc362157` | Rich SituationStatus / partial / mapping |
+| W4 | (this wave) | D26 models, permissive MutationPolicy, E7 policies, switches |
 
 ## Remaining
 
-W4 capability migration (D26) + E7 · W5 deshard · W6 rename/retire · W7 content · W8 CI · W9 fy-suites (G3) · DoD §9
+W5 deshard (171 modules; includes P-W4-SHARD-E7) · W6 rename/retire (G2 DB) · W7 · W8 · W9 (G3) · DoD §9
 
-## Test counts (latest focused)
+## Latest test counts
 
-- W3 unit: **7 passed**, 0 failed (`test_partial_action_commit` + `test_blocked_is_rare` + beat carry-forward)
-- W3 narrative_commit (excl. concurrent): **13 passed** then environment hang on Langfuse flush (not assertion failure)
-
-## Commits (local)
-
-`3e4b02cb` → `7959c848` → `6f6015f6` → `5122b1d4` → (W3 next)
+- W4 focused: **10 passed**, 0 failed  
+  `python -m pytest world-engine/tests/test_state_delta_partial_acceptance.py world-engine/tests/test_capability_switch_defaults.py world-engine/tests/test_technical_failure_fallback_chain.py`
+- W3 unit (earlier): **7 passed**

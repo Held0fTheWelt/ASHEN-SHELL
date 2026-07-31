@@ -266,8 +266,28 @@ class StoryNarrativeCommitRecord(BaseModel):
         description="Committed dramatic-continuity structure; None for commits that "
         "predate this contract version.",
     )
+    accepted_deltas: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="State deltas applied this turn (Wave 4). Absent in legacy sessions = all accepted.",
+    )
+    rejected_deltas: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="State deltas rejected this turn (Wave 4).",
+    )
+    guard_outcome: str | None = Field(
+        default=None,
+        description="accepted | partial | rejected — None means pre-Wave-4 commit.",
+    )
+    degraded_mode: str | None = Field(
+        default=None,
+        description="none | technically_reduced | narratively_prevented (Wave 4 / E7).",
+    )
+    trace_completeness: str | None = Field(
+        default=None,
+        description="full | reduced — observability completeness hint (Wave 4).",
+    )
     commit_contract_version: str = Field(
-        default="story_narrative_commit_record.v4",
+        default="story_narrative_commit_record.v5",
         description="Stable identifier for the commit contract shape; bump when persisted shape changes.",
     )
 
@@ -615,6 +635,10 @@ def resolve_narrative_commit(
     runtime_projection: dict[str, Any],
     graph_state: dict[str, Any] | None = None,
     prior_beat_progression: BeatProgression | None = None,
+    proposed_deltas: list[dict[str, Any]] | None = None,
+    degraded_mode: str | None = None,
+    trace_completeness: str | None = None,
+    evaluate_deltas: bool = True,
 ) -> StoryNarrativeCommitRecord:
     """Compute the authoritative narrative commit without mutating session state."""
     ids_from_scene_rows = _scene_ids(runtime_projection)
@@ -665,6 +689,28 @@ def resolve_narrative_commit(
     )
     overlay_terminal_scene(work, terminal_ids=terminal_ids)
 
+    accepted_delta_dicts: list[dict[str, Any]] = []
+    rejected_delta_dicts: list[dict[str, Any]] = []
+    guard_outcome: str | None = None
+    if evaluate_deltas and proposed_deltas:
+        from app.story_runtime.delta_evaluation import evaluate_proposed_deltas
+        from app.story_runtime.state_deltas import StateDelta
+
+        partition = evaluate_proposed_deltas(
+            [StateDelta.from_dict(d) for d in proposed_deltas if isinstance(d, dict)]
+        )
+        accepted_delta_dicts = [d.to_dict() for d in partition.accepted]
+        rejected_delta_dicts = [d.to_dict() for d in partition.rejected]
+        guard_outcome = partition.guard_outcome.value
+        if partition.guard_outcome.value == "partial" and work.situation_status == "continue":
+            work.situation_status = "partial"
+            work.allowed = True
+            work.authoritative_reason = (
+                "Some proposed state deltas were accepted and some rejected; "
+                "scene unchanged."
+            )
+            work.committed_consequences.append("delta_partition:partial")
+
     at_terminal_scene = work.committed_scene_id in terminal_ids
     summary = build_interpretation_summary(
         interpreted_input=interpreted_input,
@@ -708,4 +754,9 @@ def resolve_narrative_commit(
         is_terminal=at_terminal_scene,
         planner_truth=planner_truth,
         beat_progression=beat_progression,
+        accepted_deltas=accepted_delta_dicts,
+        rejected_deltas=rejected_delta_dicts,
+        guard_outcome=guard_outcome,
+        degraded_mode=degraded_mode,
+        trace_completeness=trace_completeness,
     )

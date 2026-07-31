@@ -15,6 +15,43 @@ class _RuntimeConfigMixin:
         )
         return bool(settings.get("allow_degraded_commit_after_retries", True))
 
+    def _capability_switches(self) -> dict[str, bool]:
+        """Wave 4 / D26 capability switches with documented defaults (E5).
+
+        Defaults are ON because these capabilities were missing from live
+        authority (not proven intentionally disabled). Turning a switch off
+        disables that model on the production path without removing the code.
+        """
+        settings = (
+            (self._governed_runtime_config or {}).get("world_engine_settings") or {}
+            if isinstance(self._governed_runtime_config, dict)
+            else {}
+        )
+
+        def _flag(key: str, default: bool = True) -> bool:
+            if key not in settings:
+                return default
+            return bool(settings.get(key))
+
+        return {
+            # Purpose: express accepted/rejected deltas + GuardOutcome.
+            # Default on: required for partial commits / D18 expressibility.
+            # Off: commit path ignores proposed_state_effects.
+            "capability_state_deltas": _flag("capability_state_deltas", True),
+            # Purpose: forbid identity/bookkeeping mutations; allow otherwise (E9).
+            # Default on / permissive. Off: skip path checks (all paths allowed).
+            "capability_mutation_policy": _flag("capability_mutation_policy", True),
+            # Purpose: reject disallowed proposal sources without applying deltas.
+            # Default on. Off: skip source checks.
+            "capability_source_gate": _flag("capability_source_gate", True),
+            # Purpose: E7 reduced-context retry + deterministic continue-turn.
+            # Default on. Off: fall back to allow_degraded_commit_after_retries only.
+            "capability_failure_recovery": _flag("capability_failure_recovery", True),
+            # Purpose: ending/transition legality helpers on runtime_projection.
+            # Default on. Off: skip ending legality overlay.
+            "capability_scene_legality": _flag("capability_scene_legality", True),
+        }
+
     def _turn_call_budgets(self) -> tuple[int, int]:
         """Return (soft, hard) per-turn model-call budgets.
 
@@ -203,6 +240,7 @@ class _RuntimeConfigMixin:
             "legacy_default_registry_path": src == "default_registry",
             "max_self_correction_attempts": self._max_self_correction_attempts(),
             "allow_degraded_commit_after_retries": self._allow_degraded_commit_after_retries(),
+            "capability_switches": self._capability_switches(),
             "metrics": self.metrics.summary(),
             # Authority-binding identity. Monotonically increments on every
             # successful or blocked apply so post-reload live turns can prove
