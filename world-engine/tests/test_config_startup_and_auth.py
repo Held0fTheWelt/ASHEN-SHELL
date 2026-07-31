@@ -158,7 +158,7 @@ class TestPlayServiceSecretStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_SECRET == "primary-secret-value"
+        assert world_engine.config.PLAY_SERVICE_SECRET == "primary-secret-value"
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -174,7 +174,7 @@ class TestPlayServiceSecretStartup:
             import world_engine.config
             importlib.reload(world_engine.config)
 
-            assert app.config.PLAY_SERVICE_SECRET == "fallback-secret-value"
+            assert world_engine.config.PLAY_SERVICE_SECRET == "fallback-secret-value"
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -190,7 +190,7 @@ class TestPlayServiceSecretStartup:
             import world_engine.config
             importlib.reload(world_engine.config)
 
-            assert app.config.PLAY_SERVICE_SECRET is None
+            assert world_engine.config.PLAY_SERVICE_SECRET is None
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -202,7 +202,7 @@ class TestPlayServiceSecretStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_SECRET is None
+        assert world_engine.config.PLAY_SERVICE_SECRET is None
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -214,7 +214,7 @@ class TestPlayServiceSecretStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_SECRET is None
+        assert world_engine.config.PLAY_SERVICE_SECRET is None
 
 
 class TestPlayServiceInternalApiKeyValidation:
@@ -288,7 +288,7 @@ class TestPlayServiceInternalApiKeyStartup:
             import world_engine.config
             importlib.reload(world_engine.config)
 
-            assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
+            assert world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -299,7 +299,7 @@ class TestPlayServiceInternalApiKeyStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
+        assert world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -310,7 +310,7 @@ class TestPlayServiceInternalApiKeyStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_INTERNAL_API_KEY is None
+        assert world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY is None
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -321,7 +321,7 @@ class TestPlayServiceInternalApiKeyStartup:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.PLAY_SERVICE_INTERNAL_API_KEY == "my-internal-api-key"
+        assert world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY == "my-internal-api-key"
 
 
 class TestRunStoreConfigValidation:
@@ -336,7 +336,7 @@ class TestRunStoreConfigValidation:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.RUN_STORE_BACKEND == "json"
+        assert world_engine.config.RUN_STORE_BACKEND == "json"
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -348,7 +348,7 @@ class TestRunStoreConfigValidation:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.RUN_STORE_BACKEND == "sqlalchemy"
+        assert world_engine.config.RUN_STORE_BACKEND == "sqlalchemy"
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -359,7 +359,7 @@ class TestRunStoreConfigValidation:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.RUN_STORE_URL == ""
+        assert world_engine.config.RUN_STORE_URL == ""
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -370,7 +370,7 @@ class TestRunStoreConfigValidation:
         import world_engine.config
         importlib.reload(world_engine.config)
 
-        assert app.config.RUN_STORE_URL == "postgresql://localhost/wos"
+        assert world_engine.config.RUN_STORE_URL == "postgresql://localhost/wos"
 
     @pytest.mark.unit
     @pytest.mark.config
@@ -533,7 +533,7 @@ class TestAppStartupValidation:
         """App should initialize even without PLAY_SERVICE_SECRET configured."""
         # This tests that missing secret doesn't block app startup
         # (it just warns)
-        from tests.conftest import build_test_app
+        from conftest import build_test_app
 
         app = build_test_app(tmp_path)
 
@@ -557,7 +557,7 @@ class TestConfigIsolationPerEnvironment:
     @pytest.mark.config
     def test_separate_app_instances_have_separate_configs(self, tmp_path):
         """Separate app instances should have separate config states."""
-        from tests.conftest import build_test_app
+        from conftest import build_test_app
 
         # Create two app instances with different store backends
         app1 = build_test_app(tmp_path)
@@ -582,15 +582,15 @@ class TestConfigIsolationPerEnvironment:
 
         # Reload to establish baseline
         importlib.reload(world_engine.config)
-        initial_secret = app.config.PLAY_SERVICE_SECRET
-        initial_api_key = app.config.PLAY_SERVICE_INTERNAL_API_KEY
+        initial_secret = world_engine.config.PLAY_SERVICE_SECRET
+        initial_api_key = world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY
 
         # Reload again without changing environment
         importlib.reload(world_engine.config)
 
         # Values should be consistent
-        assert app.config.PLAY_SERVICE_SECRET == initial_secret
-        assert app.config.PLAY_SERVICE_INTERNAL_API_KEY == initial_api_key
+        assert world_engine.config.PLAY_SERVICE_SECRET == initial_secret
+        assert world_engine.config.PLAY_SERVICE_INTERNAL_API_KEY == initial_api_key
 
 
 class TestInternalApiKeyEndpointGuard:
@@ -600,7 +600,7 @@ class TestInternalApiKeyEndpointGuard:
     @pytest.mark.security
     def test_internal_endpoint_requires_api_key_when_configured(self, monkeypatch):
         """Internal endpoints should require API key when configured."""
-        from tests.conftest import build_test_app
+        from conftest import build_test_app
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -629,7 +629,7 @@ class TestInternalApiKeyEndpointGuard:
     @pytest.mark.security
     def test_internal_endpoint_allows_request_with_valid_key(self, monkeypatch):
         """Internal endpoints should allow requests with valid API key."""
-        from tests.conftest import build_test_app
+        from conftest import build_test_app
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp_dir:

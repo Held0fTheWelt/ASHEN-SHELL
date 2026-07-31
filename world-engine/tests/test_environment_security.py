@@ -2,7 +2,7 @@
 import os
 import pytest
 
-from app import config
+from world_engine import config
 
 
 class TestEnvironmentSecurity:
