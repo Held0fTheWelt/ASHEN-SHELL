@@ -161,6 +161,7 @@ class StorySession:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     turn_counter: int = 0
+    revision: int = 0
     current_scene_id: str = ""
     session_input_language: str = DEFAULT_SESSION_LANGUAGE
     session_output_language: str = DEFAULT_SESSION_LANGUAGE
@@ -203,6 +204,7 @@ def story_session_to_payload(session: StorySession) -> dict[str, Any]:
         "created_at": session.created_at.isoformat(),
         "updated_at": session.updated_at.isoformat(),
         "turn_counter": session.turn_counter,
+        "revision": int(getattr(session, "revision", 0) or 0),
         "current_scene_id": session.current_scene_id,
         "session_input_language": session.session_input_language,
         "session_output_language": session.session_output_language,

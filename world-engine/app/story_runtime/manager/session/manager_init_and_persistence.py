@@ -261,12 +261,20 @@ class _ManagerInitAndPersistenceMixin:
         with self._session_locks_guard:
             return self._session_turn_locks.setdefault(session_id, threading.Lock())
 
-    def _persist_session(self, session: StorySession) -> None:
+    def _persist_session(self, session: StorySession, *, reason: str = "committed"):
+        from app.story_runtime.persist_outcome import (
+            NoStoreConfigured,
+            Persisted,
+            SkippedSimulation,
+        )
+
         if session.session_id in self._branching_simulation_session_ids:
-            return
+            return SkippedSimulation()
         if self._session_store is None:
-            return
+            return NoStoreConfigured()
+        session.revision = int(getattr(session, "revision", 0) or 0) + 1
         self._session_store.save(session.session_id, story_session_to_payload(session))
+        return Persisted(revision=session.revision, reason=reason)
 
     def _persist_branching_tree_record(self, record: dict[str, Any]) -> dict[str, Any]:
         tree_id = str(record.get("tree_id") or "").strip()

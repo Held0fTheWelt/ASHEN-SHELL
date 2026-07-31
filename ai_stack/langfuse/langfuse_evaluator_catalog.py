@@ -56,6 +56,8 @@ LLM_JUDGE_ADAPTER_EXCLUSION_NOTE: Final[str] = (
 )
 
 # Langfuse UI-style lists (evaluator attachment wizard).
+# Wave 0-C: keep Name pinned to story.model.generation only so translation /
+# self_correction / fallback ledger observations do not enter opening/turn judges.
 OPENING_JUDGE_LANGFUSE_OBSERVATION_FILTERS: Final[dict[str, Any]] = {
     "Type": ["GENERATION"],
     "Name": ["story.model.generation"],

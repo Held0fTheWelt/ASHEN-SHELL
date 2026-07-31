@@ -28,7 +28,8 @@ from .session.recoverable_rejection_and_sessions import _RecoverableRejectionAnd
 from .session.session_state_api import _SessionStateApiMixin
 from .thin_path_snapshot_api import _ThinPathSnapshotApiMixin
 from .diagnostics_api import _DiagnosticsApiMixin
-from ._legacy_methods import install_legacy_methods
+from .commit_finalization import _CommitFinalizationMixin
+from .narrator_path_opening_state import _NarratorPathOpeningStateMixin
 
 class StoryRuntimeManager(
     _ManagerInitAndPersistenceMixin,
@@ -55,9 +56,9 @@ class StoryRuntimeManager(
     _SessionStateApiMixin,
     _ThinPathSnapshotApiMixin,
     _DiagnosticsApiMixin,
+    _NarratorPathOpeningStateMixin,
+    _CommitFinalizationMixin,
 ):
     pass
-
-install_legacy_methods(StoryRuntimeManager)
 
 __all__ = ["StoryRuntimeManager"]

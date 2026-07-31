@@ -33,6 +33,7 @@ def story_session_from_payload(data: dict[str, Any]) -> StorySession:
         created_at=created_at,
         updated_at=updated_at,
         turn_counter=int(data.get("turn_counter", 0)),
+        revision=int(data.get("revision", 0) or 0),
         current_scene_id=str(data.get("current_scene_id") or ""),
         session_input_language=str(data.get("session_input_language") or data.get("session_output_language") or DEFAULT_SESSION_LANGUAGE),
         session_output_language=str(data.get("session_output_language") or DEFAULT_SESSION_LANGUAGE),
