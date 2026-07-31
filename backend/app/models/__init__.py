@@ -58,7 +58,6 @@ WORLD_ENGINE_MODEL_MODULES: tuple[str, ...] = (
     "narrative_notification",
     "narrative_runtime_health_event",
     "narrative_runtime_health_rollup",
-    "runtime_session",
 )
 
 
@@ -140,7 +139,6 @@ from app.models.world_engine.narrative_revision_conflict import NarrativeRevisio
 from app.models.world_engine.narrative_revision_status_history import NarrativeRevisionStatusHistory
 from app.models.world_engine.narrative_runtime_health_event import NarrativeRuntimeHealthEvent
 from app.models.world_engine.narrative_runtime_health_rollup import NarrativeRuntimeHealthRollup
-from app.models.world_engine.runtime_session import RuntimeSessionRecord
 
 
 __all__ = [
@@ -154,7 +152,6 @@ __all__ = [
     "EmailVerificationToken",
     "TokenBlacklist",
     "RefreshToken",
-    "RuntimeSessionRecord",
     "NewsArticle",
     "NewsArticleTranslation",
     "NewsArticleForumThread",
