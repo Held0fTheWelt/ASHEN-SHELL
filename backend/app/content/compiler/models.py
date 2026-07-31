@@ -1,9 +1,27 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+
+class SourceProvenance(BaseModel):
+    """Where an authored runtime fact came from (Wave 7 / DRIFT-004)."""
+
+    module_id: str
+    module_version: str
+    source_path: str
+    content_kind: str
+
+
+class AuthoredFact(BaseModel):
+    """One runtime-facing fact with mandatory provenance."""
+
+    fact_id: str
+    content_version: str
+    value: Any = None
+    source_provenance: SourceProvenance
 
 
 class RuntimeProjection(BaseModel):
@@ -50,7 +68,8 @@ class ReviewExportSeed(BaseModel):
     compiler_version: str = "m1.v1"
     module_id: str
     module_version: str
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # Optional stamp for human review exports; omit/null for deterministic compile digests.
+    generated_at: datetime | None = None
     summary: dict[str, Any] = Field(default_factory=dict)
     scenes: list[dict[str, Any]] = Field(default_factory=list)
     triggers: list[dict[str, Any]] = Field(default_factory=list)
@@ -59,6 +78,8 @@ class ReviewExportSeed(BaseModel):
 
 class CanonicalCompileOutput(BaseModel):
     canonical_model: str = "content_module.scene_trigger_ending.v1"
+    content_version: str
     runtime_projection: RuntimeProjection
     retrieval_corpus_seed: RetrievalCorpusSeed
     review_export_seed: ReviewExportSeed
+    authored_facts: list[AuthoredFact] = Field(default_factory=list)

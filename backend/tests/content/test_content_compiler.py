@@ -132,3 +132,26 @@ def test_retrieval_corpus_seed_emits_entity_chunks_for_god_of_carnage():
 
     for hint in hints:
         assert hint.metadata.get("player_visible") is False
+
+
+def test_content_compilation_is_deterministic():
+    """Wave 7: repeated compile of the same module is byte-identical."""
+    first = compile_module("god_of_carnage")
+    second = compile_module("god_of_carnage")
+    assert first.model_dump(mode="json") == second.model_dump(mode="json")
+    assert first.model_dump_json() == second.model_dump_json()
+
+
+def test_every_runtime_fact_traces_to_module_and_version():
+    """Wave 7: every authored fact carries module id/version and a module-rooted path."""
+    output = compile_module("god_of_carnage")
+    assert output.content_version.startswith("god_of_carnage@")
+    assert output.authored_facts
+    for fact in output.authored_facts:
+        assert fact.content_version == output.content_version
+        prov = fact.source_provenance
+        assert prov.module_id == "god_of_carnage"
+        assert prov.module_version
+        assert prov.source_path.startswith("content/modules/god_of_carnage/")
+        assert prov.content_kind
+        assert fact.fact_id

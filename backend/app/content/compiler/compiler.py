@@ -9,7 +9,15 @@ from app.content.module_loader import (
 )
 from app.content.module_models import ContentModule
 
-from .models import CanonicalCompileOutput, RetrievalChunk, RetrievalCorpusSeed, ReviewExportSeed, RuntimeProjection
+from .models import (
+    AuthoredFact,
+    CanonicalCompileOutput,
+    RetrievalChunk,
+    RetrievalCorpusSeed,
+    ReviewExportSeed,
+    RuntimeProjection,
+    SourceProvenance,
+)
 from .retrieval_chunks import build_entity_retrieval_chunks
 
 
@@ -430,6 +438,7 @@ def _build_review_export_seed(module: ContentModule, runtime_projection: Runtime
     return ReviewExportSeed(
         module_id=module.metadata.module_id,
         module_version=module.metadata.version,
+        generated_at=None,
         summary={
             "title": module.metadata.title,
             "description": module.metadata.description,
@@ -444,6 +453,70 @@ def _build_review_export_seed(module: ContentModule, runtime_projection: Runtime
     )
 
 
+def _content_version_for(module: ContentModule) -> str:
+    return f"{module.metadata.module_id}@{module.metadata.version}"
+
+
+def _build_authored_facts(
+    module: ContentModule,
+    runtime_projection: RuntimeProjection,
+) -> list[AuthoredFact]:
+    """Project core runtime facts with module-path provenance (Wave 7)."""
+    module_id = module.metadata.module_id
+    module_version = module.metadata.version
+    content_version = _content_version_for(module)
+    base = f"content/modules/{module_id}"
+    facts: list[AuthoredFact] = [
+        AuthoredFact(
+            fact_id=f"{module_id}:start_scene_id",
+            content_version=content_version,
+            value=runtime_projection.start_scene_id,
+            source_provenance=SourceProvenance(
+                module_id=module_id,
+                module_version=module_version,
+                source_path=f"{base}/scene_graph.yaml",
+                content_kind="start_scene_id",
+            ),
+        )
+    ]
+    for scene in runtime_projection.scenes:
+        scene_id = str(scene.get("id") or scene.get("scene_id") or "").strip()
+        if not scene_id:
+            continue
+        facts.append(
+            AuthoredFact(
+                fact_id=f"{module_id}:scene:{scene_id}",
+                content_version=content_version,
+                value={"id": scene_id, "name": scene.get("name")},
+                source_provenance=SourceProvenance(
+                    module_id=module_id,
+                    module_version=module_version,
+                    source_path=f"{base}/scene_graph.yaml",
+                    content_kind="scene",
+                ),
+            )
+        )
+    for character_id in runtime_projection.character_ids:
+        cid = str(character_id).strip()
+        if not cid:
+            continue
+        facts.append(
+            AuthoredFact(
+                fact_id=f"{module_id}:character:{cid}",
+                content_version=content_version,
+                value={"id": cid},
+                source_provenance=SourceProvenance(
+                    module_id=module_id,
+                    module_version=module_version,
+                    source_path=f"{base}/characters/{cid}.yaml",
+                    content_kind="character",
+                ),
+            )
+        )
+    facts.sort(key=lambda fact: fact.fact_id)
+    return facts
+
+
 def compile_loaded_module(
     module: ContentModule,
     *,
@@ -454,10 +527,13 @@ def compile_loaded_module(
     runtime_projection = _build_runtime_projection(module)
     retrieval_corpus_seed = _build_retrieval_seed(module, module_root=resolved_root)
     review_export_seed = _build_review_export_seed(module, runtime_projection)
+    authored_facts = _build_authored_facts(module, runtime_projection)
     return CanonicalCompileOutput(
+        content_version=_content_version_for(module),
         runtime_projection=runtime_projection,
         retrieval_corpus_seed=retrieval_corpus_seed,
         review_export_seed=review_export_seed,
+        authored_facts=authored_facts,
     )
 
 
