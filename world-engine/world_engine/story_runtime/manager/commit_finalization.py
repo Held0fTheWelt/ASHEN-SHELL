@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from ._deps import *
+from .commit_evidence_projection import build_commit_evidence_projection
 from .visible_projection_policy import (
     resolve_visible_projection_policy,
     rich_scene_projection_enabled,
@@ -89,54 +90,14 @@ class _CommitFinalizationMixin:
             else None
         )
 
-        # Build LLM invocation details from graph_state
-        routing = graph_state.get("routing") if isinstance(graph_state.get("routing"), dict) else {}
-        gen_meta = gen.get("metadata") if isinstance(gen.get("metadata"), dict) else {}
-        self_correction = graph_state.get("self_correction") if isinstance(graph_state.get("self_correction"), dict) else {}
-        llm_invocation_details = {
-            "selected_provider": routing.get("selected_provider"),
-            "selected_model": routing.get("selected_model"),
-            "adapter_used": gen_meta.get("adapter"),
-            "adapter_invocation_mode": gen_meta.get("adapter_invocation_mode"),
-            "fallback_stage_reached": routing.get("fallback_stage_reached") or ("graph_fallback_executed" if "fallback_model" in (graph_state.get("nodes_executed") or []) else "primary_only"),
-            "fallback_reason": routing.get("fallback_reason"),
-            "retry_attempt_count": self_correction.get("attempt_count"),
-            "parser_error": gen.get("parser_error"),
-            "structured_output_present": gen.get("structured_output") is not None,
-            "model_success": model_ok,
-        }
-
-        # Build validation details
-        validation_details = {
-            "status": validation_outcome.get("status"),
-            "reason": validation_outcome.get("reason"),
-            "dramatic_quality_gate": validation_outcome.get("dramatic_quality_gate"),
-        }
-        actor_lane_validation = validation_outcome.get("actor_lane_validation") if isinstance(validation_outcome.get("actor_lane_validation"), dict) else {}
-        if actor_lane_validation:
-            validation_details["actor_lane_validation_status"] = actor_lane_validation.get("status")
-            validation_details["actor_lane_validation_reason"] = actor_lane_validation.get("reason")
-
-        # Build commit details
-        commit_details = {
-            "committed": narrative_commit is not None,
-            "degraded": outcome == "degraded",
-            "degradation_reason": str(errors[0]) if errors else None,
-        }
-
-        # Build retrieval details if available
-        retrieval_status = graph_state.get("retrieval") if isinstance(graph_state.get("retrieval"), dict) else {}
-        retrieval_details = {
-            "status": retrieval_status.get("status"),
-            "hit_count": retrieval_status.get("hit_count"),
-            "documents_used": retrieval_status.get("documents_used"),
-            "retrieval_route": retrieval_status.get("retrieval_route"),
-            "profile": retrieval_status.get("profile"),
-            "domain": retrieval_status.get("domain"),
-            "top_hit_score": retrieval_status.get("top_hit_score"),
-            "corpus_fingerprint": retrieval_status.get("corpus_fingerprint"),
-            "index_version": retrieval_status.get("index_version"),
-        } if retrieval_status else None
+        commit_evidence = build_commit_evidence_projection(
+            graph_state=graph_state,
+            generation=gen,
+            validation_outcome=validation_outcome,
+            model_ok=model_ok,
+            errors=errors,
+            committed=narrative_commit is not None,
+        )
 
         log_story_turn_event(
             trace_id=trace_id,
@@ -150,10 +111,10 @@ class _CommitFinalizationMixin:
             degradation_signals=list(graph_state.get("degradation_signals") or []),
             vitality_telemetry=vitality_telemetry_v1,
             passivity_diagnosis=passivity_diagnosis_v1,
-            llm_invocation_details=llm_invocation_details,
-            validation_details=validation_details,
-            commit_details=commit_details,
-            retrieval_details=retrieval_details,
+            llm_invocation_details=commit_evidence["llm_invocation_details"],
+            validation_details=commit_evidence["validation_details"],
+            commit_details=commit_evidence["commit_details"],
+            retrieval_details=commit_evidence["retrieval_details"],
         )
         narrative_commit_payload = narrative_commit.model_dump(mode="json")
         beat_payload = (

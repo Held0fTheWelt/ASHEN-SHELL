@@ -15,8 +15,10 @@
 | Visible Projection Policy Resolver | Resolve the bound module's player-visible projection capabilities | Versioned policy with a closed generic default and no module-ID dispatch | [`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py) |
 | AI Proposal Bridge | Request and normalize AI proposal packets | Proposal-only anti-corruption layer | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Commit Resolution | Validate proposal against world truth and policy | Accepted/rejected decision with evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
+| Commit Evidence Projection | Project log-ready model, validation, commit and retrieval evidence | Pure read-only projection with no graph or session mutation | [`world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py) |
 | Story Session Store | Persist committed state and monotonic revision | Atomic session update | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 | Delivery Surfaces | Publish committed blocks and state | Post-commit events only | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
+| Runtime Observability | Correlate turn lifecycle and failures | Redacted trace tree | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 
 ## Modeled relationships
 
@@ -28,6 +30,8 @@
 | Visible Projection Policy Resolver | Delivery Surfaces | selects projection adapter | configured capabilities without module-ID dispatch | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
 | Live Governance | AI Proposal Bridge | requests bounded proposal | proposal-only | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | AI Proposal Bridge | Commit Resolution | returns candidate | proposal plus evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
+| Commit Resolution | Commit Evidence Projection | supplies decision evidence | accepted or degraded evidence without mutation | [`world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py) |
+| Commit Evidence Projection | Runtime Observability | projects turn audit fields | trace-ready evidence derived from committed turn state | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
 | Commit Resolution | Story Session Store | commits accepted delta | atomic revision or no write | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 | Story Session Store | Delivery Surfaces | publishes committed result | post-commit only | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 

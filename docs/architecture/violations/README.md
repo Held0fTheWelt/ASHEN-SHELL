@@ -96,6 +96,10 @@ ADRs and executable closure evidence.
 - **Target:** cohesive phases with one orchestrator and unchanged single-writer invariant.
 - **Repair order:** characterization → extract pure projection → extract persistence outcome →
   extract post-commit hooks → remove obsolete compatibility shards.
+- **Repair slice implemented:** log-ready model, validation, commit, and retrieval evidence is now
+  derived by the pure `commit_evidence_projection.py` component. Characterization covers malformed
+  optional evidence, source immutability, the public manager injection seam, and the runtime audit
+  event. The finalizer remains oversized, so this is progress evidence rather than closure.
 - **Closure:** behavior-equivalence tests and no additional sink callsite.
 
 ### AR-V006 — Fragmented cross-service trace

@@ -3399,6 +3399,13 @@
           "contract": "Accepted/rejected decision with evidence",
           "anchor": "world-engine/world_engine/story_runtime/narrative_commit_resolution.py"
         },
+        "commit_evidence": {
+          "type": "component",
+          "name": "Commit Evidence Projection",
+          "responsibility": "Project log-ready model, validation, commit and retrieval evidence",
+          "contract": "Pure read-only projection with no graph or session mutation",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py"
+        },
         "store": {
           "type": "component",
           "name": "Story Session Store",
@@ -3679,6 +3686,20 @@
           "anchor": "world-engine/world_engine/observability/trace.py",
           "order": 7
         },
+        "validation_commit_evidence": {
+          "from": "validation",
+          "to": "commit_evidence",
+          "label": "supplies decision evidence",
+          "contract": "accepted or degraded evidence without mutation",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py"
+        },
+        "commit_evidence_observability": {
+          "from": "commit_evidence",
+          "to": "observability",
+          "label": "projects turn audit fields",
+          "contract": "trace-ready evidence derived from committed turn state",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_finalization.py"
+        },
         "session_proposal": {
           "from": "session",
           "to": "proposal",
@@ -3837,8 +3858,10 @@
             "projection_policy",
             "ai_bridge",
             "validation",
+            "commit_evidence",
             "store",
-            "delivery"
+            "delivery",
+            "observability"
           ],
           "relationships": [
             "turn_lifecycle",
@@ -3847,12 +3870,15 @@
             "projection_policy_delivery",
             "governance_ai",
             "ai_validation",
+            "validation_commit_evidence",
+            "commit_evidence_observability",
             "validation_store",
             "store_delivery"
           ],
           "decisions": [
             "D1",
             "D4",
+            "D5",
             "D6",
             "D15"
           ]

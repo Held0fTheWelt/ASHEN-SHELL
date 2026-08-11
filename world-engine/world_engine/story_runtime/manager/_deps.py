@@ -27,7 +27,11 @@ _log_story_turn_event_original = log_story_turn_event
 _log_story_runtime_failure_original = log_story_runtime_failure
 
 def _dispatch_package_symbol(name, original, self_symbol, *args, **kwargs):
-    package = sys.modules.get("app.story_runtime.manager")
+    # Resolve the package that actually loaded this compatibility module.
+    # The runtime is importable through both the canonical ``world_engine``
+    # namespace and the legacy ``app`` namespace; hard-coding either one makes
+    # package-level adapter injection silently ineffective for the other.
+    package = sys.modules.get(__package__)
     target = getattr(package, name, None) if package is not None else None
     if target is not None and target is not self_symbol:
         return target(*args, **kwargs)

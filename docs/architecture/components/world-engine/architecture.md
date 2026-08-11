@@ -106,6 +106,7 @@ Only elements that participate in a container or component view are listed as bu
 | --- | --- | --- | --- | --- |
 | AI Proposal Bridge (`ai_bridge`) | `component` | Request and normalize AI proposal packets | Proposal-only anti-corruption layer | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Canonical Turn Lifecycle (`lifecycle`) | `component` | Enforce interpret, propose, validate, commit ordering | No render before commit | [`world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py`](../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py) |
+| Commit Evidence Projection (`commit_evidence`) | `component` | Project log-ready model, validation, commit and retrieval evidence | Pure read-only projection with no graph or session mutation | [`world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py) |
 | Commit Resolution (`validation`) | `component` | Validate proposal against world truth and policy | Accepted/rejected decision with evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Delivery Surfaces (`delivery`) | `component` | Publish committed blocks and state | Post-commit events only | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 | Live Governance (`governance`) | `component` | Apply runtime policy and authority guards | Fail-closed mutation policy | [`world-engine/world_engine/story_runtime/live_governance.py`](../../../../world-engine/world_engine/story_runtime/live_governance.py) |
@@ -219,6 +220,7 @@ and the current product-specific implementation debt remains tracked by
 | --- | --- | --- | --- | --- |
 | AI Proposal Bridge | Commit Resolution | returns candidate | proposal plus evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Story API | Story Runtime Manager | delegates story operation | validated command | [`world-engine/world_engine/api/http_routes/story_turn_routes.py`](../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py) |
+| Commit Evidence Projection | Runtime Observability | projects turn audit fields | trace-ready evidence derived from committed turn state | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
 | CommitDecision | StorySession | advances when accepted | monotonic revision | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 | Live Governance | AI Proposal Bridge | requests bounded proposal | proposal-only | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Live Governance | Visible Projection Policy Resolver | supplies bound projection policy | visible_projection_policy.v1 or closed generic default | [`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py) |
@@ -231,6 +233,7 @@ and the current product-specific implementation debt remains tracked by
 | StorySession | NarrativeProposal | bounds evaluation | base revision | [`world-engine/world_engine/story_runtime/commit_models.py`](../../../../world-engine/world_engine/story_runtime/commit_models.py) |
 | Story Session Store | Delivery Surfaces | publishes committed result | post-commit only | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 | Turn Execution | Canonical Turn Lifecycle | executes canonical phases | ordered lifecycle | [`world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py`](../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py) |
+| Commit Resolution | Commit Evidence Projection | supplies decision evidence | accepted or degraded evidence without mutation | [`world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py) |
 | Commit Resolution | Story Session Store | commits accepted delta | atomic revision or no write | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 <!-- END BT-SEMANTIC-DEPTH:8 -->
 
@@ -264,7 +267,7 @@ Retrieval, Director planning, narrator realization, and validation execute insid
 **Status:** Accepted; refactoring in progress
 **Origin:** `7959c848` PersistOutcome and manager unsharding
 
-Every live story command follows the lifecycle documented in §6. Compatibility paths must delegate to it or be explicitly retired. `_finalize_committed_turn` is currently too broad; [AR-V005](../../violations/README.md#ar-v005-oversized-finalization-seam) records the intended split and proof needed for closure.
+Every live story command follows the lifecycle documented in §6. Compatibility paths must delegate to it or be explicitly retired. `_finalize_committed_turn` is currently too broad; its first extracted phase is the pure [`commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py), which derives audit fields without mutating graph or session state. [AR-V005](../../violations/README.md#ar-v005-oversized-finalization-seam) records the remaining persistence-outcome and post-commit splits plus the proof needed for closure.
 
 ### D6: Actor and situation changes are committed data
 
@@ -299,7 +302,7 @@ open until they are migrated behind neutral adapters.
 | --- | --- | --- | --- |
 | `D1`, `D4` | Live authority among player, backend, content and AI proposal collaborators | `context` | [World Engine - System Context](../../../../UML/Components/world-engine/components/c4-context.md) |
 | `D1`, `D5` | API, canonical manager, compatibility runtime, persistence and observability | `container` | [World Engine - Runtime Containers](../../../../UML/Components/world-engine/components/c4-container.md) |
-| `D1`, `D4`, `D6`, `D15` | Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](../../../../UML/Components/world-engine/components/c4-component.md) |
+| `D1`, `D4`, `D5`, `D6`, `D15` | Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](../../../../UML/Components/world-engine/components/c4-component.md) |
 | `D1`, `D4` | End-to-end authoritative turn from player intent to committed event | `sequence` | [World Engine - Primary Turn](../../../../UML/Components/world-engine/sequence/primary-turn-sequence.md) |
 | `D5`, `D14` | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md) |
 | `D1`, `D4`, `D6` | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](../../../../UML/Components/world-engine/activity/canonical-turn-activity.md) |
