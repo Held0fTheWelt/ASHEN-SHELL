@@ -109,7 +109,7 @@ Only elements that participate in a container or component view are listed as bu
 | RAG Context Fabric (`retrieval`) | `component` | Assemble governed continuity and knowledge context | Bounded context pack with provenance | [`ai_stack/rag/rag_context_pack_build.py`](../../../../ai_stack/rag/rag_context_pack_build.py) |
 | Research Lane (`research`) | `component` | Explore and draft bounded canon improvements | Draft-only findings; cannot publish canon | [`ai_stack/research/canon_improvement_engine.py`](../../../../ai_stack/research/canon_improvement_engine.py) |
 | Runtime Aspect Ledger (`ledger`) | `component` | Project aspect evidence and decision metadata | Typed, non-authoritative evidence records | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
-| Semantic Input Translation (`ingress`) | `component` | Translate player text into bounded intent evidence | Semantic input record without invented state | [`ai_stack/langgraph/runtime_executor/semantic_input_translation.py`](../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py) |
+| Semantic Input Translation (`ingress`) | `component` | Normalize player text to the module-declared internal language and preserve provenance | Neutral semantic input; English alias only for English compatibility envelopes | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
 | LangGraph Runtime Executor (`executor`) | `container` | Coordinate the proposal pipeline | Prepared state in; proposal package out | [`ai_stack/langgraph/runtime_executor/public.py`](../../../../ai_stack/langgraph/runtime_executor/public.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
@@ -134,8 +134,8 @@ Shadow/dual-mode pulse emits `block_stream_events` parallel to canonical bundle 
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) | 11 |
-| How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) | 4 |
+| Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) | 12 |
+| How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) | 5 |
 | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) | 7 |
 
 The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
@@ -171,8 +171,9 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | Director | Capability Registry | requests capability plan | evidence-gated selection | [`ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py`](../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py) |
 | Director | Narrator | requests realization | scene plan and actor directives | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
 | Director | SemanticScenePlan | creates | bounded semantic scene plan | [`ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py) |
-| LangGraph Runtime Executor | Semantic Input Translation | interprets input | semantic intent envelope | [`ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py`](../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py) |
-| Semantic Input Translation | RAG Context Fabric | queries grounded context | bounded retrieval query | [`ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py`](../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py) |
+| LangGraph Runtime Executor | Semantic Input Translation | interprets input | semantic intent envelope | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
+| Semantic Input Translation | RAG Context Fabric | queries grounded context | bounded retrieval query | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
+| Semantic Input Translation | SemanticInputRecord | emits neutral input record | module-declared internal language and source provenance | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
 | Runtime Aspect Ledger | RuntimeAspectRecord | aggregates | one record per supported aspect | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
 | Runtime Aspect Ledger | LangGraph Runtime Executor | returns evidence projection | proposal package metadata | [`ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py) |
 | Narrator | Proposal Validator | submits proposal | visible blocks plus proposed delta | [`ai_stack/langgraph/runtime_executor/executor_validation_commit.py`](../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py) |
@@ -180,7 +181,9 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | SemanticScenePlan | Narrator | guides | realization constraints | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
 | Quality Lab | Runtime Aspect Ledger | reads trace aspects | evaluation-only projection | [`ai_stack/quality_lab/trace_interpreter.py`](../../../../ai_stack/quality_lab/trace_interpreter.py) |
 | Research Lane | Quality Lab | uses evaluation evidence | draft improvement finding | [`ai_stack/research/research_validation.py`](../../../../ai_stack/research/research_validation.py) |
+| RAG Context Fabric | RetrievalContextBundle | builds | ranked and budgeted context | [`ai_stack/rag/rag_context_pack_assembler.py`](../../../../ai_stack/rag/rag_context_pack_assembler.py) |
 | RAG Context Fabric | Director | provides context pack | citations and continuity facts | [`ai_stack/langgraph/runtime_executor/executor_director_selection_context.py`](../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py) |
+| SemanticInputRecord | RAG Context Fabric | keys grounded retrieval | neutral internal query with raw-input provenance | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
 | Proposal Validator | Runtime Aspect Ledger | records validation evidence | typed aspect status | [`ai_stack/langgraph/validation/result.py`](../../../../ai_stack/langgraph/validation/result.py) |
 | Proposal Validator | Runtime Proposal | annotates | validation result and retry feedback | [`ai_stack/langgraph/validation/result.py`](../../../../ai_stack/langgraph/validation/result.py) |
 <!-- END BT-SEMANTIC-DEPTH:8 -->
@@ -206,7 +209,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | D15 | Director-pause gathering mode | Proposed | ADR-0061 |
 | D16 | Director pulse and block-stream bus | Accepted | ADR-0058, ADR-0059 |
 | D17 | Bounded emergent narration | Accepted; Partial | ADR-0007 |
-| D18 | Module-owned language boundaries | Accepted; Partial | ADR-0008 |
+| D18 | Module-owned language boundaries | Accepted; replay proof gap | ADR-0008 |
 
 ### D17: Canonical material is reference input in bounded emergence
 
@@ -221,13 +224,15 @@ proof and compatibility paths.
 
 ### D18: Language is declared by the module, not by the engine
 
-**Status:** Accepted; neutral-field migration incomplete
+**Status:** Accepted; neutral consumers implemented, live replay proof open
 **Origin:** [ADR-0008](../../decisions/ADR-0008-module-language-boundaries.md)
 
 Ingress normalizes to the module's internal resolution language only when needed. Egress translates
 from explicit source provenance only when source and session output differ. The neutral field is
-`normalized_internal_text`; English-named aliases are compatibility surfaces recorded by
-`AR-V011`.
+`normalized_internal_text`. Interpretation, action resolution, retrieval and realization consume
+that field. `normalized_english_text` is accepted and emitted only by the explicit compatibility
+adapter when the declared internal language is English. `AR-V011` now tracks the remaining
+non-English full-replay proof rather than an active consumer conflict.
 
 ### D1: Proposal-only outputs
 
@@ -1265,10 +1270,10 @@ data.
 | --- | --- | --- | --- |
 | `D1`, `D10` | Proposal authority and external collaborators | `context` | [AI Stack — System Context](../../../../UML/Components/ai-stack/components/c4-context.md) |
 | `D2`, `D3`, `D5`, `D10` | Major execution, retrieval, planning, validation and evidence seams | `container` | [AI Stack — Runtime Containers](../../../../UML/Components/ai-stack/components/c4-container.md) |
-| `D1`, `D5`, `D6`, `D12` | Internal responsibilities and contracts on the canonical proposal path | `component` | [AI Stack — Proposal Pipeline Components](../../../../UML/Components/ai-stack/components/c4-component.md) |
-| `D1`, `D5`, `D6` | Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) |
-| `D3`, `D4` | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) |
-| `D3`, `D4`, `D6`, `D12`, `D17` | Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](../../../../UML/Components/ai-stack/classes/runtime-proposal-data-model.md) |
+| `D1`, `D5`, `D6`, `D12`, `D18` | Internal responsibilities and contracts on the canonical proposal path | `component` | [AI Stack — Proposal Pipeline Components](../../../../UML/Components/ai-stack/components/c4-component.md) |
+| `D1`, `D5`, `D6`, `D18` | Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) |
+| `D3`, `D4`, `D18` | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) |
+| `D3`, `D4`, `D6`, `D12`, `D17`, `D18` | Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](../../../../UML/Components/ai-stack/classes/runtime-proposal-data-model.md) |
 | `D15`, `D16` | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) |
 
 The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.

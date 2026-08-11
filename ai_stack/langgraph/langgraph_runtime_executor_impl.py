@@ -449,7 +449,7 @@ def _semantic_translation_prompt(
             f"Then ground that meaning against the module catalog authored in {module_authoring_language}.",
             "Do not use lookup tables, phrase maps, verb maps, actor alias maps, or locale files.",
             "If a target is present in the catalog, prefer the catalog id.",
-            "If the catalog is silent, follow content_catalog.player_freedom_policy.semantic_resolution_requirements; only mark an inferred target when that policy is satisfied by the meaning of the input and the English content context.",
+            "If the catalog is silent, follow content_catalog.player_freedom_policy.semantic_resolution_requirements; only mark an inferred target when that policy is satisfied by the meaning of the input and the declared module content context.",
             "For free committed player actions, set canonical_path_effect from the content policy rather than advancing the canonical path.",
             "If meaning or target is uncertain, set commit_policy to needs_clarification.",
             "Expected top-level JSON keys:",
@@ -508,6 +508,40 @@ def _semantic_payloads_from_translation_output(parsed: dict[str, Any]) -> tuple[
                 move = candidate
                 break
     return (action if isinstance(action, dict) else {}, move if isinstance(move, dict) else {})
+
+
+def _normalized_internal_value(payload: dict[str, Any], internal_language: str) -> str:
+    """Read the neutral field first and accept English aliases only for English policy."""
+
+    neutral = str(payload.get("normalized_internal_text") or "").strip()
+    if neutral:
+        return neutral
+    if internal_language != "en":
+        return ""
+    return str(
+        payload.get("normalized_english_text")
+        or payload.get("english_text")
+        or payload.get("internal_english_text")
+        or ""
+    ).strip()
+
+
+def _attach_internal_normalization(
+    target: dict[str, Any],
+    *,
+    normalized_internal_text: str,
+    internal_language: str,
+    mark_applied: bool = False,
+) -> None:
+    if not normalized_internal_text:
+        return
+    target["normalized_internal_text"] = normalized_internal_text
+    if internal_language == "en":
+        target["normalized_english_text"] = normalized_internal_text
+    else:
+        target.pop("normalized_english_text", None)
+    if mark_applied:
+        target["input_translation_applied"] = True
 def _prune_out_of_scope_actor_lanes(
     generation: dict[str, Any], out_of_scope_actors: list[str]
 ) -> dict[str, str]:
@@ -4647,27 +4681,19 @@ class RuntimeTurnGraphExecutor:
             translation["status"] = "resolved"
             translation["semantic_resolution_required"] = False
             translation["semantic_action"] = semantic_action
-            normalized = str(
-                semantic_action.get("normalized_internal_text")
-                or semantic_action.get("normalized_english_text")
-                or semantic_action.get("english_text")
-                or semantic_action.get("internal_english_text")
-                or ""
-            ).strip()
-            if normalized:
-                translation["normalized_internal_text"] = normalized
-                if internal_lang == "en":
-                    translation["normalized_english_text"] = normalized
+            normalized = _normalized_internal_value(semantic_action, internal_lang)
+            _attach_internal_normalization(
+                translation,
+                normalized_internal_text=normalized,
+                internal_language=internal_lang,
+            )
         else:
-            normalized_top = str(
-                parsed.get("normalized_internal_text")
-                or parsed.get("normalized_english_text")
-                or ""
-            ).strip()
-            if normalized_top:
-                translation["normalized_internal_text"] = normalized_top
-                if internal_lang == "en":
-                    translation["normalized_english_text"] = normalized_top
+            normalized_top = _normalized_internal_value(parsed, internal_lang)
+            _attach_internal_normalization(
+                translation,
+                normalized_internal_text=normalized_top,
+                internal_language=internal_lang,
+            )
             translation["status"] = "model_missing_semantic_action_contract_only"
         if semantic_move:
             translation["semantic_move"] = semantic_move
@@ -4787,16 +4813,22 @@ class RuntimeTurnGraphExecutor:
             else {}
         )
         raw_pi = str(state.get("player_input") or "").strip()
-        normalized_english_text = str(
-            translation.get("normalized_internal_text")
-            or translation.get("normalized_english_text")
-            or semantic_action.get("normalized_internal_text")
-            or semantic_action.get("normalized_english_text")
-            or semantic_action.get("english_text")
-            or semantic_action.get("internal_english_text")
-            or ""
-        ).strip()
-        interpretation_text = normalized_english_text or raw_pi
+        contract_input = (
+            translation_contract.get("input")
+            if isinstance(translation_contract.get("input"), dict)
+            else {}
+        )
+        internal_resolution_language = str(
+            translation.get("internal_resolution_language")
+            or semantic_action.get("internal_resolution_language")
+            or contract_input.get("internal_resolution_language")
+            or "en"
+        ).strip().lower()[:2] or "en"
+        normalized_internal_text = _normalized_internal_value(
+            translation,
+            internal_resolution_language,
+        ) or _normalized_internal_value(semantic_action, internal_resolution_language)
+        interpretation_text = normalized_internal_text or raw_pi
         interpretation = self.interpreter(interpretation_text)
         task_type = "classification" if interpretation.kind.value in {"explicit_command", "meta"} else "narrative_formulation"
         interp_dict = interpretation.model_dump(mode="json")
@@ -4849,10 +4881,12 @@ class RuntimeTurnGraphExecutor:
             intent_fields["session_input_language"] = session_input_lang
             intent_fields["session_output_language"] = session_output_lang
             intent_fields["input_translation_status"] = translation.get("status")
-            if normalized_english_text:
-                intent_fields["normalized_internal_text"] = normalized_english_text
-                intent_fields["normalized_english_text"] = normalized_english_text
-                intent_fields["input_translation_applied"] = True
+            _attach_internal_normalization(
+                intent_fields,
+                normalized_internal_text=normalized_internal_text,
+                internal_language=internal_resolution_language,
+                mark_applied=True,
+            )
         else:
             hit = translation_shell if translation_shell else prepare_player_input_semantic_resolution(
                 raw_pi,
@@ -4910,10 +4944,12 @@ class RuntimeTurnGraphExecutor:
                 intent_fields["session_input_language"] = session_input_lang
                 intent_fields["session_output_language"] = session_output_lang
                 intent_fields["input_translation_status"] = translation.get("status")
-                if normalized_english_text:
-                    intent_fields["normalized_internal_text"] = normalized_english_text
-                    intent_fields["normalized_english_text"] = normalized_english_text
-                    intent_fields["input_translation_applied"] = True
+                _attach_internal_normalization(
+                    intent_fields,
+                    normalized_internal_text=normalized_internal_text,
+                    internal_language=internal_resolution_language,
+                    mark_applied=True,
+                )
                 interp_dict["kind"] = json_kind
                 kind_raw = json_kind
             elif bool(hit.get("semantic_resolution_required")):
@@ -4943,6 +4979,12 @@ class RuntimeTurnGraphExecutor:
                 intent_fields["session_input_language"] = session_input_lang
                 intent_fields["session_output_language"] = session_output_lang
                 intent_fields["input_translation_status"] = translation.get("status")
+                _attach_internal_normalization(
+                    intent_fields,
+                    normalized_internal_text=normalized_internal_text,
+                    internal_language=internal_resolution_language,
+                    mark_applied=True,
+                )
                 interp_dict["kind"] = json_kind
                 kind_raw = json_kind
             else:
@@ -4963,10 +5005,12 @@ class RuntimeTurnGraphExecutor:
                 intent_fields["session_input_language"] = session_input_lang
                 intent_fields["session_output_language"] = session_output_lang
                 intent_fields["input_translation_status"] = translation.get("status")
-                if normalized_english_text:
-                    intent_fields["normalized_internal_text"] = normalized_english_text
-                    intent_fields["normalized_english_text"] = normalized_english_text
-                    intent_fields["input_translation_applied"] = True
+                _attach_internal_normalization(
+                    intent_fields,
+                    normalized_internal_text=normalized_internal_text,
+                    internal_language=internal_resolution_language,
+                    mark_applied=True,
+                )
                 if silence_negative_space_active:
                     intent_fields["silence_negative_space_signal"] = True
                     intent_fields["silence_negative_space_signal_source"] = (
@@ -4998,9 +5042,11 @@ class RuntimeTurnGraphExecutor:
             interpreted_move_payload["semantic_action"] = dict(interp_dict["semantic_action"])
         if isinstance(interp_dict.get("semantic_move"), dict):
             interpreted_move_payload["semantic_move"] = dict(interp_dict["semantic_move"])
-        if normalized_english_text:
-            interpreted_move_payload["normalized_internal_text"] = normalized_english_text
-            interpreted_move_payload["normalized_english_text"] = normalized_english_text
+        _attach_internal_normalization(
+            interpreted_move_payload,
+            normalized_internal_text=normalized_internal_text,
+            internal_language=internal_resolution_language,
+        )
         update["interpreted_move"] = interpreted_move_payload
         update["task_type"] = task_type
         turn_number = int(state.get("turn_number") or 0)
@@ -5022,7 +5068,10 @@ class RuntimeTurnGraphExecutor:
                     "semantic_kind": interp_dict.get("kind"),
                     "action_text": interp_dict.get("action_text"),
                     "speech_text": interp_dict.get("speech_text"),
-                    "normalized_english_text_present": bool(interp_dict.get("normalized_english_text")),
+                    "normalized_internal_text_present": bool(interp_dict.get("normalized_internal_text")),
+                    "normalized_english_compatibility_alias_present": bool(
+                        interp_dict.get("normalized_english_text")
+                    ),
                     "input_translation_status": interp_dict.get("input_translation_status"),
                     "semantic_resolution_required": bool(interp_dict.get("semantic_resolution_required")),
                     "narrator_response_expected": bool(interp_dict.get("narrator_response_expected")),
@@ -5173,11 +5222,13 @@ class RuntimeTurnGraphExecutor:
         query_context, query_signal = _retrieval_continuity_query_context(state)
         interp_for_query = state.get("interpreted_input") if isinstance(state.get("interpreted_input"), dict) else {}
         translation_for_query = state.get("input_translation") if isinstance(state.get("input_translation"), dict) else {}
-        normalized_query = str(
-            interp_for_query.get("normalized_english_text")
-            or translation_for_query.get("normalized_english_text")
-            or ""
-        ).strip()
+        internal_language = str(
+            translation_for_query.get("internal_resolution_language") or "en"
+        ).strip().lower()[:2] or "en"
+        normalized_query = _normalized_internal_value(
+            interp_for_query,
+            internal_language,
+        ) or _normalized_internal_value(translation_for_query, internal_language)
         raw_query = str(state.get("player_input") or "")
         query_head = normalized_query or raw_query
         query_str = f"{query_head}\nscene:{state['current_scene_id']}\nmodule:{state['module_id']}"
@@ -5322,7 +5373,10 @@ class RuntimeTurnGraphExecutor:
         )
         base = raw_query
         if normalized_query and normalized_query != raw_query:
-            base = f"{base}\n\nInternal normalized English input:\n{normalized_query}"
+            base = (
+                f"{base}\n\nInternal normalized input ({internal_language}):\n"
+                f"{normalized_query}"
+            )
         if context_text:
             base = f"{base}\n\n{context_text}"
         prompt = f"{base}\n\n{interpretation_block}"
@@ -6010,7 +6064,8 @@ class RuntimeTurnGraphExecutor:
         language = str(plan.get("language_target") or state.get("session_output_language") or "de")
         frame = state.get("player_action_frame") if isinstance(state.get("player_action_frame"), dict) else {}
         raw_player = str(state.get("player_input") or "").strip()
-        normalized_en = str(frame.get("normalized_english_text") or "").strip()
+        internal_language = str(frame.get("internal_resolution_language") or "en").strip().lower()[:2] or "en"
+        normalized_internal = _normalized_internal_value(frame, internal_language)
         target_id = str(frame.get("resolved_target_id") or "").strip() or None
         target_type = str(frame.get("resolved_target_type") or "").strip().lower() or None
         outcome = (plan.get("outcome_disposition") or {}).get("outcome") or "success"
@@ -6041,8 +6096,10 @@ class RuntimeTurnGraphExecutor:
             "invented details. Use second-person address.",
             f"raw_player_input: {raw_player}",
         ]
-        if normalized_en:
-            prompt_lines.append(f"normalized_english_text: {normalized_en}")
+        if normalized_internal:
+            prompt_lines.append(
+                f"normalized_internal_text[{internal_language}]: {normalized_internal}"
+            )
         if target_id:
             prompt_lines.append(f"resolved_target_id: {target_id}")
         destination_block = _destination_context_block(sam, target_id, target_type, language)

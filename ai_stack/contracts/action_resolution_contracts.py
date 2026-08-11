@@ -149,12 +149,20 @@ class PlayerActionFrameContract:
     validation_surface: str | None = None
     projection_rule_id: str | None = None
     normalized_internal_text: str | None = None
+    # Read/write compatibility only for envelopes whose internal language is English.
     normalized_english_text: str | None = None
     internal_resolution_language: str = "en"
     session_input_language: str | None = None
     session_output_language: str | None = None
     semantic_inference: dict[str, Any] | None = None
     canonical_path_effect: str | None = None
+
+    def __post_init__(self) -> None:
+        self.internal_resolution_language = (
+            str(self.internal_resolution_language or "en").strip().lower()[:2] or "en"
+        )
+        if self.internal_resolution_language != "en":
+            self.normalized_english_text = None
 
     def to_dict(self) -> dict[str, Any]:
         aff = self.affordance_resolution.to_dict()

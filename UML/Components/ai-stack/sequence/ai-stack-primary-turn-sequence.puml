@@ -11,6 +11,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: ai
 ' bt-element-id: executor
 ' bt-element-id: ingress
+' bt-element-id: semantic_input
 ' bt-element-id: retrieval
 ' bt-element-id: director
 ' bt-element-id: capabilities
@@ -21,7 +22,8 @@ skinparam maxMessageSize 180
 participant "World Engine\nResponsibility: Provide authoritative session context and accept or reject proposals\nContract: Turn request and validated proposal boundary\n[[../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py source]]" as world
 participant "AI Stack\nResponsibility: Produce bounded narrative proposals and evidence\nContract: No direct authoritative session write\n[[../../../../ai_stack/__init__.py source]]\n[[../components/c4-container.puml drill-down]]" as ai
 participant "LangGraph Runtime Executor\nResponsibility: Coordinate the proposal pipeline\nContract: Prepared state in; proposal package out\n[[../../../../ai_stack/langgraph/runtime_executor/public.py source]]\n[[../components/c4-component.puml drill-down]]" as executor
-participant "Semantic Input Translation\nResponsibility: Translate player text into bounded intent evidence\nContract: Semantic input record without invented state\n[[../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py source]]" as ingress
+participant "Semantic Input Translation\nResponsibility: Normalize player text to the module-declared internal language and preserve provenance\nContract: Neutral semantic input; English alias only for English compatibility envelopes\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]" as ingress
+participant "SemanticInputRecord\nResponsibility: Carry raw input, neutral internal normalization and language provenance\nContract: normalized_internal_text is primary; compatibility alias is language-gated\n[[../../../../ai_stack/contracts/action_resolution_contracts.py source]]" as semantic_input
 participant "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval
 participant "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
 participant "Capability Registry\nResponsibility: Select allowed runtime capabilities\nContract: Evidence-gated capability plan\n[[../../../../ai_stack/capabilities/capability_selector.py source]]" as capabilities
@@ -31,8 +33,9 @@ participant "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and 
 
 world -> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]"
 ai -> executor : "dispatches proposal run\ncontract: one governed executor invocation per proposal request\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
-executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
-ingress -> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+ingress -> semantic_input : "emits neutral input record\ncontract: module-declared internal language and source provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+semantic_input -> retrieval : "keys grounded retrieval\ncontract: neutral internal query with raw-input provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
 director -> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"
 director -> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"

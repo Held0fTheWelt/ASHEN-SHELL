@@ -171,6 +171,46 @@ def test_ai_semantic_resolution_preserves_internal_english_normalization() -> No
     assert frame["target_query"] == "kitchen"
 
 
+def test_non_english_internal_resolution_prefers_neutral_fields() -> None:
+    interpreted = _semantic_interpreted(
+        verb="move_to",
+        action_kind="movement",
+        target_query="Kueche",
+        target_id="kitchen",
+        target_type="location",
+        extra_semantic={
+            "normalized_internal_text": "Gehe in die Kueche",
+            "normalized_english_text": "Go to the kitchen",
+            "normalized_english_action_kind": "wrong_legacy_kind",
+            "normalized_english_verb": "wrong_legacy_verb",
+            "target_query_english": "wrong legacy target",
+        },
+    )
+    interpreted["semantic_resolution_contract"] = {
+        "input": {
+            "session_input_language": "de",
+            "session_output_language": "de",
+            "internal_resolution_language": "de",
+        }
+    }
+
+    out = resolve_player_action(
+        raw_text="Gehe in die Kueche",
+        interpreted_input=interpreted,
+        module_id="god_of_carnage",
+        runtime_projection=_runtime_projection(),
+        content_modules_root=_content_root(),
+    )
+
+    frame = out["player_action_frame"]
+    assert frame["normalized_internal_text"] == "Gehe in die Kueche"
+    assert frame["normalized_english_text"] is None
+    assert frame["internal_resolution_language"] == "de"
+    assert frame["action_kind"] == "movement"
+    assert frame["verb"] == "move_to"
+    assert frame["target_query"] == "Kueche"
+
+
 def test_ai_semantic_stairwell_resolution_is_prevented_not_forbidden() -> None:
     out = resolve_player_action(
         raw_text="Gehe ins Treppenhaus",

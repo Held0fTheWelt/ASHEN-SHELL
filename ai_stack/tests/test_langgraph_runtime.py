@@ -398,6 +398,81 @@ def test_translate_player_input_skips_adapter_for_english_input(tmp_path: Path) 
     assert translator.prompts == []
 
 
+def test_non_english_internal_input_never_populates_english_alias(tmp_path: Path) -> None:
+    graph = _build_graph(tmp_path)
+    state = {
+        "module_id": "module_de",
+        "player_input": "Gehe in die Kueche",
+        "session_input_language": "de",
+        "session_output_language": "de",
+        "turn_number": 1,
+        "module_runtime_policy": {
+            "language_policy": {
+                "authoring_language": "de",
+                "internal_resolution_language": "de",
+                "default_session_output_language": "de",
+            }
+        },
+    }
+
+    translated = graph._translate_player_input(state)["input_translation"]
+    assert translated["normalized_internal_text"] == "Gehe in die Kueche"
+    assert "normalized_english_text" not in translated
+
+    interpreted = graph._interpret_input({**state, "input_translation": translated})
+    assert interpreted["interpreted_input"]["normalized_internal_text"] == "Gehe in die Kueche"
+    assert "normalized_english_text" not in interpreted["interpreted_input"]
+    assert interpreted["interpreted_move"]["normalized_internal_text"] == "Gehe in die Kueche"
+    assert "normalized_english_text" not in interpreted["interpreted_move"]
+
+
+def test_realization_prompt_labels_non_english_internal_text_neutrally(tmp_path: Path) -> None:
+    graph = _build_graph(tmp_path)
+    update = graph._realize_via_capabilities(
+        {
+            "player_input": "Gehe in die Kueche",
+            "session_output_language": "de",
+            "task_type": "narrative_formulation",
+            "realization_plan": {
+                "capabilities_selected": ["narrator.clarification.describe"],
+                "outcome_disposition": {"outcome": "partial", "reason": "test"},
+            },
+            "player_action_frame": {
+                "normalized_internal_text": "Gehe in die Kueche",
+                "internal_resolution_language": "de",
+            },
+        }
+    )
+
+    assert "normalized_internal_text[de]: Gehe in die Kueche" in update["model_prompt"]
+    assert "normalized_english_text" not in update["model_prompt"]
+
+
+def test_retrieval_prompt_uses_non_english_internal_text_as_neutral_query(tmp_path: Path) -> None:
+    graph = _build_graph(tmp_path)
+    update = graph._retrieve_context(
+        {
+            "module_id": "module_de",
+            "current_scene_id": "wohnzimmer",
+            "player_input": "Ich gehe",
+            "turn_number": 1,
+            "task_type": "narrative_formulation",
+            "interpreted_input": {
+                "normalized_internal_text": "Gehe in die Kueche",
+                "kind": "action",
+                "intent": "movement",
+            },
+            "input_translation": {
+                "internal_resolution_language": "de",
+                "normalized_internal_text": "Gehe in die Kueche",
+            },
+        }
+    )
+
+    assert "Internal normalized input (de):\nGehe in die Kueche" in update["model_prompt"]
+    assert "Internal normalized English input" not in update["model_prompt"]
+
+
 def test_translate_output_skips_adapter_for_english_output() -> None:
     translator = OutputTranslationAdapter(["unused"])
     graph = _output_translation_executor(translator)

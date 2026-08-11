@@ -481,7 +481,7 @@
       ],
       "id": "D18",
       "state": "bound",
-      "status": "Accepted; neutral-field migration incomplete",
+      "status": "Accepted; neutral consumers implemented, live replay proof open",
       "title": "Language is declared by the module, not by the engine"
     },
     {
@@ -6049,7 +6049,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 4090,
+        "line": 4124,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeTurnGraphExecutor"
@@ -6061,7 +6061,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3701,
+        "line": 3735,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "complete_actor_locations_for_gathering"
@@ -6073,7 +6073,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3862,
+        "line": 3896,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "complete_actor_locations_for_gathering_with_optional_w5_projection"
@@ -6085,7 +6085,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3974,
+        "line": 4008,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_w5_first_actor_locations"
@@ -6097,7 +6097,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 2665,
+        "line": 2699,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_w5_first_npc_context"
@@ -6109,7 +6109,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3839,
+        "line": 3873,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "w5_ast_director_projection_enabled"
@@ -6121,7 +6121,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 2542,
+        "line": 2576,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "w5_ast_npc_projection_enabled"
@@ -12529,7 +12529,7 @@
       "anchor": {
         "file": "ai_stack/story_runtime/player_action_resolution.py",
         "kind": "python",
-        "line": 1170,
+        "line": 1177,
         "module": "ai_stack.story_runtime.player_action_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_player_action"
@@ -16079,11 +16079,10 @@
     },
     {
       "anchors": [
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
         "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
-        "ai_stack/langgraph/runtime_executor/semantic_input_translation.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
         "ai_stack/quality_lab/evaluation_pipeline.py",
@@ -16114,13 +16113,11 @@
     {
       "anchors": [
         "ai_stack/capabilities/capability_selector.py",
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py",
-        "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
         "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
         "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
-        "ai_stack/langgraph/runtime_executor/semantic_input_translation.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
         "ai_stack/rag/rag_context_pack_build.py",
@@ -16134,7 +16131,8 @@
         "D1",
         "D5",
         "D6",
-        "D12"
+        "D12",
+        "D18"
       ],
       "element_count": 8,
       "id": "proposal-components",
@@ -16148,14 +16146,13 @@
       "anchors": [
         "ai_stack/__init__.py",
         "ai_stack/capabilities/capability_selector.py",
+        "ai_stack/contracts/action_resolution_contracts.py",
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py",
-        "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
         "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
         "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
         "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
-        "ai_stack/langgraph/runtime_executor/semantic_input_translation.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
         "ai_stack/rag/rag_context_pack_build.py",
@@ -16170,23 +16167,22 @@
       "decisions": [
         "D1",
         "D5",
-        "D6"
+        "D6",
+        "D18"
       ],
-      "element_count": 10,
+      "element_count": 11,
       "id": "primary-turn",
       "kind": "sequence",
       "level": "sequence",
       "path": "UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.puml",
-      "relationship_count": 11,
+      "relationship_count": 12,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
       "anchors": [
-        "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py",
-        "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
+        "ai_stack/contracts/action_resolution_contracts.py",
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/langgraph/runtime_executor/public.py",
-        "ai_stack/langgraph/runtime_executor/semantic_input_translation.py",
         "ai_stack/rag/rag_context_pack_assembler.py",
         "ai_stack/rag/rag_context_pack_build.py",
         "ai_stack/rag/retrieval_context_bundles.py",
@@ -16195,21 +16191,26 @@
       "concern": "How a runtime query becomes a bounded provenance-preserving context pack",
       "decisions": [
         "D3",
-        "D4"
+        "D4",
+        "D18"
       ],
-      "element_count": 5,
+      "element_count": 6,
       "id": "retrieval-fabric",
       "kind": "sequence",
       "level": "sequence",
       "path": "UML/Components/ai-stack/sequence/rag-context-fabric-sequence.puml",
-      "relationship_count": 4,
+      "relationship_count": 5,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
       "anchors": [
+        "ai_stack/contracts/action_resolution_contracts.py",
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/langgraph/langgraph_runtime_package_output.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
+        "ai_stack/rag/rag_context_pack_assembler.py",
+        "ai_stack/rag/rag_context_pack_build.py",
         "ai_stack/rag/retrieval_context_bundles.py",
         "ai_stack/story_runtime/director/director_realization_composer.py",
         "ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py",
@@ -16224,14 +16225,15 @@
         "D4",
         "D6",
         "D12",
-        "D17"
+        "D17",
+        "D18"
       ],
-      "element_count": 9,
+      "element_count": 12,
       "id": "runtime-data",
       "kind": "class",
       "level": "class",
       "path": "UML/Components/ai-stack/classes/runtime-proposal-data-model.puml",
-      "relationship_count": 5,
+      "relationship_count": 8,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {

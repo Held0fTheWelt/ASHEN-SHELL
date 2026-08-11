@@ -7,6 +7,9 @@ skinparam shadowing false
 skinparam wrapWidth 220
 skinparam maxMessageSize 180
 
+' bt-element-id: ingress
+' bt-element-id: semantic_input
+' bt-element-id: retrieval
 ' bt-element-id: director
 ' bt-element-id: narrator
 ' bt-element-id: validator
@@ -17,6 +20,19 @@ skinparam maxMessageSize 180
 ' bt-element-id: proposal
 ' bt-element-id: aspect
 
+class "Semantic Input Translation\nResponsibility: Normalize player text to the module-declared internal language and preserve provenance\nContract: Neutral semantic input; English alias only for English compatibility envelopes\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]" as ingress {
+
+}
+class "SemanticInputRecord\nResponsibility: Carry raw input, neutral internal normalization and language provenance\nContract: normalized_internal_text is primary; compatibility alias is language-gated\n[[../../../../ai_stack/contracts/action_resolution_contracts.py source]]" as semantic_input {
+  raw_text
+  normalized_internal_text
+  internal_resolution_language
+  session_input_language
+  session_output_language
+}
+class "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval {
+
+}
 class "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director {
 
 }
@@ -66,6 +82,9 @@ ledger ..> aspect : "aggregates\ncontract: one record per supported aspect\n[[..
 plan ..> narrative_move : "projects advisory move\ncontract: configured off-path or reference-rejoin relation\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py source]]"
 plan ..> narrator : "guides\ncontract: realization constraints\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
 validator ..> proposal : "annotates\ncontract: validation result and retry feedback\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
+ingress ..> semantic_input : "emits neutral input record\ncontract: module-declared internal language and source provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+semantic_input ..> retrieval : "keys grounded retrieval\ncontract: neutral internal query with raw-input provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+retrieval ..> context_pack : "builds\ncontract: ranked and budgeted context\n[[../../../../ai_stack/rag/rag_context_pack_assembler.py source]]"
 
 legend bottom
 Viewpoint: class

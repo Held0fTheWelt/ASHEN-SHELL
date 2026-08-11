@@ -29,7 +29,7 @@ ADRs and executable closure evidence.
 | `AR-V008` | `nonconforming` | Medium | arc42 structure is present but major SADs remain ADR accumulations | ADR-0006 | DRIFT-011, DRIFT-012 |
 | `AR-V009` | `resolved` | High | Aggregate coverage counted unmapped code as represented | ADR-0006 | DRIFT-012 |
 | `AR-V010` | `proof-gap` | High | Bounded emergence is repaired, but full live-model replay evidence is still incomplete | ADR-0007 | DRIFT-003, DRIFT-005 |
-| `AR-V011` | `nonconforming` | High | English-named compatibility fields remain below the repaired module-language boundary | ADR-0008 | DRIFT-004 |
+| `AR-V011` | `proof-gap` | High | Neutral language consumers are repaired; non-English live replay remains unproven | ADR-0008 | DRIFT-004 |
 
 ## Detailed violations
 
@@ -159,14 +159,18 @@ ADRs and executable closure evidence.
 
 - **Historical cause:** semantic translation was designed around the first English-authored module
   and the implementation promoted that module choice into an engine rule.
-- **Current evidence:** the repaired boundary emits `normalized_internal_text` and source-aware
-  output provenance, while downstream action and narrator paths still read
-  `normalized_english_text` as a compatibility alias.
-- **Conflict:** a non-English internal module can cross the boundary correctly but is not yet proven
-  through every legacy consumer.
+- **Repair now present:** ingress, interpretation, action resolution, retrieval and realization use
+  `normalized_internal_text` as their primary field. One explicit compatibility reader accepts
+  `normalized_english_text` only when `internal_resolution_language == en`; non-English envelopes
+  cannot populate or override the alias.
+- **Evidence now present:** non-English unit/integration paths cover same-language ingress,
+  interpreted envelopes, action-frame precedence, retrieval query construction and realization
+  prompts. Existing English envelopes retain their compatibility alias.
+- **Remaining gap:** a persisted, full graph-to-World-Engine replay from a genuinely non-English
+  module declaration is not yet recorded.
 - **Target:** [ADR-0008](../decisions/ADR-0008-module-language-boundaries.md).
-- **Closure:** migrate all consumers to neutral names, retain an explicit schema adapter for old
-  envelopes, then add non-English module end-to-end replay tests.
+- **Closure:** retain the neutral-consumer and compatibility tests, then add the non-English module
+  end-to-end replay fixture.
 
 ## Provenance
 

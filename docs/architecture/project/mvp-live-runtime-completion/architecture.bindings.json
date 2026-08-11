@@ -6773,7 +6773,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 4090,
+        "line": 4124,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "RuntimeTurnGraphExecutor"
@@ -6785,7 +6785,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3701,
+        "line": 3735,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "complete_actor_locations_for_gathering"
@@ -6797,7 +6797,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3862,
+        "line": 3896,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "complete_actor_locations_for_gathering_with_optional_w5_projection"
@@ -6809,7 +6809,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3974,
+        "line": 4008,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_w5_first_actor_locations"
@@ -6821,7 +6821,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 2665,
+        "line": 2699,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_w5_first_npc_context"
@@ -6833,7 +6833,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 3839,
+        "line": 3873,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "w5_ast_director_projection_enabled"
@@ -6845,7 +6845,7 @@
       "anchor": {
         "file": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "kind": "python",
-        "line": 2542,
+        "line": 2576,
         "module": "ai_stack.langgraph.langgraph_runtime_executor_impl",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "w5_ast_npc_projection_enabled"
@@ -13253,7 +13253,7 @@
       "anchor": {
         "file": "ai_stack/story_runtime/player_action_resolution.py",
         "kind": "python",
-        "line": 1170,
+        "line": 1177,
         "module": "ai_stack.story_runtime.player_action_resolution",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "resolve_player_action"

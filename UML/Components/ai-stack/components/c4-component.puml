@@ -17,7 +17,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: ledger
 
 rectangle "LangGraph Runtime Executor\nResponsibility: Coordinate the proposal pipeline\nContract: Prepared state in; proposal package out\n[[../../../../ai_stack/langgraph/runtime_executor/public.py source]]\n[[c4-component.puml drill-down]]" as executor
-component "Semantic Input Translation\nResponsibility: Translate player text into bounded intent evidence\nContract: Semantic input record without invented state\n[[../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py source]]" as ingress
+component "Semantic Input Translation\nResponsibility: Normalize player text to the module-declared internal language and preserve provenance\nContract: Neutral semantic input; English alias only for English compatibility envelopes\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]" as ingress
 component "RAG Context Fabric\nResponsibility: Assemble governed continuity and knowledge context\nContract: Bounded context pack with provenance\n[[../../../../ai_stack/rag/rag_context_pack_build.py source]]" as retrieval
 component "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
 component "Capability Registry\nResponsibility: Select allowed runtime capabilities\nContract: Evidence-gated capability plan\n[[../../../../ai_stack/capabilities/capability_selector.py source]]" as capabilities
@@ -25,8 +25,8 @@ component "Narrator\nResponsibility: Realize visible narrative blocks\nContract:
 component "Proposal Validator\nResponsibility: Evaluate seams, capabilities and retry feedback\nContract: Accepted proposal or actionable rejection\n[[../../../../ai_stack/langgraph/validation/builder.py source]]" as validator
 component "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger
 
-executor ..> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
-ingress ..> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+executor ..> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+ingress ..> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 retrieval ..> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
 director ..> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"
 director ..> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"

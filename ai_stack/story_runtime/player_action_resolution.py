@@ -218,7 +218,7 @@ def _semantic_bool(semantic: dict[str, Any], *keys: str) -> bool:
     return False
 
 
-def _slug_from_english_text(value: str) -> str:
+def _slug_from_internal_text(value: str) -> str:
     folded = fold_unicode(value)
     slug = re.sub(r"[^a-z0-9]+", "_", folded).strip("_")
     return slug[:64] or "target"
@@ -307,7 +307,7 @@ def _inferred_target_from_semantics(
         return None
     inferred_type = inferred_type or "object"
     provided_id = _semantic_text(semantic, "inferred_target_id", "inferred_object_id")
-    slug = _slug_from_english_text(provided_id or str(target_query or ""))
+    slug = _slug_from_internal_text(provided_id or str(target_query or ""))
     prefix = str(silent_policy.get("runtime_target_id_prefix") or "inferred_local").strip() or "inferred_local"
     inferred_id = provided_id if provided_id else f"{prefix}_{slug}"
     mode = _semantic_text(
@@ -853,6 +853,24 @@ def _semantic_action_fields(
     interpreted_input: dict[str, Any],
 ) -> dict[str, Any]:
     resolved_pik = str(semantic.get("player_input_kind") or pik).strip().lower() or pik
+    internal_resolution_language = _internal_resolution_language(semantic, interpreted_input)
+    normalized_internal_text = str(semantic.get("normalized_internal_text") or "").strip()
+    if not normalized_internal_text and internal_resolution_language == "en":
+        normalized_internal_text = str(
+            semantic.get("normalized_english_text")
+            or semantic.get("english_text")
+            or semantic.get("internal_english_text")
+            or ""
+        ).strip()
+    normalized_english_text = None
+    if internal_resolution_language == "en":
+        normalized_english_text = str(
+            semantic.get("normalized_english_text")
+            or semantic.get("english_text")
+            or semantic.get("internal_english_text")
+            or normalized_internal_text
+            or ""
+        ).strip() or None
     speech_text = str(semantic.get("speech_text") or "").strip() or None
     if is_mixed_player_input_kind(resolved_pik) and not speech_text:
         captures = interpreted_input.get("projection_captures")
@@ -860,32 +878,21 @@ def _semantic_action_fields(
             speech_text = str(captures.get("speech") or "").strip() or None
     return {
         "pik": resolved_pik,
-        "normalized_internal_text": str(
-            semantic.get("normalized_internal_text")
-            or semantic.get("normalized_english_text")
-            or semantic.get("english_text")
-            or semantic.get("internal_english_text")
-            or ""
-        ).strip() or None,
-        "normalized_english_text": str(
-            semantic.get("normalized_english_text")
-            or semantic.get("english_text")
-            or semantic.get("internal_english_text")
-            or ""
-        ).strip() or None,
-        "internal_resolution_language": _internal_resolution_language(semantic, interpreted_input),
+        "normalized_internal_text": normalized_internal_text or None,
+        "normalized_english_text": normalized_english_text,
+        "internal_resolution_language": internal_resolution_language,
         "action_kind": str(
-            semantic.get("normalized_english_action_kind")
-            or semantic.get("action_kind")
+            semantic.get("action_kind")
+            or semantic.get("normalized_english_action_kind")
             or "semantic_action"
         ).strip() or "semantic_action",
-        "verb": str(semantic.get("normalized_english_verb") or semantic.get("verb") or "semantic_action").strip()
+        "verb": str(semantic.get("verb") or semantic.get("normalized_english_verb") or "semantic_action").strip()
         or "semantic_action",
         "speech_text": speech_text,
         "target_query": str(
-            semantic.get("target_query_english")
+            semantic.get("target_query")
+            or semantic.get("target_query_english")
             or semantic.get("english_target_query")
-            or semantic.get("target_query")
             or ""
         ).strip() or None,
         "target_id": str(semantic.get("resolved_target_id") or semantic.get("target_id") or "").strip() or None,
@@ -945,9 +952,9 @@ def _semantic_source_resolution(
     confidence: str,
 ) -> tuple[str | None, ResolvedTarget | None, str | None]:
     source_query = str(
-        semantic.get("source_query_english")
+        semantic.get("source_query")
+        or semantic.get("source_query_english")
         or semantic.get("english_source_query")
-        or semantic.get("source_query")
         or ""
     ).strip() or None
     source_id = str(semantic.get("resolved_source_id") or "").strip() or None

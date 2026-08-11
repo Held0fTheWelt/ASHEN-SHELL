@@ -1,7 +1,7 @@
 # ADR-0008 — Module-owned semantic and output language boundaries
 
 **Decision status:** Accepted
-**Implementation state:** Partial
+**Implementation state:** Implemented; live replay proof gap
 **Owners:** AI Stack, Content Authority
 **Date:** 2026-08-11
 **Violations:** `AR-V011`
@@ -36,20 +36,22 @@ flatten or reclassify blocks.
 
 ## Consequences
 
-English is a valid module choice, not an engine invariant. Existing English-named downstream
-fields remain visible as migration debt until all consumers use the neutral field. Missing source
-language is interpreted from the module policy and reported as compatibility behavior, never from
-the target language.
+English is a valid module choice, not an engine invariant. The English-named input field remains a
+schema compatibility alias, not a downstream semantic dependency. Missing source language is
+interpreted from the module policy and reported as compatibility behavior, never from the target
+language.
 
 ## Implementation correspondence
 
 | Target element | Current evidence | State | Closure evidence |
 | --- | --- | --- | --- |
 | Module declaration | `content/modules/god_of_carnage/module.yaml#language` | Conforming | loader test |
-| Neutral ingress contract | `language_io/language_adapter.py::build_semantic_resolution_contract` | Implementing | non-English module test |
-| Runtime source-aware ingress | `langgraph_runtime_executor_impl.py::_translate_player_input` | Implementing | same/different internal-language tests |
-| Runtime source-aware egress | `langgraph_runtime_executor_impl.py::_translate_output` | Implementing | non-English-source-to-English test |
-| Neutral action frame | `contracts/action_resolution_contracts.py::PlayerActionFrameContract` | Partial | compatibility-alias removal gate |
+| Neutral ingress contract | `language_io/language_adapter.py::build_semantic_resolution_contract` | Conforming | contract test |
+| Runtime source-aware ingress | `langgraph_runtime_executor_impl.py::_translate_player_input` | Conforming | same/different internal-language tests |
+| Neutral internal consumers | interpretation, retrieval and realization in `langgraph_runtime_executor_impl.py` | Conforming | non-English consumer-path tests |
+| Runtime source-aware egress | `langgraph_runtime_executor_impl.py::_translate_output` | Conforming | non-English-source-to-English test |
+| Neutral action frame | `contracts/action_resolution_contracts.py::PlayerActionFrameContract` | Conforming | neutral precedence and English-compatibility tests |
+| Persisted graph-to-engine replay | full runtime fixture | Proof gap | non-English module replay test |
 
 ## Git and AKDB lineage
 

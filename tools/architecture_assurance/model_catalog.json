@@ -340,9 +340,9 @@
         "ingress": {
           "type": "component",
           "name": "Semantic Input Translation",
-          "responsibility": "Translate player text into bounded intent evidence",
-          "contract": "Semantic input record without invented state",
-          "anchor": "ai_stack/langgraph/runtime_executor/semantic_input_translation.py"
+          "responsibility": "Normalize player text to the module-declared internal language and preserve provenance",
+          "contract": "Neutral semantic input; English alias only for English compatibility envelopes",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py"
         },
         "retrieval": {
           "type": "component",
@@ -453,6 +453,20 @@
             "budget"
           ]
         },
+        "semantic_input": {
+          "type": "class",
+          "name": "SemanticInputRecord",
+          "responsibility": "Carry raw input, neutral internal normalization and language provenance",
+          "contract": "normalized_internal_text is primary; compatibility alias is language-gated",
+          "anchor": "ai_stack/contracts/action_resolution_contracts.py",
+          "members": [
+            "raw_text",
+            "normalized_internal_text",
+            "internal_resolution_language",
+            "session_input_language",
+            "session_output_language"
+          ]
+        },
         "proposal": {
           "type": "class",
           "name": "Runtime Proposal",
@@ -540,7 +554,7 @@
           "to": "ingress",
           "label": "interprets input",
           "contract": "semantic intent envelope",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 3
         },
         "ingress_retrieval": {
@@ -548,8 +562,24 @@
           "to": "retrieval",
           "label": "queries grounded context",
           "contract": "bounded retrieval query",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 4
+        },
+        "ingress_semantic_input": {
+          "from": "ingress",
+          "to": "semantic_input",
+          "label": "emits neutral input record",
+          "contract": "module-declared internal language and source provenance",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+          "order": 4
+        },
+        "semantic_input_retrieval": {
+          "from": "semantic_input",
+          "to": "retrieval",
+          "label": "keys grounded retrieval",
+          "contract": "neutral internal query with raw-input provenance",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+          "order": 5
         },
         "retrieval_director": {
           "from": "retrieval",
@@ -605,7 +635,15 @@
           "label": "builds",
           "contract": "ranked and budgeted context",
           "anchor": "ai_stack/rag/rag_context_pack_assembler.py",
-          "order": 5
+          "order": 6
+        },
+        "context_pack_director": {
+          "from": "context_pack",
+          "to": "director",
+          "label": "supplies bounded context",
+          "contract": "ranked citations and continuity facts",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
+          "order": 7
         },
         "director_plan": {
           "from": "director",
@@ -793,7 +831,8 @@
             "D1",
             "D5",
             "D6",
-            "D12"
+            "D12",
+            "D18"
           ]
         },
         {
@@ -807,6 +846,7 @@
             "ai",
             "executor",
             "ingress",
+            "semantic_input",
             "retrieval",
             "director",
             "capabilities",
@@ -818,7 +858,8 @@
             "world_ai",
             "ai_executor",
             "executor_ingress",
-            "ingress_retrieval",
+            "ingress_semantic_input",
+            "semantic_input_retrieval",
             "retrieval_director",
             "director_capabilities",
             "director_narrator",
@@ -830,7 +871,8 @@
           "decisions": [
             "D1",
             "D5",
-            "D6"
+            "D6",
+            "D18"
           ]
         },
         {
@@ -842,19 +884,22 @@
           "elements": [
             "executor",
             "ingress",
+            "semantic_input",
             "retrieval",
             "context_pack",
             "director"
           ],
           "relationships": [
             "executor_ingress",
-            "ingress_retrieval",
+            "ingress_semantic_input",
+            "semantic_input_retrieval",
             "retrieval_context_pack",
-            "retrieval_director"
+            "context_pack_director"
           ],
           "decisions": [
             "D3",
-            "D4"
+            "D4",
+            "D18"
           ]
         },
         {
@@ -864,6 +909,9 @@
           "title": "AI Stack — Runtime Proposal Data Model",
           "concern": "Data contracts carried between retrieval, planning, realization and validation",
           "elements": [
+            "ingress",
+            "semantic_input",
+            "retrieval",
             "director",
             "narrator",
             "validator",
@@ -875,6 +923,9 @@
             "aspect"
           ],
           "relationships": [
+            "ingress_semantic_input",
+            "semantic_input_retrieval",
+            "retrieval_context_pack",
             "director_plan",
             "plan_narrative_move",
             "plan_narrator",
@@ -886,7 +937,8 @@
             "D4",
             "D6",
             "D12",
-            "D17"
+            "D17",
+            "D18"
           ]
         },
         {
