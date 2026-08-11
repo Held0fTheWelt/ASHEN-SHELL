@@ -176,6 +176,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | Runtime Aspect Ledger | RuntimeAspectRecord | aggregates | one record per supported aspect | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
 | Runtime Aspect Ledger | LangGraph Runtime Executor | returns evidence projection | proposal package metadata | [`ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py) |
 | Narrator | Proposal Validator | submits proposal | visible blocks plus proposed delta | [`ai_stack/langgraph/runtime_executor/executor_validation_commit.py`](../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py) |
+| SemanticScenePlan | NarrativeMoveProposal | projects advisory move | configured off-path or reference-rejoin relation | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py) |
 | SemanticScenePlan | Narrator | guides | realization constraints | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
 | Quality Lab | Runtime Aspect Ledger | reads trace aspects | evaluation-only projection | [`ai_stack/quality_lab/trace_interpreter.py`](../../../../ai_stack/quality_lab/trace_interpreter.py) |
 | Research Lane | Quality Lab | uses evaluation evidence | draft improvement finding | [`ai_stack/research/research_validation.py`](../../../../ai_stack/research/research_validation.py) |
@@ -1267,7 +1268,7 @@ data.
 | `D1`, `D5`, `D6`, `D12` | Internal responsibilities and contracts on the canonical proposal path | `component` | [AI Stack — Proposal Pipeline Components](../../../../UML/Components/ai-stack/components/c4-component.md) |
 | `D1`, `D5`, `D6` | Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) |
 | `D3`, `D4` | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) |
-| `D3`, `D4`, `D6`, `D12` | Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](../../../../UML/Components/ai-stack/classes/runtime-proposal-data-model.md) |
+| `D3`, `D4`, `D6`, `D12`, `D17` | Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](../../../../UML/Components/ai-stack/classes/runtime-proposal-data-model.md) |
 | `D15`, `D16` | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) |
 
 The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.

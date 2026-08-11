@@ -23,6 +23,7 @@ from .dialogue_plan import (
 )
 from .dramatic_beats import _dramatic_beats
 from .mappings import SEMANTIC_SCENE_PLANNER_VERSION, TRANSITION_PATTERNS
+from .narrative_move import build_narrative_move_proposal
 from .scene_target import (
     _narrative_scene_function,
     _pressure_function,
@@ -388,6 +389,15 @@ def _assemble_scene_plan_enrichment(
         actor_directives=actor_directives,
         turn_input_class=turn_input_class,
     )
+    narrative_move_proposal = build_narrative_move_proposal(
+        content_frame=content_frame,
+        selected_scene_function=state["scene_fn"],
+        narrative_scene_function=state["narrative_scene_function"],
+        pressure_function=state["pressure_function"],
+        scene_target=state["scene_target"],
+        continuity_obligation=state["obligation"],
+        selected_responder_set=selected_responder_set,
+    )
     rationale_codes = _scene_plan_rationale_codes(
         state=state,
         content_frame=content_frame,
@@ -395,6 +405,10 @@ def _assemble_scene_plan_enrichment(
         quote_moment_policy=quote_moment_policy,
         capability_manager_plan=capability_manager_plan,
         selection_source=selection_source,
+    )
+    _append_unique(
+        rationale_codes,
+        f"narrative_arc_relation:{narrative_move_proposal['arc_relation']}",
     )
     return _scene_plan_enrichment_payload(
         state=state,
@@ -408,6 +422,7 @@ def _assemble_scene_plan_enrichment(
         beats=beats,
         handover_policy=handover_policy,
         rationale_codes=rationale_codes,
+        narrative_move_proposal=narrative_move_proposal,
     )
 
 
@@ -424,6 +439,7 @@ def _scene_plan_enrichment_payload(
     beats: list[dict[str, Any]],
     handover_policy: dict[str, Any],
     rationale_codes: list[str],
+    narrative_move_proposal: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "semantic_scene_planner_version": SEMANTIC_SCENE_PLANNER_VERSION,
@@ -444,6 +460,7 @@ def _scene_plan_enrichment_payload(
         "continuity_obligation": state["obligation"],
         "expected_transition_pattern": state["transition"],
         "planner_rationale_codes": rationale_codes,
+        "narrative_move_proposal": narrative_move_proposal,
     }
 
 

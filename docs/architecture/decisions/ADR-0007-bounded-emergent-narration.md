@@ -39,6 +39,8 @@ runtime profile selects one active mode. In `bounded_emergence`:
   responder state, continuity, pacing and module policies;
 - canonical steps, quotes and mandatory beats are exposed as reference opportunities, not output
   obligations, on live player turns;
+- the Director emits a non-authoritative `NarrativeMoveProposal.v1` that records pressure intent,
+  arc relation and a configured reference-opportunity rejoin without granting write authority;
 - hard world, actor-lane, access, safety and continuity invariants remain mandatory;
 - an off-path action is absorbed into dramatic state and causes replanning rather than an
   automatic rejection or return to the same scripted line;
@@ -62,7 +64,8 @@ the script after the Director has planned an emergent response.
 | Profile selection | `runtime_profiles/god_of_carnage_solo.yaml#narrative_mode` | Conforming | profile override test |
 | Canonical reference demotion | `semantic_scene_plan/content_frame.py::_apply_narrative_governance` | Implementing | bounded vs reenactment planner tests |
 | LDSS compatibility boundary | `live_dramatic_scene_simulator.py::_run_canonical_ldss_path` | Implementing | mode-specific LDSS test |
-| State-only commit authority | ADR-0001 and World Engine commit resolver | Partial | one-writer plus off-path scenario test |
+| Narrative move and arc relation | `semantic_scene_plan/narrative_move.py` | Implemented | three-turn off-path/rejoin planner test |
+| State-only commit authority | ADR-0001 and World Engine commit resolver | Implementing | one-writer multi-turn manager test; live replay remains |
 
 ## Git and AKDB lineage
 

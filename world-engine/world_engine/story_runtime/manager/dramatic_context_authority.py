@@ -160,8 +160,21 @@ def _build_committed_turn_authority(
             "social_state": "narrative_commit.planner_truth.social_state_summary",
             "dramatic_context": "dramatic_context_summary",
             "player_visibility": "visible_output_bundle",
+            "narrative_move": "scene_plan_record.narrative_move_proposal",
         },
     }
+    scene_plan = (
+        graph_state.get("scene_plan_record")
+        if isinstance(graph_state.get("scene_plan_record"), dict)
+        else {}
+    )
+    narrative_move = (
+        scene_plan.get("narrative_move_proposal")
+        if isinstance(scene_plan.get("narrative_move_proposal"), dict)
+        else None
+    )
+    if narrative_move:
+        record["narrative_move_proposal"] = dict(narrative_move)
     if isinstance(dramatic_context_summary, dict) and dramatic_context_summary:
         record["dramatic_context_summary"] = dramatic_context_summary
     return record

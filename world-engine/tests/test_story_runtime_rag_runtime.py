@@ -98,7 +98,13 @@ class _FakeTurnGraph:
         return self._payload
 
 
-def _graph_envelope(*, interpreted_input: dict, generation: dict | None = None) -> dict:
+def _graph_envelope(
+    *,
+    interpreted_input: dict,
+    generation: dict | None = None,
+    visible_output_bundle: dict | None = None,
+    scene_plan_record: dict | None = None,
+) -> dict:
     gen = dict(generation or {"success": True, "metadata": {}})
     if "content" not in gen and "model_raw_text" not in gen:
         gen["content"] = "x" * 120
@@ -109,7 +115,10 @@ def _graph_envelope(*, interpreted_input: dict, generation: dict | None = None) 
         "retrieval": {"domain": "runtime", "status": "ok"},
         "routing": {"selected_model": "mock"},
         "validation_outcome": {"status": "approved", "reason": "rag_progression_fixture"},
-        "visible_output_bundle": {"gm_narration": ["RAG progression fixture narration."]},
+        "visible_output_bundle": dict(
+            visible_output_bundle or {"gm_narration": ["RAG progression fixture narration."]}
+        ),
+        "scene_plan_record": dict(scene_plan_record or {}),
         "committed_result": {"commit_applied": True, "committed_effects": []},
     }
 
@@ -314,6 +323,91 @@ def test_story_runtime_builds_multi_turn_committed_progression(tmp_path):
     assert diagnostics["authoritative_history_tail"][-1].get("committed_state_after", {}).get("current_scene_id") == "scene_3"
     assert "graph" not in diagnostics["authoritative_history_tail"][-1]
     assert "narrative_commit" in diagnostics["authoritative_history_tail"][-1]
+
+
+def test_bounded_emergent_multi_turns_preserve_free_output_and_single_writer(tmp_path):
+    content_file = tmp_path / "content" / "god_of_carnage.md"
+    content_file.parent.mkdir(parents=True, exist_ok=True)
+    content_file.write_text("Bounded emergence production scenario corpus.", encoding="utf-8")
+    corpus = RagIngestionPipeline().build_corpus(tmp_path)
+    adapter = CaptureAdapter()
+    manager = StoryRuntimeManager(
+        adapters={"mock": adapter, "openai": adapter, "ollama": adapter},
+        retriever=ContextRetriever(corpus),
+        context_assembler=ContextPackAssembler(),
+    )
+    session = manager.create_session(
+        module_id="god_of_carnage",
+        runtime_projection=_goc_projection(
+            runtime_profile_id="god_of_carnage_solo",
+            start_scene_id="scene_1",
+            scenes=[{"id": "scene_1"}],
+        ),
+    )
+    _advance_past_opening(manager, session.session_id, start_scene_id="scene_1")
+    canonical_reference = manager.sessions[session.session_id].canonical_step_id
+
+    turn_specs = [
+        (
+            "I step away from the statement and let the silence stand.",
+            "Annette leaves the sentence unfinished; Alain folds the paper once.",
+            "off_path_with_reference_available",
+            "preserve_withholding",
+        ),
+        (
+            "I ask why the wording matters more than the injured child.",
+            "The question shifts the room from etiquette to accountability.",
+            "off_path_with_reference_available",
+            "escalate_rupture",
+        ),
+        (
+            "I point to the word armed and ask Alain to defend it.",
+            "Alain must now answer for the loaded word without borrowing a scripted line.",
+            "rejoined_reference_opportunity",
+            "force_accountability",
+        ),
+    ]
+    turns = []
+    for player_input, narration, arc_relation, pressure_function in turn_specs:
+        proposal = {
+            "schema_version": "narrative_move_proposal.v1",
+            "authority_scope": "planner_advisory",
+            "authoritative": False,
+            "state_writer": "world_engine_story_runtime",
+            "narrative_mode": "bounded_emergence",
+            "progression_authority": "dramatic_state",
+            "arc_relation": arc_relation,
+            "pressure_function": pressure_function,
+            "reference_step_id": canonical_reference,
+            "canonical_output_required": False,
+        }
+        manager.turn_graph = _FakeTurnGraph(  # type: ignore[assignment]
+            _graph_envelope(
+                interpreted_input={"kind": "speech", "confidence": 0.99},
+                visible_output_bundle={"gm_narration": [narration]},
+                scene_plan_record={"narrative_move_proposal": proposal},
+            )
+        )
+        turns.append(manager.execute_turn(session_id=session.session_id, player_input=player_input))
+
+    state = manager.get_state(session.session_id)
+    assert manager.sessions[session.session_id].canonical_step_id == canonical_reference
+    assert state["turn_counter"] == 4
+    assert state["history_count"] == 4
+    assert [turn["narrative_move_proposal"]["arc_relation"] for turn in turns] == [
+        "off_path_with_reference_available",
+        "off_path_with_reference_available",
+        "rejoined_reference_opportunity",
+    ]
+    for turn, (_, narration, _, _) in zip(turns, turn_specs, strict=True):
+        assert turn["visible_output_bundle"]["gm_narration"] == [narration]
+        assert turn["narrative_move_proposal"]["authoritative"] is False
+        authority = turn["committed_turn_authority"]
+        assert authority["authority"] == "world_engine_story_runtime"
+        assert authority["narrative_move_proposal"] == turn["narrative_move_proposal"]
+        assert authority["truth_sources"]["narrative_move"] == (
+            "scene_plan_record.narrative_move_proposal"
+        )
 
 
 def test_story_runtime_natural_language_with_scene_token_commits_progression(tmp_path):

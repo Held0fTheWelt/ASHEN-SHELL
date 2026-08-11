@@ -413,6 +413,20 @@
             "capability_plan"
           ]
         },
+        "narrative_move": {
+          "type": "class",
+          "name": "NarrativeMoveProposal",
+          "responsibility": "Expose the advisory dramatic move and its relation to the reference arc",
+          "contract": "Non-authoritative proposal; World Engine remains the state writer",
+          "anchor": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py",
+          "members": [
+            "arc_relation",
+            "pressure_function",
+            "reference_step_id",
+            "canonical_output_required",
+            "state_writer"
+          ]
+        },
         "aspect": {
           "type": "class",
           "name": "RuntimeAspectRecord",
@@ -599,6 +613,13 @@
           "label": "creates",
           "contract": "bounded semantic scene plan",
           "anchor": "ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py"
+        },
+        "plan_narrative_move": {
+          "from": "plan",
+          "to": "narrative_move",
+          "label": "projects advisory move",
+          "contract": "configured off-path or reference-rejoin relation",
+          "anchor": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py"
         },
         "plan_narrator": {
           "from": "plan",
@@ -849,11 +870,13 @@
             "ledger",
             "context_pack",
             "plan",
+            "narrative_move",
             "proposal",
             "aspect"
           ],
           "relationships": [
             "director_plan",
+            "plan_narrative_move",
             "plan_narrator",
             "validator_proposal",
             "ledger_aspect"
@@ -862,7 +885,8 @@
             "D3",
             "D4",
             "D6",
-            "D12"
+            "D12",
+            "D17"
           ]
         },
         {

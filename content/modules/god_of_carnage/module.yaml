@@ -208,6 +208,12 @@ runtime_intelligence:
         off_path_policy: absorb_and_replan
         mandatory_beats_role: dramatic_opportunities
         player_agency: continuous
+        reference_rejoin:
+          strategy: scene_function_allowlist
+          scene_functions:
+            - redirect_blame
+            - reveal_surface
+            - scene_pivot
       sandbox:
         canonical_path_role: optional_reference
         progression_authority: committed_world_state

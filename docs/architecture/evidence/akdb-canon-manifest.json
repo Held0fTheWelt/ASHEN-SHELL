@@ -6,9 +6,9 @@
       "sha256": "0327699b98022323d12c63883b16d04bf8730a99242d8fb04becb876e4cacd40"
     },
     {
-      "bytes": 2514,
+      "bytes": 2695,
       "path": ".gitignore",
-      "sha256": "95daf9cf2762f39a3b3537b791fd0277d7c4d5d3a528ff94b916507e29fd3225"
+      "sha256": "8a79ca1600402b8f565d24e35f5306658bfcc4bf9394e548c9b4857d22eece3d"
     },
     {
       "bytes": 647,
@@ -66,24 +66,24 @@
       "sha256": "dc50efc7bc7be18a2ef90a196bc492e180a76691d4b0c83884b680434e39876e"
     },
     {
-      "bytes": 1864,
+      "bytes": 1869,
       "path": "UML/Components/ai-stack/README.md",
-      "sha256": "669b845d85268fad2128e458a9e5c9d55217357ca52fc1bafd7429fff80eee57"
+      "sha256": "955ad2620ddd0b9ad6ba900ea4f2e28318e61698cc27c5ba559947047da89538"
     },
     {
-      "bytes": 5703,
+      "bytes": 5789,
       "path": "UML/Components/ai-stack/TRACEABILITY.md",
-      "sha256": "c58c82047a6fe059ba4d4f88ea2651d67dbbbe2475fbc52a299cb4838806b3ce"
+      "sha256": "2bbd1ad0284e2e4c14f6bfa8c8737ac0dec4f509fda73ad37c0c5e28c29e43d0"
     },
     {
-      "bytes": 3277,
+      "bytes": 3917,
       "path": "UML/Components/ai-stack/classes/runtime-proposal-data-model.md",
-      "sha256": "0722f26f55118727e1ea7104a906dd5e3d2af6b72259673d1d7a1a579d28c2b6"
+      "sha256": "e22dd9b802b588fa1ff5828b6be494e1ae407139baa43d382a5dcf183ed8c66b"
     },
     {
-      "bytes": 3335,
+      "bytes": 3998,
       "path": "UML/Components/ai-stack/classes/runtime-proposal-data-model.puml",
-      "sha256": "570b263827710424e2e327de6e670e96a598bb033506a05d9758a304ea8d57ab"
+      "sha256": "4f230536899813304ca05b7c3164a87b9f934c42604cd40654998cf7951b0a7b"
     },
     {
       "bytes": 4413,
@@ -1191,14 +1191,14 @@
       "sha256": "f9349493ba6643dc70bcfef86dcfbdc29bbe5158c9da5de1b5ef844a9a1a8690"
     },
     {
-      "bytes": 702926,
+      "bytes": 703701,
       "path": "docs/architecture/components/ai-stack/architecture.bindings.json",
-      "sha256": "5f1f49308eeef33b29aa6ff43d173d3457bf20109485363f84696ee567a648b7"
+      "sha256": "7cb97e5ed007eb20b0a62aba9459593e09942aef8cf252e946fa2dd9372c31be"
     },
     {
-      "bytes": 92157,
+      "bytes": 92461,
       "path": "docs/architecture/components/ai-stack/architecture.md",
-      "sha256": "d850e600b14b6ecbbe60979169ba3418c9897e4575c37aef876dfdcf718bc06b"
+      "sha256": "6fbfc919aad3128f6c84c6ef9866637d817cca6e3badc1bc50f2f4f1d9efa3a2"
     },
     {
       "bytes": 1133318,
@@ -1286,49 +1286,49 @@
       "sha256": "78b9fcfa780a2728258b23018395794437ec3d49d3eb18fb43934fa3e468c6ca"
     },
     {
-      "bytes": 2792,
+      "bytes": 2782,
       "path": "docs/architecture/decisions/ADR-0001-single-live-story-commit-authority.md",
-      "sha256": "397376c4f5c43a87740cb933e0da7d6c705012b99dc6dadb80ae02c4a832f054"
+      "sha256": "234442a0ca9fe6bf9fd39aa9f50099526e4ee3f18a0b13ec935d06ec5f27dfcc"
     },
     {
-      "bytes": 2424,
+      "bytes": 2414,
       "path": "docs/architecture/decisions/ADR-0002-versioned-turn-envelope.md",
-      "sha256": "316d1a7d94be756da98d05311c0085f0b9220d6def427e9741353ee7900e71cf"
+      "sha256": "006faa4af6e8d4691a68883f5a0764febb0e0cf565a745a68796a21994f73c2d"
     },
     {
-      "bytes": 2247,
+      "bytes": 2237,
       "path": "docs/architecture/decisions/ADR-0003-single-compiled-content-projection.md",
-      "sha256": "2edf5583d0bef44f991926faeaf38396ebdbfb0d067122d445b42694b31cdb9f"
+      "sha256": "e9f8b6b6b4ebd1901a3488adf12338d789aec391cb606e427b70ec1008c99ae5"
     },
     {
-      "bytes": 1795,
+      "bytes": 1785,
       "path": "docs/architecture/decisions/ADR-0004-player-visible-block-envelope.md",
-      "sha256": "b234f8f9e314c71b62d051a5a62807436e12da1ae167e7bd4c47408f9b437fc5"
+      "sha256": "84b2ec3c548599656964a71d258cd382cfb03497c050b001230173192126423b"
     },
     {
-      "bytes": 1797,
+      "bytes": 1787,
       "path": "docs/architecture/decisions/ADR-0005-cross-service-turn-trace.md",
-      "sha256": "501bb03388701e420a469bbba1a200d85ae2ecf5371cd6f4128a8f71d1078a93"
+      "sha256": "51e1d57332ade5374c6fbf34c32c778a998f0b843913c86c54dd220490f9f03a"
     },
     {
-      "bytes": 2724,
+      "bytes": 2714,
       "path": "docs/architecture/decisions/ADR-0006-honest-architecture-evidence.md",
-      "sha256": "80826768e0ea5736e76aebf41daff4e29ef3dc2e8bc70e0c2d38a9430e820ca0"
+      "sha256": "af38f0600152ab46144742edf4672a7f487ce57fce15df7b7087baa7563d6aed"
     },
     {
-      "bytes": 4164,
+      "bytes": 4505,
       "path": "docs/architecture/decisions/ADR-0007-bounded-emergent-narration.md",
-      "sha256": "9efc5d398aed5073e0a04199245f722def337905c60a3c7c441dfa86499f2484"
+      "sha256": "8bbc464d9bd47101bbc639952f747d8d5abbc589075c69c40c3f4980af3593ae"
     },
     {
-      "bytes": 3156,
+      "bytes": 3148,
       "path": "docs/architecture/decisions/ADR-0008-module-language-boundaries.md",
-      "sha256": "3a3e6a7daa29f7c4133a003c09b9cadd9d35290e0aaffe762323e76cb07df100"
+      "sha256": "9838568a2297a0b89a6005bf6a514be049ba498447a1d36dc3e93a1a98c481d0"
     },
     {
-      "bytes": 767,
+      "bytes": 757,
       "path": "docs/architecture/decisions/ADR-TEMPLATE.md",
-      "sha256": "cd55233c7f961ca6c1c5f1097b45f23acb3b08778041b97f4fcbb4de15a2d59d"
+      "sha256": "2e41129497082825d886afb2484fa3b2f4ce186f728b2bd221c9c245d212a558"
     },
     {
       "bytes": 1771,
@@ -1416,9 +1416,9 @@
       "sha256": "a0a0dcc0608cfeaf95d4e89af71bacc4d367559fd77c11adc5864590a25d593d"
     },
     {
-      "bytes": 779600,
+      "bytes": 780276,
       "path": "docs/architecture/project/mvp-live-runtime-completion/architecture.bindings.json",
-      "sha256": "2f5813177d99dbed49ce831781e29da9ac49505501060e661f85a8758ed50be5"
+      "sha256": "d6bc19230be8a97a7111fd4df87fd1a16522f1c27a30d3005f68d6a78ddce7d0"
     },
     {
       "bytes": 131561,
@@ -1426,9 +1426,9 @@
       "sha256": "76f9574b79505b94ef795ce55d861dcae87c5bb18ca7d7f1746de04bc844a03d"
     },
     {
-      "bytes": 703535,
+      "bytes": 704213,
       "path": "docs/architecture/project/observability-traceability/architecture.bindings.json",
-      "sha256": "3c263fd96ebe44920450d5784ad6efc37b8f25783efa06be84adeec18bb5efb7"
+      "sha256": "75ed20f132d36a761eed39b3f1b55749d320f35fd147e23eb0794dea77128609"
     },
     {
       "bytes": 23320,
@@ -1461,9 +1461,9 @@
       "sha256": "543e4a707db4573b53790b1a7e8aecd9a9f8d7ef1bd8e30f80e29ea8f8338f65"
     },
     {
-      "bytes": 8057,
+      "bytes": 8051,
       "path": "docs/architecture/scenarios/canonical-turn.md",
-      "sha256": "b5d78ba4d3290f1636d616df2f448180797095cab114263972f509160990f174"
+      "sha256": "2298bda9edc8f88390ecd80333e743d60e0e0765050728f1c1a4b7ffdaa7db35"
     },
     {
       "bytes": 791,
@@ -1476,9 +1476,9 @@
       "sha256": "42560e20f1ce76216cbe2d0e79ff938038d6ad141fa93342aa70ce898a194a6e"
     },
     {
-      "bytes": 10413,
+      "bytes": 10732,
       "path": "docs/architecture/violations/README.md",
-      "sha256": "5d18b795dd78b13f739907741f1db8a5f97d38e1be906d9727d3f191d1b02491"
+      "sha256": "193f0c6e9f3e5c1e31adc76421f12d312163de8ee121b6fab726f043a23f458a"
     },
     {
       "bytes": 4825,
@@ -1626,9 +1626,9 @@
       "sha256": "5b043744c6001ba9ae6fc8d2d95c5e686b4309eb9e0c94b953dcd24146f70108"
     },
     {
-      "bytes": 251552,
+      "bytes": 252560,
       "path": "tools/architecture_assurance/model_catalog.json",
-      "sha256": "b9f0c023c15900b9071a0670826278f2bfc59a19f8569b2470c8b2037a14760b"
+      "sha256": "c2a97fa0876579e230d6be51734f5db7c9f87b83e52714ece70a8f543234e913"
     },
     {
       "bytes": 1974,

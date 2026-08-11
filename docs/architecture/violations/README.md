@@ -28,7 +28,7 @@ ADRs and executable closure evidence.
 | `AR-V007` | `resolved` | Medium | Parallel World Engine UML projections defined the same concern | ADR-0006 | DRIFT-012 |
 | `AR-V008` | `nonconforming` | Medium | arc42 structure is present but major SADs remain ADR accumulations | ADR-0006 | DRIFT-011, DRIFT-012 |
 | `AR-V009` | `resolved` | High | Aggregate coverage counted unmapped code as represented | ADR-0006 | DRIFT-012 |
-| `AR-V010` | `nonconforming` | High | Free actions commit, but canonical output machinery can still reassert a fixed script | ADR-0007 | DRIFT-003, DRIFT-005 |
+| `AR-V010` | `proof-gap` | High | Bounded emergence is repaired, but full live-model replay evidence is still incomplete | ADR-0007 | DRIFT-003, DRIFT-005 |
 | `AR-V011` | `nonconforming` | High | English-named compatibility fields remain below the repaired module-language boundary | ADR-0008 | DRIFT-004 |
 
 ## Detailed violations
@@ -140,11 +140,15 @@ ADRs and executable closure evidence.
   without changing every downstream consumer of the current canonical step.
 - **Current evidence:** the semantic planner derived mandatory dialogue from canonical beats and
   LDSS deterministically rendered the same step on player turns.
-- **Repair now present:** module/profile narrative modes, reference-only content frames and an LDSS
-  mode boundary prevent those consumers from silently treating the step as mandatory.
-- **Remaining gap:** production scenario evidence must prove a sequence of off-path actions develops
-  coherent pressure, later rejoins a dramatic opportunity and never creates a second state writer.
-- **Closure:** deterministic multi-turn God of Carnage scenario test plus player-delivery evidence.
+- **Repair now present:** module/profile narrative modes, reference-only content frames, an LDSS
+  mode boundary and `NarrativeMoveProposal.v1` prevent those consumers from silently treating the
+  step as mandatory. Rejoin scene functions are module policy rather than engine constants.
+- **Evidence now present:** deterministic planner and World Engine multi-turn tests prove two
+  off-path pressure moves, a configured reference-opportunity rejoin, unchanged canonical pointer,
+  preserved player-visible prose and one `world_engine_story_runtime` state writer.
+- **Remaining gap:** a recorded live-model graph-to-replay run must prove the same properties without
+  injecting deterministic graph envelopes.
+- **Closure:** live-model replay fixture plus current deterministic multi-turn and delivery tests.
 
 ### AR-V011 — Neutral language boundary with English compatibility debt
 

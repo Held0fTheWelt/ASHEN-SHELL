@@ -6711,6 +6711,9 @@ class RuntimeTurnGraphExecutor:
             capability_manager_plan=semantic_scene_plan.get("capability_manager_plan")
             if isinstance(semantic_scene_plan.get("capability_manager_plan"), dict)
             else {},
+            narrative_move_proposal=semantic_scene_plan.get("narrative_move_proposal")
+            if isinstance(semantic_scene_plan.get("narrative_move_proposal"), dict)
+            else {},
             continuity_obligation=semantic_scene_plan.get("continuity_obligation")
             if isinstance(semantic_scene_plan.get("continuity_obligation"), dict)
             else {},

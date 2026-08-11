@@ -80,6 +80,10 @@ class ScenePlanRecord(BaseModel):
         default_factory=dict,
         description="Director-selected capability gate: which runtime dramatic capabilities should run for this turn.",
     )
+    narrative_move_proposal: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Advisory dramatic move and canonical-arc relation; never a state-write instruction.",
+    )
     continuity_obligation: dict[str, Any] = Field(
         default_factory=dict,
         description="Planner-facing continuity carry obligation; does not commit world truth.",

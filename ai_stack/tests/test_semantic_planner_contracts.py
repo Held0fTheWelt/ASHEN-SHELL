@@ -192,6 +192,14 @@ def test_scene_plan_record_roundtrip() -> None:
             "selected_capabilities": ["npc.social_reaction.optional"],
             "required_capabilities": ["npc.social_reaction.optional"],
         },
+        narrative_move_proposal={
+            "schema_version": "narrative_move_proposal.v1",
+            "authority_scope": "planner_advisory",
+            "authoritative": False,
+            "state_writer": "world_engine_story_runtime",
+            "arc_relation": "off_path_with_reference_available",
+            "canonical_output_required": False,
+        },
         continuity_obligation={
             "continuity_class": "situational_pressure",
             "carry_forward_required": False,

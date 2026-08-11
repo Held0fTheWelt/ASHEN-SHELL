@@ -13,7 +13,7 @@ Proposal-producing narrative intelligence layer: semantic ingress, retrieval, di
 | Internal responsibilities and contracts on the canonical proposal path | `component` | [AI Stack — Proposal Pipeline Components](components/c4-component.md) | D1, D5, D6, D12 |
 | Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](sequence/ai-stack-primary-turn-sequence.md) | D1, D5, D6 |
 | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](sequence/rag-context-fabric-sequence.md) | D3, D4 |
-| Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](classes/runtime-proposal-data-model.md) | D3, D4, D6, D12 |
+| Data contracts carried between retrieval, planning, realization and validation | `class` | [AI Stack — Runtime Proposal Data Model](classes/runtime-proposal-data-model.md) | D3, D4, D6, D12, D17 |
 | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](states/director-pulse-lifecycle.md) | D15, D16 |
 
 ## Drift focus

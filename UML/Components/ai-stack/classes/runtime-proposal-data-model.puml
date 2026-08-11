@@ -13,6 +13,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: ledger
 ' bt-element-id: context_pack
 ' bt-element-id: plan
+' bt-element-id: narrative_move
 ' bt-element-id: proposal
 ' bt-element-id: aspect
 
@@ -40,6 +41,13 @@ class "SemanticScenePlan\nResponsibility: Carry intended scene target, beats and
   actor_directives[]
   capability_plan
 }
+class "NarrativeMoveProposal\nResponsibility: Expose the advisory dramatic move and its relation to the reference arc\nContract: Non-authoritative proposal; World Engine remains the state writer\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py source]]" as narrative_move {
+  arc_relation
+  pressure_function
+  reference_step_id
+  canonical_output_required
+  state_writer
+}
 class "Runtime Proposal\nResponsibility: Carry visible blocks and state-delta proposal\nContract: Must pass world-engine validation before commit\n[[../../../../ai_stack/langgraph/langgraph_runtime_package_output.py source]]" as proposal {
   visible_blocks[]
   state_delta
@@ -55,6 +63,7 @@ class "RuntimeAspectRecord\nResponsibility: Carry one grounded runtime aspect\nC
 
 director ..> plan : "creates\ncontract: bounded semantic scene plan\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py source]]"
 ledger ..> aspect : "aggregates\ncontract: one record per supported aspect\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]"
+plan ..> narrative_move : "projects advisory move\ncontract: configured off-path or reference-rejoin relation\n[[../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py source]]"
 plan ..> narrator : "guides\ncontract: realization constraints\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
 validator ..> proposal : "annotates\ncontract: validation result and retry feedback\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
 

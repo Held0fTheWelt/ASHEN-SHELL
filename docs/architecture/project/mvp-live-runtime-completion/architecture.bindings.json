@@ -14345,12 +14345,24 @@
       "anchor": {
         "file": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/enrichment.py",
         "kind": "python",
-        "line": 450,
+        "line": 467,
         "module": "ai_stack.story_runtime.semantic_planner.semantic_scene_plan.enrichment",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "build_semantic_scene_plan_enrichment"
       },
       "id": "python:ai_stack.story_runtime.semantic_planner.semantic_scene_plan.enrichment:build_semantic_scene_plan_enrichment",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py",
+        "kind": "python",
+        "line": 43,
+        "module": "ai_stack.story_runtime.semantic_planner.semantic_scene_plan.narrative_move",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "build_narrative_move_proposal"
+      },
+      "id": "python:ai_stack.story_runtime.semantic_planner.semantic_scene_plan.narrative_move:build_narrative_move_proposal",
       "kind": "python"
     },
     {
@@ -17701,6 +17713,7 @@
     "python:ai_stack.story_runtime.semantic_planner.semantic_planner_effect_surface:resolve_dramatic_effect_evaluator": "B-mvp-integration-surface",
     "python:ai_stack.story_runtime.semantic_planner.semantic_planner_effect_surface:support_level_for_module": "B-mvp-integration-surface",
     "python:ai_stack.story_runtime.semantic_planner.semantic_scene_plan.enrichment:build_semantic_scene_plan_enrichment": "B-mvp-integration-surface",
+    "python:ai_stack.story_runtime.semantic_planner.semantic_scene_plan.narrative_move:build_narrative_move_proposal": "B-mvp-integration-surface",
     "python:ai_stack.story_runtime.session_loop.cut_in:apply_cut_in": "B-mvp-integration-surface",
     "python:ai_stack.story_runtime.session_loop.feature_flags:is_follow_up_semantic_composition_enabled": "B-mvp-integration-surface",
     "python:ai_stack.story_runtime.session_loop.feature_flags:is_ws_session_loop_enabled": "B-mvp-integration-surface",

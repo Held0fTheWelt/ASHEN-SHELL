@@ -502,6 +502,18 @@ class _CommitFinalizationMixin:
             "inactive_branches_authoritative": branching_forecast.get("inactive_branches_authoritative"),
             "mutates_canonical_state": branching_forecast.get("mutates_canonical_state"),
         }
+        scene_plan_record = (
+            graph_state.get("scene_plan_record")
+            if isinstance(graph_state.get("scene_plan_record"), dict)
+            else {}
+        )
+        narrative_move_proposal = (
+            scene_plan_record.get("narrative_move_proposal")
+            if isinstance(scene_plan_record.get("narrative_move_proposal"), dict)
+            else None
+        )
+        if narrative_move_proposal:
+            gov["narrative_move_proposal"] = dict(narrative_move_proposal)
         event: dict[str, Any] = {
             "turn_number": commit_turn_number,
             "canonical_turn_id": canonical_turn_id,
@@ -555,6 +567,9 @@ class _CommitFinalizationMixin:
             "branching_forecast": branching_forecast,
             "actor_survival_telemetry": actor_survival_telemetry,
             "actor_turn_summary": actor_turn_summary,
+            "narrative_move_proposal": dict(narrative_move_proposal)
+            if narrative_move_proposal
+            else None,
             "runtime_governance_surface": gov,
         }
         projection_aspect_recorded = False

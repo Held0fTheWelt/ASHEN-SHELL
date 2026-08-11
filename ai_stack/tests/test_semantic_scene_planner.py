@@ -287,3 +287,84 @@ def test_bounded_emergence_keeps_canonical_step_as_reference_not_dialogue_obliga
     assert frame["next_step_id"] is None
     assert enrichment["speech_policy"]["speech_required"] is False
     assert enrichment["dialogue_plan"] == []
+
+
+def _bounded_emergent_plan(
+    *,
+    selected_scene_function: str,
+    move_type: str,
+    prior_planner_truth: dict | None = None,
+) -> dict:
+    step_id = "opening_006_armed_vs_carrying"
+    return build_semantic_scene_plan_enrichment(
+        selected_scene_function=selected_scene_function,
+        selected_responder_set=[{"actor_id": "alain_reille", "role": "primary_responder"}],
+        pacing_mode="standard",
+        silence_brevity_decision={"mode": "normal"},
+        semantic_move_record={
+            "move_type": move_type,
+            "scene_risk_band": "high",
+            "target_actor_hint": "alain_reille",
+        },
+        social_state_record={"social_risk_band": "high"},
+        character_mind_records=[],
+        scene_assessment={"canonical_path_step_id": step_id},
+        canonical_path=load_goc_canonical_path_yaml(),
+        character_documents={"alain": {"actor_id": "alain_reille"}},
+        actor_lane_context={
+            "human_actor_id": "annette_reille",
+            "ai_forbidden_actor_ids": ["annette_reille"],
+        },
+        prior_planner_truth=prior_planner_truth,
+        turn_input_class="player_input",
+        module_runtime_policy={
+            "narrative_governance_policy": {
+                "active_mode": "bounded_emergence",
+                "canonical_path_role": "reference_arc",
+                "progression_authority": "dramatic_state",
+                "mandatory_beats_role": "dramatic_opportunities",
+                "player_agency": "continuous",
+                "mode_policy": {
+                    "reference_rejoin": {
+                        "strategy": "scene_function_allowlist",
+                        "scene_functions": ["redirect_blame"],
+                    }
+                },
+            }
+        },
+    )
+
+
+def test_bounded_emergence_tracks_off_path_pressure_and_explicit_rejoin() -> None:
+    first = _bounded_emergent_plan(
+        selected_scene_function="withhold_or_evade",
+        move_type="silence_withdrawal",
+    )
+    second = _bounded_emergent_plan(
+        selected_scene_function="escalate_conflict",
+        move_type="escalation_threat",
+        prior_planner_truth=first,
+    )
+    third = _bounded_emergent_plan(
+        selected_scene_function="redirect_blame",
+        move_type="direct_accusation",
+        prior_planner_truth=second,
+    )
+
+    proposals = [plan["narrative_move_proposal"] for plan in (first, second, third)]
+    assert [proposal["arc_relation"] for proposal in proposals] == [
+        "off_path_with_reference_available",
+        "off_path_with_reference_available",
+        "rejoined_reference_opportunity",
+    ]
+    assert [proposal["pressure_function"] for proposal in proposals] == [
+        "preserve_withholding",
+        "escalate_rupture",
+        "force_accountability",
+    ]
+    assert all(proposal["authoritative"] is False for proposal in proposals)
+    assert all(proposal["state_writer"] == "world_engine_story_runtime" for proposal in proposals)
+    assert all(proposal["canonical_output_required"] is False for proposal in proposals)
+    assert all(proposal["reference_step_id"] == "opening_006_armed_vs_carrying" for proposal in proposals)
+    assert all(plan["dialogue_plan"] == [] for plan in (first, second, third))
+    assert "narrative_arc_relation:rejoined_reference_opportunity" in third["planner_rationale_codes"]

@@ -15,6 +15,7 @@
 | Runtime Aspect Ledger | Project aspect evidence and decision metadata | Typed, non-authoritative evidence records | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
 | RetrievalContextBundle | Carry bounded retrieval results | Provenance-preserving ranked context | [`ai_stack/rag/retrieval_context_bundles.py`](../../../../ai_stack/rag/retrieval_context_bundles.py) |
 | SemanticScenePlan | Carry intended scene target, beats and directives | Immutable proposal structure | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py) |
+| NarrativeMoveProposal | Expose the advisory dramatic move and its relation to the reference arc | Non-authoritative proposal; World Engine remains the state writer | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py) |
 | Runtime Proposal | Carry visible blocks and state-delta proposal | Must pass world-engine validation before commit | [`ai_stack/langgraph/langgraph_runtime_package_output.py`](../../../../ai_stack/langgraph/langgraph_runtime_package_output.py) |
 | RuntimeAspectRecord | Carry one grounded runtime aspect | Typed source, status and evidence | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
 
@@ -23,6 +24,7 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Director | SemanticScenePlan | creates | bounded semantic scene plan | [`ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_planner.py) |
+| SemanticScenePlan | NarrativeMoveProposal | projects advisory move | configured off-path or reference-rejoin relation | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/narrative_move.py) |
 | SemanticScenePlan | Narrator | guides | realization constraints | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
 | Proposal Validator | Runtime Proposal | annotates | validation result and retry feedback | [`ai_stack/langgraph/validation/result.py`](../../../../ai_stack/langgraph/validation/result.py) |
 | Runtime Aspect Ledger | RuntimeAspectRecord | aggregates | one record per supported aspect | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
