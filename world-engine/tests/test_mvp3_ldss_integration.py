@@ -17,6 +17,10 @@ from unittest.mock import MagicMock, patch
 from ai_stack.rag import ContextPackAssembler, ContextRetriever, InMemoryRetrievalCorpus
 from story_runtime_core.model_registry import ModelRegistry
 from world_engine.story_runtime.manager import StoryRuntimeManager
+from world_engine.story_runtime.manager.visible_projection_policy import (
+    resolve_visible_projection_policy,
+    rich_scene_projection_enabled,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +94,11 @@ def _mock_graph_state(*, force_ldss_scene_fallback: bool = False) -> dict:
     return state
 
 
-def _goc_solo_projection(human: str = "annette") -> dict:
+def _goc_solo_projection(
+    human: str = "annette",
+    *,
+    runtime_profile_id: str = "god_of_carnage_solo",
+) -> dict:
     npc_map = {
         "annette": ["alain", "veronique", "michel"],
         "alain": ["annette", "veronique", "michel"],
@@ -106,7 +114,7 @@ def _goc_solo_projection(human: str = "annette") -> dict:
         "human_actor_id": human,
         "npc_actor_ids": npcs,
         "actor_lanes": lanes,
-        "runtime_profile_id": "god_of_carnage_solo",
+        "runtime_profile_id": runtime_profile_id,
         "runtime_module_id": "solo_story_runtime",
     }
 
@@ -126,13 +134,17 @@ def _make_manager_with_session(
     human: str = "annette",
     *,
     force_ldss_scene_fallback: bool = False,
+    runtime_profile_id: str = "god_of_carnage_solo",
 ) -> tuple[StoryRuntimeManager, object]:
     mgr = _make_test_manager()
     assert mgr._skip_graph_opening_on_create is True
 
     session = mgr.create_session(
         module_id="god_of_carnage",
-        runtime_projection=_goc_solo_projection(human),
+        runtime_projection=_goc_solo_projection(
+            human,
+            runtime_profile_id=runtime_profile_id,
+        ),
     )
     mock_turn_graph = MagicMock()
     mock_turn_graph.run.return_value = _mock_graph_state(
@@ -145,6 +157,39 @@ def _make_manager_with_session(
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+
+def test_rich_projection_dispatch_uses_policy_not_module_identity():
+    policy = resolve_visible_projection_policy(
+        module_id="module_alpha",
+        runtime_projection={"runtime_profile_id": "profile_alpha"},
+        graph_state={
+            "module_runtime_policy": {
+                "runtime_governance_policy": {
+                    "visible_projection": {
+                        "enabled": True,
+                        "projection_profile": "scene_turn_envelope_v2",
+                        "live_scene_projection_enabled": True,
+                        "deterministic_fallback": "none",
+                    }
+                }
+            }
+        },
+    )
+
+    assert rich_scene_projection_enabled(policy) is True
+    assert policy["deterministic_fallback"] == "none"
+
+
+def test_unconfigured_projection_stays_on_generic_blocks():
+    policy = resolve_visible_projection_policy(
+        module_id="module_alpha",
+        runtime_projection={},
+        graph_state={"module_runtime_policy": {"runtime_governance_policy": {}}},
+    )
+
+    assert rich_scene_projection_enabled(policy) is False
+    assert policy["projection_profile"] == "generic_blocks"
 
 @pytest.mark.mvp3
 def test_create_session_can_defer_opening_with_explicit_skip_flag():
@@ -289,12 +334,32 @@ def test_ldss_fallback_holds_canonical_step_for_free_player_action():
 
 
 @pytest.mark.mvp3
-def test_ldss_fallback_advances_canonical_step_without_free_action_hold():
-    """Canonical LDSS fallback keeps its normal advancement when no hold is requested."""
+def test_bounded_ldss_fallback_holds_reference_step_without_explicit_action_hold():
+    """Bounded emergence never spends the reference step as an output cursor."""
     mgr, session = _make_manager_with_session("annette", force_ldss_scene_fallback=True)
     session.canonical_step_id = "opening_005_statement_reading"
     graph_state = _mock_graph_state(force_ldss_scene_fallback=True)
     mgr.turn_graph.run.return_value = graph_state
+
+    result = mgr.execute_turn(
+        session_id=session.session_id,
+        player_input="I continue.",
+    )
+
+    assert "scene_turn_envelope" in result
+    assert session.canonical_step_id == "opening_005_statement_reading"
+
+
+@pytest.mark.mvp3
+def test_reenactment_ldss_fallback_advances_mandatory_canonical_step():
+    """The configured reenactment profile preserves canonical-spine advancement."""
+    mgr, session = _make_manager_with_session(
+        "annette",
+        force_ldss_scene_fallback=True,
+        runtime_profile_id="god_of_carnage_reenactment",
+    )
+    session.canonical_step_id = "opening_005_statement_reading"
+    mgr.turn_graph.run.return_value = _mock_graph_state(force_ldss_scene_fallback=True)
 
     result = mgr.execute_turn(
         session_id=session.session_id,

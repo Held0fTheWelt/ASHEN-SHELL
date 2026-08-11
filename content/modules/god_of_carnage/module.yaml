@@ -238,6 +238,13 @@ runtime_intelligence:
     no_verb_or_input_kind_whitelists: true
   visible_projection:
     enabled: true
+    projection_profile: scene_turn_envelope_v2
+    live_scene_projection_enabled: true
+    deterministic_fallback: ldss_v1
+    opening_shape: two_movement_paragraphs
+    opening_narration_normalization_enabled: true
+    diagnostics_envelope_enabled: true
+    human_input_attribution_enabled: true
     require_origin_metadata: true
     hard_failure_behavior: recover
   capability_gate:

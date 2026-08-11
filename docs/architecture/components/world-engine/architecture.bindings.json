@@ -192,6 +192,28 @@
     {
       "anchors": [
         {
+          "declared_path": "docs/architecture/decisions/ADR-0003-single-compiled-content-projection.md",
+          "file": "docs/architecture/decisions/ADR-0003-single-compiled-content-projection.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/decisions/ADR-0007-bounded-emergent-narration.md",
+          "file": "docs/architecture/decisions/ADR-0007-bounded-emergent-narration.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D15",
+      "state": "bound",
+      "status": "Accepted; product-specific projection internals remain",
+      "title": "Visible projection is selected by module policy"
+    },
+    {
+      "anchors": [
+        {
           "declared_path": "UML/Components/world-engine/sequence/primary-turn-sequence.md",
           "file": "UML/Components/world-engine/sequence/primary-turn-sequence.md",
           "kind": "file",
@@ -4308,6 +4330,30 @@
     },
     {
       "anchor": {
+        "file": "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py",
+        "kind": "python",
+        "line": 18,
+        "module": "world-engine.world_engine.story_runtime.manager.visible_projection_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "resolve_visible_projection_policy"
+      },
+      "id": "python:world-engine.world_engine.story_runtime.manager.visible_projection_policy:resolve_visible_projection_policy",
+      "kind": "python"
+    },
+    {
+      "anchor": {
+        "file": "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py",
+        "kind": "python",
+        "line": 68,
+        "module": "world-engine.world_engine.story_runtime.manager.visible_projection_policy",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "rich_scene_projection_enabled"
+      },
+      "id": "python:world-engine.world_engine.story_runtime.manager.visible_projection_policy:rich_scene_projection_enabled",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "world-engine/world_engine/story_runtime/minimal_turn_graph.py",
         "kind": "python",
         "line": 23,
@@ -5231,6 +5277,8 @@
     "python:world-engine.world_engine.story_runtime.manager.story_window_entry_parts:detect_thin_path_narrator_fold": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.story_window_entry_parts:event_surfaces_for_story_window": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.story_window_entry_parts:vitality_readout_for_story_window": "B-story-runtime-manager",
+    "python:world-engine.world_engine.story_runtime.manager.visible_projection_policy:resolve_visible_projection_policy": "B-story-runtime-manager",
+    "python:world-engine.world_engine.story_runtime.manager.visible_projection_policy:rich_scene_projection_enabled": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.minimal_turn_graph:MinimalRuntimeTurnGraphExecutor": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.module_turn_hooks:goc_append_continuity_impacts": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.module_turn_hooks:goc_host_experience_template": "B-engine-application",
@@ -5335,7 +5383,9 @@
         "world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py",
         "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
         "world-engine/world_engine/story_runtime/live_governance.py",
+        "world-engine/world_engine/story_runtime/manager/commit_finalization.py",
         "world-engine/world_engine/story_runtime/manager/turn_execution.py",
+        "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py",
         "world-engine/world_engine/story_runtime/narrative_commit_resolution.py",
         "world-engine/world_engine/story_runtime/story_session_store.py"
       ],
@@ -5343,14 +5393,15 @@
       "decisions": [
         "D1",
         "D4",
-        "D6"
+        "D6",
+        "D15"
       ],
-      "element_count": 7,
+      "element_count": 8,
       "id": "turn-components",
       "kind": "component",
       "level": "component",
       "path": "UML/Components/world-engine/components/c4-component.puml",
-      "relationship_count": 6,
+      "relationship_count": 8,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {

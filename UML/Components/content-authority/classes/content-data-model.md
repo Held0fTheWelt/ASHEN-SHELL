@@ -12,7 +12,7 @@
 | Authored Module | Hold canonical versioned content truth | module.yaml plus referenced YAML documents | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 | Scene Graph | Describe spaces, actors, objects and connections | Stable identifiers and references | [`content/modules/god_of_carnage/scene_graph.yaml`](../../../../content/modules/god_of_carnage/scene_graph.yaml) |
 | Canonical Path | Express authored dramatic invariants without scripting player choice | Schema-governed beats and alternatives | [`content/modules/god_of_carnage/canonical_path/_schema.yaml`](../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml) |
-| Narrative Policies | Bound memory, aspects, beats and phase behavior | Declarative policy YAML | [`content/modules/god_of_carnage/narrative_aspect_policy.yaml`](../../../../content/modules/god_of_carnage/narrative_aspect_policy.yaml) |
+| Narrative Policies | Bound narrative modes, memory, aspects, beats and player-visible projection behavior | Declarative, versioned module policy YAML | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 
 ## Modeled relationships
 

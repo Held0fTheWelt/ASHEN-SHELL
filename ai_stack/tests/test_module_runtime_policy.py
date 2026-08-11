@@ -101,6 +101,9 @@ def _assert_callback_cascade_and_timing_policy(policy: dict) -> None:
     assert governance["player_freedom"]["enabled"] is True
     assert governance["player_freedom"]["canonical_path_control"] == "hold_current_canonical_step_for_free_player_actions"
     assert governance["visible_projection"]["hard_failure_behavior"] == "recover"
+    assert governance["visible_projection"]["projection_profile"] == "scene_turn_envelope_v2"
+    assert governance["visible_projection"]["deterministic_fallback"] == "ldss_v1"
+    assert governance["visible_projection"]["diagnostics_envelope_enabled"] is True
 
 
 def _assert_symbolic_genre_and_tone_policy(policy: dict) -> None:

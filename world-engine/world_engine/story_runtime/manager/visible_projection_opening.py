@@ -191,10 +191,11 @@ def _finalize_visible_bundle_opening_gm_narration(
     graph_state: dict[str, Any],
     packaged_bundle: Any,
     commit_turn_number: int,
+    normalization_enabled: bool = False,
 ) -> Any:
-    """After experience packaging, restore model-authored GM opening beats for GoC turn 0 when needed."""
+    """Restore model-authored opening beats when the module projection policy requests it."""
     graph_state.pop("_opening_narration_normalization", None)
-    if commit_turn_number != 0 or session.module_id != GOD_OF_CARNAGE_MODULE_ID:
+    if commit_turn_number != 0 or not normalization_enabled:
         return packaged_bundle
     if not isinstance(packaged_bundle, dict):
         return packaged_bundle
@@ -229,7 +230,7 @@ def _finalize_visible_bundle_opening_gm_narration(
     out["gm_narration"] = beats[:12]
     return out
 
-def _maybe_split_goc_opening_into_two_movements(
+def _maybe_split_opening_into_two_movements(
     blocks: list[dict[str, Any]],
     *,
     commit_turn_number: int,

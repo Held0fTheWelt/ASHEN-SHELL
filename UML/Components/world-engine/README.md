@@ -10,7 +10,7 @@ Authoritative live story runtime coordinating sessions, content, AI proposals, v
 | --- | --- | --- | --- |
 | Live authority among player, backend, content and AI proposal collaborators | `context` | [World Engine - System Context](components/c4-context.md) | D1, D4 |
 | API, canonical manager, compatibility runtime, persistence and observability | `container` | [World Engine - Runtime Containers](components/c4-container.md) | D1, D5 |
-| Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](components/c4-component.md) | D1, D4, D6 |
+| Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](components/c4-component.md) | D1, D4, D6, D15 |
 | End-to-end authoritative turn from player intent to committed event | `sequence` | [World Engine - Primary Turn](sequence/primary-turn-sequence.md) | D1, D4 |
 | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](sequence/degraded-turn-sequence.md) | D5, D14 |
 | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](activity/canonical-turn-activity.md) | D1, D4, D6 |

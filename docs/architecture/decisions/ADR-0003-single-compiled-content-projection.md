@@ -45,6 +45,14 @@ Current anchors include `content/modules/god_of_carnage/module.yaml`,
 `ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py`. Their coexistence is
 evidence for the migration boundary, not proof of conformance.
 
+The player-visible projection selection seam now consumes
+`runtime_governance_policy.visible_projection` through
+`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`. The policy has a
+closed generic default and selects rich projection, deterministic fallback, opening shaping,
+diagnostics and input attribution without inspecting a module ID. This is a conforming slice, not
+closure of the ADR: compiler-level schema/version enforcement and removal of product-specific
+Python projections are still required.
+
 ## Git and historical lineage
 
 Content-module commits from May show the authored-model intent; later loader and runtime repairs

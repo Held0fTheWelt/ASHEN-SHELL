@@ -111,6 +111,7 @@ Only elements that participate in a container or component view are listed as bu
 | Live Governance (`governance`) | `component` | Apply runtime policy and authority guards | Fail-closed mutation policy | [`world-engine/world_engine/story_runtime/live_governance.py`](../../../../world-engine/world_engine/story_runtime/live_governance.py) |
 | Story Session Store (`store`) | `component` | Persist committed state and monotonic revision | Atomic session update | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 | Turn Execution (`turn`) | `component` | Run the canonical lifecycle for one player command | Exactly one commit or explicit rejection | [`world-engine/world_engine/story_runtime/manager/turn_execution.py`](../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py) |
+| Visible Projection Policy Resolver (`projection_policy`) | `component` | Resolve the bound module's player-visible projection capabilities | Versioned policy with a closed generic default and no module-ID dispatch | [`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py) |
 | Compatibility Runtime (`runtime`) | `container` | Host legacy engine profiles and transitional behavior | Explicitly non-canonical where overlapped | [`world-engine/world_engine/runtime/manager.py`](../../../../world-engine/world_engine/runtime/manager.py) |
 | Runtime Observability (`observability`) | `container` | Correlate turn lifecycle and failures | Redacted trace tree | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | Session Stores (`persistence`) | `container` | Persist committed session, branches and callbacks | Commit-versioned state | [`world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py`](../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py) |
@@ -201,6 +202,16 @@ The module/profile narrative mode is carried into planning and compatibility out
 emergence the canonical path is a reference arc; hard world and actor-lane invariants remain
 mandatory. See [ADR-0007](../../decisions/ADR-0007-bounded-emergent-narration.md).
 
+### Player-visible projection governance
+
+The engine resolves player-visible projection behavior from the bound module/runtime-profile
+policy. An absent policy selects the closed `generic_blocks` profile. Rich scene envelopes,
+deterministic fallback, opening shaping, diagnostics, and human-input attribution are independent
+declared capabilities; no engine branch may select them from a module ID. The resolver is
+[`visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py),
+and the current product-specific implementation debt remains tracked by
+[AR-V003](../../violations/README.md#ar-v003--multiple-executable-content-projections).
+
 <!-- BEGIN BT-SEMANTIC-DEPTH:8 -->
 ### Explicit interaction and dependency contracts
 
@@ -210,9 +221,11 @@ mandatory. See [ADR-0007](../../decisions/ADR-0007-bounded-emergent-narration.md
 | Story API | Story Runtime Manager | delegates story operation | validated command | [`world-engine/world_engine/api/http_routes/story_turn_routes.py`](../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py) |
 | CommitDecision | StorySession | advances when accepted | monotonic revision | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
 | Live Governance | AI Proposal Bridge | requests bounded proposal | proposal-only | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
+| Live Governance | Visible Projection Policy Resolver | supplies bound projection policy | visible_projection_policy.v1 or closed generic default | [`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py) |
 | Canonical Turn Lifecycle | Live Governance | checks authority and policy | fail closed | [`world-engine/world_engine/story_runtime/live_governance.py`](../../../../world-engine/world_engine/story_runtime/live_governance.py) |
 | Story Runtime Manager | Runtime Observability | emits lifecycle evidence | trace-correlated spans | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | Story Runtime Manager | Session Stores | loads and stores session | revision-safe transaction | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
+| Visible Projection Policy Resolver | Delivery Surfaces | selects projection adapter | configured capabilities without module-ID dispatch | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
 | NarrativeProposal | CommitDecision | is resolved as | validation evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Compatibility Runtime | Story Runtime Manager | adapts supported legacy paths | explicit compatibility seam | [`world-engine/world_engine/runtime/manager.py`](../../../../world-engine/world_engine/runtime/manager.py) |
 | StorySession | NarrativeProposal | bounds evaluation | base revision | [`world-engine/world_engine/story_runtime/commit_models.py`](../../../../world-engine/world_engine/story_runtime/commit_models.py) |
@@ -267,6 +280,18 @@ Actor location, presence, situation, and consequence changes are part of the rev
 
 Free player intent is normalized once at the canonical ingress and remains attributable throughout proposal, decision, and trace evidence. Choice compatibility may adapt to that contract but cannot create a second turn path. Closure depends on [ADR-0002](../../decisions/ADR-0002-versioned-turn-envelope.md).
 
+### D15: Visible projection is selected by module policy
+
+**Status:** Accepted; product-specific projection internals remain
+**Origin:** [ADR-0003](../../decisions/ADR-0003-single-compiled-content-projection.md) and [ADR-0007](../../decisions/ADR-0007-bounded-emergent-narration.md)
+
+World Engine selects a player-visible projection adapter only from a versioned, bound module
+policy. Missing configuration is closed and generic. The policy names projection profile,
+fallback, opening shaping, diagnostics and attribution independently so future modules can compose
+capabilities without adding product identifiers to engine dispatch. The main finalization dispatch
+now conforms; GoC-named helper implementations and duplicate content projections keep AR-V003
+open until they are migrated behind neutral adapters.
+
 <!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
 ### Decision-to-view correspondence
 
@@ -274,7 +299,7 @@ Free player intent is normalized once at the canonical ingress and remains attri
 | --- | --- | --- | --- |
 | `D1`, `D4` | Live authority among player, backend, content and AI proposal collaborators | `context` | [World Engine - System Context](../../../../UML/Components/world-engine/components/c4-context.md) |
 | `D1`, `D5` | API, canonical manager, compatibility runtime, persistence and observability | `container` | [World Engine - Runtime Containers](../../../../UML/Components/world-engine/components/c4-container.md) |
-| `D1`, `D4`, `D6` | Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](../../../../UML/Components/world-engine/components/c4-component.md) |
+| `D1`, `D4`, `D6`, `D15` | Canonical interpret, govern, propose, validate, commit and delivery seams | `component` | [World Engine - Turn Components](../../../../UML/Components/world-engine/components/c4-component.md) |
 | `D1`, `D4` | End-to-end authoritative turn from player intent to committed event | `sequence` | [World Engine - Primary Turn](../../../../UML/Components/world-engine/sequence/primary-turn-sequence.md) |
 | `D5`, `D14` | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md) |
 | `D1`, `D4`, `D6` | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](../../../../UML/Components/world-engine/activity/canonical-turn-activity.md) |
@@ -295,6 +320,7 @@ The correspondence is intentionally many-to-many: one decision may require struc
 | WE-Q4 | A turn crosses backend, World Engine, and AI | all evidence is joinable by one `trace_id` and `turn_id` |
 | WE-Q5 | Fallback/mock adapter runs | result is explicitly degraded and never counted as successful live realization |
 | WE-Q6 | Architecture evidence is regenerated | unmapped source remains visible and does not inflate representation coverage |
+| WE-Q7 | A new module requests rich player projection | policy configuration selects the adapter without a module-ID code change; an unconfigured module remains on generic blocks |
 
 ## 11. Risks & Technical Debt
 
@@ -302,6 +328,7 @@ The authoritative register is [Architecture violations](../../violations/README.
 
 - **AR-V001:** AI code still exposes commit-like proposal finalization.
 - **AR-V002:** the versioned turn envelope is not proven across every boundary.
+- **AR-V003:** the main visible-projection dispatch is policy-driven, but product-specific helper projections and duplicated vocabularies remain.
 - **AR-V005:** `_finalize_committed_turn` concentrates validation, mutation, persistence, and projection concerns.
 - **AR-V006:** trace identity is not yet uniformly propagated.
 - **AR-V007:** duplicate historical UML files can create parallel truths until removed.

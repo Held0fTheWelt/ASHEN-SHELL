@@ -254,6 +254,28 @@
       "state": "bound",
       "status": "Accepted; production scenario proof remains open",
       "title": "Module-declared narrative governance"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "UML/Components/content-authority/TRACEABILITY.md",
+          "file": "UML/Components/content-authority/TRACEABILITY.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docs/architecture/decisions/ADR-0003-single-compiled-content-projection.md",
+          "file": "docs/architecture/decisions/ADR-0003-single-compiled-content-projection.md",
+          "kind": "file",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "D5",
+      "state": "bound",
+      "status": "Accepted; compilation and schema validation remain incomplete",
+      "title": "Module-declared player-visible projection"
     }
   ],
   "discovered_units": [
@@ -3317,6 +3339,105 @@
     },
     {
       "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 5,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#content_module_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#content_module_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 9,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#join_policy",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#join_policy",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 7,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#kind",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#kind",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 10,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#max_humans",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#max_humans",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 8,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#narrative_mode",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#narrative_mode",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 3,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#profile_id",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#profile_id",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 14,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#summary",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#summary",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 11,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#tags",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#tags",
+      "kind": "content"
+    },
+    {
+      "anchor": {
+        "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml",
+        "kind": "content",
+        "line": 6,
+        "object": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#title",
+        "schema_version": "bt.source_anchor.v1"
+      },
+      "id": "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#title",
+      "kind": "content"
+    },
+    {
+      "anchor": {
         "file": "content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml",
         "kind": "content",
         "line": 7,
@@ -4368,6 +4489,15 @@
     "content:content/modules/god_of_carnage/objects/opening/bicycle_rack.yaml#object": "B-authored-content-repository",
     "content:content/modules/god_of_carnage/objects/opening/stick.yaml#object": "B-authored-content-repository",
     "content:content/modules/god_of_carnage/phase_beat_policy.yaml#phase_beat_policy": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#content_module_id": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#join_policy": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#kind": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#max_humans": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#narrative_mode": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#profile_id": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#summary": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#tags": "B-authored-content-repository",
+    "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_reenactment.yaml#title": "B-authored-content-repository",
     "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#content_module_id": "B-authored-content-repository",
     "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#initial_beat_id": "B-authored-content-repository",
     "content:content/modules/god_of_carnage/runtime_profiles/god_of_carnage_solo.yaml#join_policy": "B-authored-content-repository",
@@ -4509,12 +4639,13 @@
       "anchors": [
         "content/modules/god_of_carnage/canonical_path/_schema.yaml",
         "content/modules/god_of_carnage/module.yaml",
-        "content/modules/god_of_carnage/narrative_aspect_policy.yaml",
         "content/modules/god_of_carnage/scene_graph.yaml"
       ],
       "concern": "Relationships among scene truth, canonical path and narrative policies",
       "decisions": [
-        "D1"
+        "D1",
+        "D4",
+        "D5"
       ],
       "element_count": 4,
       "id": "content-data-model",

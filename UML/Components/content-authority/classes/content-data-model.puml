@@ -27,7 +27,9 @@ class "Canonical Path\nResponsibility: Express authored dramatic invariants with
   constraints
   alternatives
 }
-class "Narrative Policies\nResponsibility: Bound memory, aspects, beats and phase behavior\nContract: Declarative policy YAML\n[[../../../../content/modules/god_of_carnage/narrative_aspect_policy.yaml source]]" as policies {
+class "Narrative Policies\nResponsibility: Bound narrative modes, memory, aspects, beats and player-visible projection behavior\nContract: Declarative, versioned module policy YAML\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as policies {
+  narrative governance
+  visible projection
   memory
   aspects
   phase beats

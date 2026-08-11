@@ -1,0 +1,16 @@
+# Compatibility profile for deterministic canonical-path reenactment.
+# Story truth remains in the content module; this profile only selects runtime mode.
+
+profile_id: god_of_carnage_reenactment
+content_module_id: god_of_carnage
+title: God of Carnage — Reenactment
+kind: solo_story
+narrative_mode: reenactment
+join_policy: owner_only
+max_humans: 1
+tags:
+  - authored
+  - canonical-reenactment
+summary: >-
+  Runs the canonical path as a mandatory spine. Use god_of_carnage_solo for
+  bounded emergent play where canonical steps are reference opportunities.

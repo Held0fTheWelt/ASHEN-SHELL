@@ -242,6 +242,21 @@ Quality Requirements
 
 `tests/smoke/test_goc_module_structure_smoke.py`, content validators, GoC gate tests.
 
+### D5: Module-declared player-visible projection
+
+**Status:** Accepted; compilation and schema validation remain incomplete
+**Origin:** [ADR-0003](../../decisions/ADR-0003-single-compiled-content-projection.md)
+
+The module policy declares a versioned visible-projection profile and its independently selectable
+capabilities: live scene projection, deterministic fallback, opening shaping, diagnostics and
+human-input attribution. Runtime profiles may select behavior supported by the module, while the
+engine consumes only the neutral policy shape. A missing declaration is generic and fail-closed;
+adding a module must not require a module-ID branch in World Engine.
+
+The GoC module is the first configured instance. This repairs selection of the projection path,
+but it does not close AR-V003: backend compilation does not yet prove the policy schema and several
+GoC-named adapters still duplicate projection vocabulary.
+
 <!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
 ### Decision-to-view correspondence
 
@@ -250,7 +265,7 @@ Quality Requirements
 | `D1`, `D2` | Authored truth and its validating and consuming systems | `context` | [Content Authority - Context](../../../../UML/Components/content-authority/context/content-authority-context.md) |
 | `D1`, `D3` | Validation and projection seams from YAML to runtime | `component` | [Content Authority - Compilation Components](../../../../UML/Components/content-authority/components/content-compilation-components.md) |
 | `D2`, `D3` | Fail-closed path from author change to runtime-readable version | `activity` | [Content Authority - Publication Flow](../../../../UML/Components/content-authority/activity/content-publication-flow.md) |
-| `D1` | Relationships among scene truth, canonical path and narrative policies | `class` | [Content Authority - Data Model](../../../../UML/Components/content-authority/classes/content-data-model.md) |
+| `D1`, `D4`, `D5` | Relationships among scene truth, canonical path and narrative policies | `class` | [Content Authority - Data Model](../../../../UML/Components/content-authority/classes/content-data-model.md) |
 | `D2`, `D3` | Validation, publication and runtime binding states | `state` | [Content Authority - Lifecycle](../../../../UML/Components/content-authority/states/content-lifecycle.md) |
 
 The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.

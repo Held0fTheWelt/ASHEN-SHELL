@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 from ._deps import *
+from .visible_projection_policy import (
+    resolve_visible_projection_policy,
+    rich_scene_projection_enabled,
+)
 
 
 class _CommitFinalizationMixin:
@@ -21,6 +25,12 @@ class _CommitFinalizationMixin:
         host_experience_template: dict[str, Any] | None,
         prior_ci: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
+        visible_projection_policy = resolve_visible_projection_policy(
+            module_id=session.module_id,
+            runtime_projection=session.runtime_projection,
+            graph_state=graph_state,
+        )
+        use_rich_scene_projection = rich_scene_projection_enabled(visible_projection_policy)
         prior_narrative_threads_for_rollback = copy.deepcopy(session.narrative_threads)
         prior_thread_update_trace_for_rollback = copy.deepcopy(session.last_thread_update_trace)
         prior_continuity_impacts_for_rollback = copy.deepcopy(session.prior_continuity_impacts)
@@ -377,6 +387,9 @@ class _CommitFinalizationMixin:
             graph_state=graph_state,
             packaged_bundle=packaged_bundle,
             commit_turn_number=commit_turn_number,
+            normalization_enabled=bool(
+                visible_projection_policy.get("opening_narration_normalization_enabled")
+            ),
         )
         visible_bundle_for_summary = (
             packaged_bundle if isinstance(packaged_bundle, dict) else raw_bundle if isinstance(raw_bundle, dict) else {}
@@ -502,6 +515,7 @@ class _CommitFinalizationMixin:
             "inactive_branches_authoritative": branching_forecast.get("inactive_branches_authoritative"),
             "mutates_canonical_state": branching_forecast.get("mutates_canonical_state"),
         }
+        gov["visible_projection_policy"] = dict(visible_projection_policy)
         scene_plan_record = (
             graph_state.get("scene_plan_record")
             if isinstance(graph_state.get("scene_plan_record"), dict)
@@ -660,7 +674,7 @@ class _CommitFinalizationMixin:
                 player_input=player_input,
                 turn_outcome="recoverable_projection_failure",
             )
-        if session.module_id != GOD_OF_CARNAGE_MODULE_ID:
+        if not use_rich_scene_projection:
             generic_scene_blocks = _scene_blocks_from_visible_bundle(
                 event.get("visible_output_bundle")
                 if isinstance(event.get("visible_output_bundle"), dict)
@@ -686,11 +700,12 @@ class _CommitFinalizationMixin:
                 blocked_projection_event = _recover_if_projection_gate_blocks_commit()
                 if blocked_projection_event is not None:
                     return blocked_projection_event
-        # Build SceneTurnEnvelope.v2 for God of Carnage solo sessions.
+        # Build SceneTurnEnvelope.v2 for modules that explicitly select the
+        # rich scene projection profile. Module identity is not a dispatch key.
         # Live graph/model output is primary. LDSS is reserved as the final
         # deterministic fallback when the live path cannot produce scene blocks.
         scene_turn_envelope: dict[str, Any] | None = None
-        if session.module_id == GOD_OF_CARNAGE_MODULE_ID:
+        if use_rich_scene_projection:
             live_scene_blocks = []
             if gen.get("success") is True and not graph_state.get("force_ldss_scene_fallback"):
                 gen_meta_for_blocks = gen.get("metadata") if isinstance(gen.get("metadata"), dict) else {}
@@ -715,10 +730,11 @@ class _CommitFinalizationMixin:
                     player_input=player_input,
                     story_runtime_experience=experience_policy.effective,
                 )
-                live_scene_blocks = _maybe_split_goc_opening_into_two_movements(
-                    live_scene_blocks,
-                    commit_turn_number=commit_turn_number,
-                )
+                if visible_projection_policy.get("opening_shape") == "two_movement_paragraphs":
+                    live_scene_blocks = _maybe_split_opening_into_two_movements(
+                        live_scene_blocks,
+                        commit_turn_number=commit_turn_number,
+                    )
             if live_scene_blocks:
                 event_bundle = (
                     event.get("visible_output_bundle")
@@ -763,7 +779,7 @@ class _CommitFinalizationMixin:
                         .get("visible_actor_response_present")
                     ),
                 )
-            else:
+            elif visible_projection_policy.get("deterministic_fallback") == "ldss_v1":
                 ldss_span = None
                 try:
                     from world_engine.observability.langfuse_adapter import LangfuseAdapter
@@ -1107,7 +1123,7 @@ class _CommitFinalizationMixin:
 
         # MVP4: Build DiagnosticsEnvelope from committed state only.
         # Never exposes raw AI proposals as committed truth.
-        if session.module_id == GOD_OF_CARNAGE_MODULE_ID:
+        if visible_projection_policy.get("diagnostics_envelope_enabled"):
             try:
                 # Phase B: Collect degradation events
                 degradation_events = []
@@ -1161,7 +1177,7 @@ class _CommitFinalizationMixin:
             else:
                 event["turn_status"] = "committed" if outcome == "ok" else "committed_degraded"
         event.setdefault("http_status", 200)
-        if session.module_id == GOD_OF_CARNAGE_MODULE_ID:
+        if visible_projection_policy.get("human_input_attribution_enabled"):
             human_att = _build_human_input_attribution_record(
                 session=session,
                 graph_state=graph_state,

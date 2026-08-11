@@ -1842,10 +1842,12 @@
         "policies": {
           "type": "class",
           "name": "Narrative Policies",
-          "responsibility": "Bound memory, aspects, beats and phase behavior",
-          "contract": "Declarative policy YAML",
-          "anchor": "content/modules/god_of_carnage/narrative_aspect_policy.yaml",
+          "responsibility": "Bound narrative modes, memory, aspects, beats and player-visible projection behavior",
+          "contract": "Declarative, versioned module policy YAML",
+          "anchor": "content/modules/god_of_carnage/module.yaml",
           "members": [
+            "narrative governance",
+            "visible projection",
             "memory",
             "aspects",
             "phase beats"
@@ -2075,7 +2077,9 @@
             "module_policies"
           ],
           "decisions": [
-            "D1"
+            "D1",
+            "D4",
+            "D5"
           ]
         },
         {
@@ -3322,6 +3326,13 @@
           "contract": "Fail-closed mutation policy",
           "anchor": "world-engine/world_engine/story_runtime/live_governance.py"
         },
+        "projection_policy": {
+          "type": "component",
+          "name": "Visible Projection Policy Resolver",
+          "responsibility": "Resolve the bound module's player-visible projection capabilities",
+          "contract": "Versioned policy with a closed generic default and no module-ID dispatch",
+          "anchor": "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py"
+        },
         "ai_bridge": {
           "type": "component",
           "name": "AI Proposal Bridge",
@@ -3570,6 +3581,20 @@
           "anchor": "world-engine/world_engine/api/story_ws.py",
           "order": 11
         },
+        "governance_projection_policy": {
+          "from": "governance",
+          "to": "projection_policy",
+          "label": "supplies bound projection policy",
+          "contract": "visible_projection_policy.v1 or closed generic default",
+          "anchor": "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py"
+        },
+        "projection_policy_delivery": {
+          "from": "projection_policy",
+          "to": "delivery",
+          "label": "selects projection adapter",
+          "contract": "configured capabilities without module-ID dispatch",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_finalization.py"
+        },
         "delivery_backend": {
           "from": "delivery",
           "to": "backend",
@@ -3757,6 +3782,7 @@
             "turn",
             "lifecycle",
             "governance",
+            "projection_policy",
             "ai_bridge",
             "validation",
             "store",
@@ -3765,6 +3791,8 @@
           "relationships": [
             "turn_lifecycle",
             "lifecycle_governance",
+            "governance_projection_policy",
+            "projection_policy_delivery",
             "governance_ai",
             "ai_validation",
             "validation_store",
@@ -3773,7 +3801,8 @@
           "decisions": [
             "D1",
             "D4",
-            "D6"
+            "D6",
+            "D15"
           ]
         },
         {

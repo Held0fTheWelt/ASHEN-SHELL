@@ -64,11 +64,16 @@ ADRs and executable closure evidence.
 - **Historical intent:** YAML-first authored modules allow reviewable content independent of runtime
   code.
 - **Current evidence:** YAML module, backend loader/validator, World Engine loader and AI GoC
-  authority adapter all project the model.
-- **Conflict:** duplicated vocabularies and product-specific Python can become a second truth.
+  authority adapter all project the model. The main finalization dispatch now reads the neutral
+  `visible_projection_policy.v1`; an arbitrary configured module can select the rich adapter and an
+  unconfigured module remains on generic blocks.
+- **Conflict:** duplicated vocabularies and product-specific Python can still become a second
+  truth. Policy schema enforcement at compilation and neutralization of the remaining GoC-named
+  projection helpers are incomplete.
 - **Target:** one versioned compiled projection with provenance and anti-corruption adapters.
 - **Closure:** deterministic compile hash, cross-consumer contract test, and gate rejecting authored
-  fact overrides in product-specific Python.
+  fact overrides in product-specific Python. Also require a second-module projection contract test
+  without any engine-source module identifier.
 
 ### AR-V004 — Player delivery can flatten committed semantics
 

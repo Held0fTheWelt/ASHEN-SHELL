@@ -364,7 +364,32 @@ def _player_freedom_governance(player_freedom: dict[str, Any]) -> dict[str, Any]
 
 def _visible_projection_governance(visible_projection: dict[str, Any]) -> dict[str, Any]:
     return {
+        "schema_version": "visible_projection_policy.v1",
         "enabled": bool(visible_projection.get("enabled", False)),
+        "projection_profile": str(
+            visible_projection.get("projection_profile") or "generic_blocks"
+        ).strip()
+        or "generic_blocks",
+        "live_scene_projection_enabled": bool(
+            visible_projection.get("live_scene_projection_enabled", False)
+        ),
+        "deterministic_fallback": str(
+            visible_projection.get("deterministic_fallback") or "none"
+        ).strip()
+        or "none",
+        "opening_shape": str(
+            visible_projection.get("opening_shape") or "preserve"
+        ).strip()
+        or "preserve",
+        "opening_narration_normalization_enabled": bool(
+            visible_projection.get("opening_narration_normalization_enabled", False)
+        ),
+        "diagnostics_envelope_enabled": bool(
+            visible_projection.get("diagnostics_envelope_enabled", False)
+        ),
+        "human_input_attribution_enabled": bool(
+            visible_projection.get("human_input_attribution_enabled", False)
+        ),
         "hard_failure_behavior": str(
             visible_projection.get("hard_failure_behavior") or "recover"
         ).strip()

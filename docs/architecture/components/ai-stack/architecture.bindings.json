@@ -7081,7 +7081,7 @@
       "anchor": {
         "file": "ai_stack/module_runtime_policy.py",
         "kind": "python",
-        "line": 510,
+        "line": 535,
         "module": "ai_stack.module_runtime_policy",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "ModuleRuntimePolicy"
@@ -7093,7 +7093,7 @@
       "anchor": {
         "file": "ai_stack/module_runtime_policy.py",
         "kind": "python",
-        "line": 707,
+        "line": 732,
         "module": "ai_stack.module_runtime_policy",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "load_module_runtime_policy"
@@ -7105,7 +7105,7 @@
       "anchor": {
         "file": "ai_stack/module_runtime_policy.py",
         "kind": "python",
-        "line": 781,
+        "line": 806,
         "module": "ai_stack.module_runtime_policy",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "minimum_actor_response_count_from_governance"
