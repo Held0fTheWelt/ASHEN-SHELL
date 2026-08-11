@@ -16056,8 +16056,7 @@
     {
       "anchors": [
         "ai_stack/__init__.py",
-        "ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py",
-        "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
+        "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
         "ai_stack/operational_profile.py",
         "ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py",
         "content/modules/god_of_carnage/module.yaml",
@@ -16080,8 +16079,6 @@
     {
       "anchors": [
         "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
-        "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
@@ -16114,9 +16111,6 @@
       "anchors": [
         "ai_stack/capabilities/capability_selector.py",
         "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
-        "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
-        "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",
@@ -16148,10 +16142,6 @@
         "ai_stack/capabilities/capability_selector.py",
         "ai_stack/contracts/action_resolution_contracts.py",
         "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
-        "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-        "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
-        "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
-        "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
         "ai_stack/langgraph/runtime_executor/public.py",
         "ai_stack/langgraph/validation/builder.py",
         "ai_stack/langgraph/validation/result.py",

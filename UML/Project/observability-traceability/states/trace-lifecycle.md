@@ -9,7 +9,7 @@
 
 | Element | Responsibility | Contract | Source |
 | --- | --- | --- | --- |
-| Started | Establish trace identity | Trace id present | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
+| Started | Establish trace identity | Trace id present | [`backend/app/api/v1/game_routes_impl.py`](../../../../backend/app/api/v1/game_routes_impl.py) |
 | Propagating | Carry identity across service boundaries | Parent context retained | [`world-engine/world_engine/middleware/trace_middleware.py`](../../../../world-engine/world_engine/middleware/trace_middleware.py) |
 | Complete | Close all required spans | Terminal outcome recorded | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | Partial | Retain useful evidence after telemetry failure | Domain flow not failed solely by telemetry | [`world-engine/world_engine/observability/langfuse_adapter.py`](../../../../world-engine/world_engine/observability/langfuse_adapter.py) |

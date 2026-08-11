@@ -19,7 +19,7 @@ rectangle "Authored Truth\nResponsibility: Supply experience identity and policy
 rectangle "Live Runtime\nResponsibility: Coordinate and commit canonical turns\nContract: World-engine ownership\n[[../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py source]]" as live_runtime
 rectangle "Proposal Runtime\nResponsibility: Interpret, retrieve, plan, realize and validate candidates\nContract: AI proposal only\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor.py source]]" as proposal_runtime
 
-identity ..> play_proxy : "authorizes launch\ncontract: player and run binding\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+identity ..> play_proxy : "authorizes launch\ncontract: player and run binding\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 proposal_runtime ..> live_runtime : "returns candidate\ncontract: validation evidence and no commit\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]"
 play_proxy ..> live_runtime : "forwards command\ncontract: signed ticket\n[[../../../../backend/app/services/game/game_service.py source]]"
 live_runtime ..> proposal_runtime : "requests candidate\ncontract: proposal-only call\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"

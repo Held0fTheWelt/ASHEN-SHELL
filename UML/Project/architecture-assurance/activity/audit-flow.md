@@ -9,7 +9,7 @@
 
 | Element | Responsibility | Contract | Source |
 | --- | --- | --- | --- |
-| Semantic Model Catalog | Define individualized elements, contracts, relations and viewpoints | Validated source-bound JSON | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Semantic Model Catalog | Define individualized elements, contracts, relations and viewpoints | Validated source-bound JSON with no retired placeholder evidence | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
 | Repository Discovery | Enumerate implementation and document evidence | Ignored/local evidence excluded | [`tools/architecture_assurance/discovery.py`](../../../../tools/architecture_assurance/discovery.py) |
 | Binding Manifest Builder | Bind SAD declarations to source, tests and views | One deterministic manifest per scope | [`tools/architecture_assurance/manifest_builder.py`](../../../../tools/architecture_assurance/manifest_builder.py) |
 | Semantic View Builder | Project catalog models into PlantUML and companion documents | No generic inferred star graphs | [`tools/architecture_assurance/view_builder.py`](../../../../tools/architecture_assurance/view_builder.py) |

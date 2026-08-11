@@ -523,7 +523,7 @@
           "to": "provider",
           "label": "invokes governed model route",
           "contract": "provider/model/budget policy",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 2
         },
         "content_ai": {
@@ -538,7 +538,7 @@
           "to": "world",
           "label": "returns proposal and evidence",
           "contract": "uncommitted runtime package",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 12
         },
         "ai_executor": {
@@ -546,7 +546,7 @@
           "to": "executor",
           "label": "dispatches proposal run",
           "contract": "one governed executor invocation per proposal request",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 2
         },
         "executor_ingress": {
@@ -586,7 +586,7 @@
           "to": "director",
           "label": "provides context pack",
           "contract": "citations and continuity facts",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 6
         },
         "director_capabilities": {
@@ -594,7 +594,7 @@
           "to": "capabilities",
           "label": "requests capability plan",
           "contract": "evidence-gated selection",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 7
         },
         "director_narrator": {
@@ -610,7 +610,7 @@
           "to": "validator",
           "label": "submits proposal",
           "contract": "visible blocks plus proposed delta",
-          "anchor": "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
+          "anchor": "ai_stack/langgraph/langgraph_runtime_executor_impl.py",
           "order": 9
         },
         "validator_ledger": {
@@ -1063,7 +1063,7 @@
           "name": "Game API",
           "responsibility": "Create run bindings and proxy live play operations",
           "contract": "No backend-local narrative commit",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py"
+          "anchor": "backend/app/api/v1/game_routes_impl.py"
         },
         "game_service": {
           "type": "component",
@@ -1233,7 +1233,7 @@
           "to": "game_service",
           "label": "delegates live operation",
           "contract": "proxy-only service seam",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "anchor": "backend/app/api/v1/game_routes_impl.py",
           "order": 3
         },
         "backend_game_api": {
@@ -1241,7 +1241,7 @@
           "to": "game_api",
           "label": "routes authenticated player turn",
           "contract": "validated game API request",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "anchor": "backend/app/api/v1/game_routes_impl.py",
           "order": 2
         },
         "game_service_world": {
@@ -3522,7 +3522,7 @@
           "to": "backend",
           "label": "submits intent",
           "contract": "authenticated player request",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "anchor": "backend/app/api/v1/game_routes_impl.py",
           "order": 1
         },
         "backend_world": {
@@ -3660,7 +3660,7 @@
           "to": "player",
           "label": "delivers committed result",
           "contract": "HTTP response or ordered WebSocket projection",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "anchor": "backend/app/api/v1/game_routes_impl.py",
           "order": 10
         },
         "manager_turn": {
@@ -4066,7 +4066,7 @@
           "type": "component",
           "name": "Semantic Model Catalog",
           "responsibility": "Define individualized elements, contracts, relations and viewpoints",
-          "contract": "Validated source-bound JSON",
+          "contract": "Validated source-bound JSON with no retired placeholder evidence",
           "anchor": "tools/architecture_assurance/model_catalog.json"
         },
         "discovery": {
@@ -5053,7 +5053,7 @@
           "to": "play_proxy",
           "label": "authorizes launch",
           "contract": "player and run binding",
-          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py"
+          "anchor": "backend/app/api/v1/game_routes_impl.py"
         },
         "proxy_runtime": {
           "from": "play_proxy",
@@ -6030,7 +6030,7 @@
           "name": "Backend Trace Start",
           "responsibility": "Create or propagate player request identity",
           "contract": "Stable trace and request ids",
-          "anchor": "backend/app/api/v1/game/player_turn_trace_start.py"
+          "anchor": "backend/app/api/v1/game_routes_impl.py"
         },
         "world": {
           "type": "component",
@@ -6104,7 +6104,7 @@
           "name": "Started",
           "responsibility": "Establish trace identity",
           "contract": "Trace id present",
-          "anchor": "backend/app/api/v1/game/player_turn_trace_start.py"
+          "anchor": "backend/app/api/v1/game_routes_impl.py"
         },
         "propagating": {
           "type": "state",
@@ -6147,7 +6147,7 @@
           "to": "world",
           "label": "propagates trace context",
           "contract": "trace and request ids",
-          "anchor": "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
+          "anchor": "backend/app/api/v1/game_routes_impl.py",
           "order": 1
         },
         "world_ai": {
@@ -6766,14 +6766,14 @@
           "name": "Provider Credential Service",
           "responsibility": "Seal, rotate and resolve provider secrets",
           "contract": "No plaintext persistence or response",
-          "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "runtime_secret": {
           "type": "component",
           "name": "Runtime Secret Resolver",
           "responsibility": "Provide ephemeral secret material to authorized calls",
           "contract": "Scoped in-memory use",
-          "anchor": "backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "audit": {
           "type": "component",
@@ -6794,7 +6794,7 @@
           "name": "Provider Secret",
           "responsibility": "Represent encrypted provider credential material",
           "contract": "Ciphertext at rest",
-          "anchor": "backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py",
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py",
           "members": [
             "provider_id",
             "ciphertext",
@@ -6833,35 +6833,35 @@
           "name": "Absent",
           "responsibility": "Represent unconfigured provider credential",
           "contract": "Runtime not ready",
-          "anchor": "backend/app/services/governance/governance_runtime/10_provider_listing_and_create.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "sealed": {
           "type": "state",
           "name": "Sealed",
           "responsibility": "Store encrypted credential",
           "contract": "Ciphertext only",
-          "anchor": "backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "active": {
           "type": "state",
           "name": "Active",
           "responsibility": "Permit scoped provider use",
           "contract": "Health and policy valid",
-          "anchor": "backend/app/services/governance/governance_runtime/12_provider_connection_health.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "rotating": {
           "type": "state",
           "name": "Rotating",
           "responsibility": "Replace credential without plaintext exposure",
           "contract": "Audited atomic replacement",
-          "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "revoked": {
           "type": "state",
           "name": "Revoked",
           "responsibility": "Prevent further resolution",
           "contract": "Audit retained",
-          "anchor": "backend/app/services/governance/governance_runtime/14_model_update_delete_rebind.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "browser_node": {
           "type": "node",
@@ -6889,7 +6889,7 @@
           "name": "External Model Provider",
           "responsibility": "Accept authenticated inference call",
           "contract": "TLS and scoped provider key",
-          "anchor": "backend/app/services/governance/governance_runtime/03_provider_contracts_remote_and_mock.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         }
       },
       "relationships": {
@@ -6935,7 +6935,7 @@
           "to": "credentials",
           "label": "seals or rotates credential",
           "contract": "plaintext ephemeral only",
-          "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py",
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py",
           "order": 5
         },
         "credentials_runtime": {
@@ -6943,7 +6943,7 @@
           "to": "runtime_secret",
           "label": "resolves for provider call",
           "contract": "scoped in-memory secret",
-          "anchor": "backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py",
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py",
           "order": 4
         },
         "service_audit": {
@@ -6986,21 +6986,21 @@
           "to": "sealed",
           "label": "credential supplied",
           "contract": "encrypt before persistence",
-          "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "sealed_active": {
           "from": "sealed",
           "to": "active",
           "label": "health and policy pass",
           "contract": "provider ready",
-          "anchor": "backend/app/services/governance/governance_runtime/12_provider_connection_health.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "active_rotating": {
           "from": "active",
           "to": "rotating",
           "label": "rotation requested",
           "contract": "old secret remains until replacement valid",
-          "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "rotating_active": {
           "from": "rotating",
@@ -7013,7 +7013,7 @@
           "to": "revoked",
           "label": "provider disabled",
           "contract": "resolution denied",
-          "anchor": "backend/app/services/governance/governance_runtime/14_model_update_delete_rebind.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         },
         "browser_backend": {
           "from": "browser_node",
@@ -7033,7 +7033,7 @@
           "to": "provider_node",
           "label": "TLS inference call",
           "contract": "ephemeral scoped secret",
-          "anchor": "backend/app/services/governance/governance_runtime/05_provider_probe_http.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service_impl.py"
         }
       },
       "views": [

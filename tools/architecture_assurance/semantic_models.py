@@ -25,6 +25,10 @@ _SUPPORTED_KINDS = {
     "state",
     "usecase",
 }
+_RETIRED_SOURCE_ANCHOR_MARKERS = (
+    "Retired SOURCE_LINES shard",
+    "Retired SOURCE segment",
+)
 
 
 class SemanticModelError(ValueError):
@@ -52,6 +56,24 @@ def _escape(value: str) -> str:
 def _relative_link(anchor: str, destination: Path, repo_root: Path) -> str:
     target = repo_root / anchor
     return Path(os.path.relpath(target, destination.parent)).as_posix()
+
+
+def _is_retired_source_placeholder(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        prefix = path.read_text(encoding="utf-8-sig", errors="replace")[:1024]
+    except OSError:
+        return False
+    stripped = prefix.lstrip()
+    quote = stripped[:3]
+    if quote not in {'"""', "'''"}:
+        return False
+    end = stripped.find(quote, 3)
+    if end < 0:
+        return False
+    module_docstring = stripped[3:end]
+    return any(marker in module_docstring for marker in _RETIRED_SOURCE_ANCHOR_MARKERS)
 
 
 def _resolved_view(
@@ -167,6 +189,16 @@ def validate_model_catalog(
                             "error": f"missing source anchor: {element['anchor']}",
                         }
                     )
+                elif _is_retired_source_placeholder(anchor):
+                    findings.append(
+                        {
+                            "subsystem": str(subsystem_id),
+                            "view": view_id,
+                            "error": (
+                                f"retired placeholder source anchor: {element['anchor']}"
+                            ),
+                        }
+                    )
             for relationship in view["relationships_resolved"]:
                 missing = [
                     key
@@ -207,6 +239,16 @@ def validate_model_catalog(
                             "subsystem": str(subsystem_id),
                             "view": view_id,
                             "error": f"missing edge anchor: {anchor_value}",
+                        }
+                    )
+                elif anchor_value and _is_retired_source_placeholder(
+                    repo_root / anchor_value
+                ):
+                    findings.append(
+                        {
+                            "subsystem": str(subsystem_id),
+                            "view": view_id,
+                            "error": f"retired placeholder edge anchor: {anchor_value}",
                         }
                     )
             if kind in {"sequence", "activity"} and element_ids:

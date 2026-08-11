@@ -5333,7 +5333,7 @@
     {
       "anchors": [
         "ai_stack/langgraph/langgraph_runtime_executor.py",
-        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "backend/app/services/game/game_service.py",
         "content/modules/god_of_carnage/module.yaml",
         "world-engine/world_engine/api/story_ws.py",
@@ -5406,7 +5406,7 @@
     },
     {
       "anchors": [
-        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "backend/app/services/game/game_service.py",
         "world-engine/world_engine/api/http_routes/story_turn_routes.py",
         "world-engine/world_engine/api/story_ws.py",

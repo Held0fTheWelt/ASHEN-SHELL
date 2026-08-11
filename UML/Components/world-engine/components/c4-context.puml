@@ -19,7 +19,7 @@ rectangle "World Engine\nResponsibility: Own sessions, validate proposals and co
 rectangle "AI Stack\nResponsibility: Produce bounded narrative proposals\nContract: Proposal and evidence, never commit\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor.py source]]" as ai
 rectangle "Content Authority\nResponsibility: Supply versioned authored facts and policy\nContract: Immutable bound content version\n[[../../../../content/modules/god_of_carnage/module.yaml source]]" as content
 
-player ..> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+player ..> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 backend ..> world : "proxies turn\ncontract: signed story request\n[[../../../../backend/app/services/game/game_service.py source]]"
 content ..> world : "supplies authored truth\ncontract: bound immutable content version\n[[../../../../world-engine/world_engine/content/backend_loader.py source]]"
 world ..> ai : "requests proposal\ncontract: bounded context and trace\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"

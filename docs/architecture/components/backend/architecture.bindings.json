@@ -27414,7 +27414,7 @@
     {
       "anchors": [
         "backend/app/api/v1/auth_routes.py",
-        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "backend/app/models/__init__.py",
         "backend/app/observability/__init__.py",
         "backend/app/observability/trace.py",
@@ -27440,7 +27440,7 @@
     {
       "anchors": [
         "backend/app/api/v1/auth_routes.py",
-        "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "backend/app/factory_app.py",
         "backend/app/observability/__init__.py",
         "backend/app/services/game/game_service.py",

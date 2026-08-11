@@ -32,17 +32,17 @@ participant "Proposal Validator\nResponsibility: Evaluate seams, capabilities an
 participant "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger
 
 world -> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]"
-ai -> executor : "dispatches proposal run\ncontract: one governed executor invocation per proposal request\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
+ai -> executor : "dispatches proposal run\ncontract: one governed executor invocation per proposal request\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 ingress -> semantic_input : "emits neutral input record\ncontract: module-declared internal language and source provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 semantic_input -> retrieval : "keys grounded retrieval\ncontract: neutral internal query with raw-input provenance\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
-retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
-director -> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"
+retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+director -> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 director -> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
-narrator -> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py source]]"
+narrator -> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 validator -> ledger : "records validation evidence\ncontract: typed aspect status\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
 ledger -> executor : "returns evidence projection\ncontract: proposal package metadata\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py source]]"
-ai -> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
+ai -> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 
 legend bottom
 Viewpoint: sequence

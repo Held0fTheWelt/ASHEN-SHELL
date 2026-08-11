@@ -27,7 +27,7 @@ participant "Commit Resolution\nResponsibility: Validate proposal against world 
 participant "Story Session Store\nResponsibility: Persist committed state and monotonic revision\nContract: Atomic session update\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]" as store
 participant "Delivery Surfaces\nResponsibility: Publish committed blocks and state\nContract: Post-commit events only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]" as delivery
 
-player -> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+player -> backend : "submits intent\ncontract: authenticated player request\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 backend -> turn : "enters authoritative turn execution\ncontract: signed request, session id, base revision and trace id\n[[../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py source]]"
 turn -> lifecycle : "executes canonical phases\ncontract: ordered lifecycle\n[[../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py source]]"
 lifecycle -> governance : "checks authority and policy\ncontract: fail closed\n[[../../../../world-engine/world_engine/story_runtime/live_governance.py source]]"
@@ -35,7 +35,7 @@ governance -> ai_bridge : "requests bounded proposal\ncontract: proposal-only\n[
 ai_bridge -> validation : "returns candidate\ncontract: proposal plus evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]"
 validation -> store : "commits accepted delta\ncontract: atomic revision or no write\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
 delivery -> backend : "returns committed turn envelope\ncontract: accepted revision and typed player-visible blocks only\n[[../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py source]]"
-backend -> player : "delivers committed result\ncontract: HTTP response or ordered WebSocket projection\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+backend -> player : "delivers committed result\ncontract: HTTP response or ordered WebSocket projection\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 store -> delivery : "publishes committed result\ncontract: post-commit only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]"
 
 legend bottom

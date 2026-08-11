@@ -12,12 +12,12 @@ skinparam maxMessageSize 180
 ' bt-element-id: ai
 ' bt-element-id: projection
 
-participant "Backend Trace Start\nResponsibility: Create or propagate player request identity\nContract: Stable trace and request ids\n[[../../../../backend/app/api/v1/game/player_turn_trace_start.py source]]" as backend
+participant "Backend Trace Start\nResponsibility: Create or propagate player request identity\nContract: Stable trace and request ids\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]" as backend
 participant "World Runtime Trace\nResponsibility: Record authoritative lifecycle spans\nContract: Session and revision correlation\n[[../../../../world-engine/world_engine/observability/trace.py source]]" as world
 participant "AI Langfuse Evidence\nResponsibility: Record retrieval, planning, generation and validation spans\nContract: Proposal trace under parent turn\n[[../../../../ai_stack/langfuse/langfuse_evidence.py source]]" as ai
 participant "Operator Projection\nResponsibility: Present cross-service trace tree and diagnostics\nContract: Read-only evidence view\n[[../../../../world-engine/world_engine/web/static/ui_traces.js source]]" as projection
 
-backend -> world : "propagates trace context\ncontract: trace and request ids\n[[../../../../backend/app/api/v1/game/trace_identity_and_auth_helpers.py source]]"
+backend -> world : "propagates trace context\ncontract: trace and request ids\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 world -> ai : "parents proposal trace\ncontract: turn trace context\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"
 ai -> world : "returns evidence references\ncontract: proposal span linkage\n[[../../../../ai_stack/langfuse/langfuse_evidence.py source]]"
 world -> projection : "publishes lifecycle evidence\ncontract: redacted trace DTO\n[[../../../../world-engine/world_engine/web/static/ui_traces.js source]]"

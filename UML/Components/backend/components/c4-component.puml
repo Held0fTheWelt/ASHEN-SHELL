@@ -19,7 +19,7 @@ skinparam maxMessageSize 180
 
 component "Authentication API\nResponsibility: Issue and revoke platform sessions and tokens\nContract: Password/session/refresh-token policy\n[[../../../../backend/app/api/v1/auth_routes.py source]]" as auth
 rectangle "Domain Services\nResponsibility: Implement platform and governance use cases\nContract: Transaction-scoped service operations\n[[../../../../backend/app/services/__init__.py source]]" as services
-component "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]" as game_api
+component "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]" as game_api
 component "Game Service\nResponsibility: Call world-engine and map service responses\nContract: Internal HTTP and signed ticket\n[[../../../../backend/app/services/game/game_service.py source]]" as game_service
 rectangle "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/world_engine/main.py source]]" as world
 component "Governance Services\nResponsibility: Validate provider, route, security and runtime settings\nContract: Audit-producing admin mutation boundary\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]" as governance
@@ -31,7 +31,7 @@ auth ..> services : "authenticates\ncontract: identity and token services\n[[../
 content_service ..> models : "persists package lifecycle\ncontract: immutable versions and events\n[[../../../../backend/app/services/game/game_content_service.py source]]"
 services ..> observability : "emits evidence\ncontract: redacted trace correlation\n[[../../../../backend/app/observability/trace.py source]]"
 governance ..> models : "persists settings and audit\ncontract: validated governance transaction\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
-game_api ..> game_service : "delegates live operation\ncontract: proxy-only service seam\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+game_api ..> game_service : "delegates live operation\ncontract: proxy-only service seam\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 game_service ..> world : "calls story API\ncontract: ticketed HTTP request\n[[../../../../backend/app/services/game/game_service.py source]]"
 
 legend bottom

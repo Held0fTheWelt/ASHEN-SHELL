@@ -250,6 +250,30 @@
       "state": "bound",
       "status": "Accepted",
       "title": "AKDB integration tests are strictly disposable"
+    },
+    {
+      "anchors": [
+        {
+          "declared_path": "tests/architecture_assurance/test_semantic_models_and_drift.py",
+          "file": "tests/architecture_assurance/test_semantic_models_and_drift.py",
+          "kind": "test",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Semantic models require executable source correspondence"
+        },
+        {
+          "declared_path": "tools/architecture_assurance/semantic_models.py",
+          "file": "tools/architecture_assurance/semantic_models.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Semantic models require executable source correspondence"
+        }
+      ],
+      "id": "D7",
+      "state": "bound",
+      "status": "Accepted",
+      "title": "Semantic models require executable source correspondence"
     }
   ],
   "discovered_units": [
@@ -1243,7 +1267,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 30,
+        "line": 34,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "SemanticModelError"
@@ -1255,7 +1279,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 34,
+        "line": 38,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "load_model_catalog"
@@ -1267,7 +1291,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 660,
+        "line": 702,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_package_readme"
@@ -1279,7 +1303,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 511,
+        "line": 553,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_semantic_view"
@@ -1291,7 +1315,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 700,
+        "line": 742,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_traceability"
@@ -1303,7 +1327,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 581,
+        "line": 623,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "render_view_companion"
@@ -1315,7 +1339,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 90,
+        "line": 112,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "validate_model_catalog"
@@ -1327,7 +1351,7 @@
       "anchor": {
         "file": "tools/architecture_assurance/semantic_models.py",
         "kind": "python",
-        "line": 276,
+        "line": 318,
         "module": "tools.architecture_assurance.semantic_models",
         "schema_version": "bt.source_anchor.v1",
         "symbol": "view_requirements"

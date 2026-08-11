@@ -13,7 +13,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: partial
 ' bt-element-id: redacted
 
-state "Started\nResponsibility: Establish trace identity\nContract: Trace id present\n[[../../../../backend/app/api/v1/game/player_turn_trace_start.py source]]" as started
+state "Started\nResponsibility: Establish trace identity\nContract: Trace id present\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]" as started
 state "Propagating\nResponsibility: Carry identity across service boundaries\nContract: Parent context retained\n[[../../../../world-engine/world_engine/middleware/trace_middleware.py source]]" as propagating
 state "Complete\nResponsibility: Close all required spans\nContract: Terminal outcome recorded\n[[../../../../world-engine/world_engine/observability/trace.py source]]" as complete
 state "Partial\nResponsibility: Retain useful evidence after telemetry failure\nContract: Domain flow not failed solely by telemetry\n[[../../../../world-engine/world_engine/observability/langfuse_adapter.py source]]" as partial

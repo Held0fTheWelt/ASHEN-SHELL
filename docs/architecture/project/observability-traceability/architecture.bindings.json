@@ -15861,8 +15861,7 @@
     {
       "anchors": [
         "ai_stack/langfuse/langfuse_evidence.py",
-        "backend/app/api/v1/game/player_turn_trace_start.py",
-        "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "tools/mcp_server/langfuse_tracing.py",
         "world-engine/world_engine/observability/trace.py",
         "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
@@ -15884,8 +15883,7 @@
     {
       "anchors": [
         "ai_stack/langfuse/langfuse_evidence.py",
-        "backend/app/api/v1/game/player_turn_trace_start.py",
-        "backend/app/api/v1/game/trace_identity_and_auth_helpers.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "world-engine/world_engine/observability/trace.py",
         "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
         "world-engine/world_engine/web/static/ui_traces.js"
@@ -15922,7 +15920,7 @@
     },
     {
       "anchors": [
-        "backend/app/api/v1/game/player_turn_trace_start.py",
+        "backend/app/api/v1/game_routes_impl.py",
         "world-engine/world_engine/middleware/trace_middleware.py",
         "world-engine/world_engine/observability/langfuse_adapter.py",
         "world-engine/world_engine/observability/trace.py",

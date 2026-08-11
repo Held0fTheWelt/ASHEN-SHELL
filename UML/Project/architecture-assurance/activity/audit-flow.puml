@@ -16,7 +16,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: audit
 ' bt-element-id: reports
 
-(*) --> "Semantic Model Catalog\nResponsibility: Define individualized elements, contracts, relations and viewpoints\nContract: Validated source-bound JSON\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as catalog
+(*) --> "Semantic Model Catalog\nResponsibility: Define individualized elements, contracts, relations and viewpoints\nContract: Validated source-bound JSON with no retired placeholder evidence\n[[../../../../tools/architecture_assurance/model_catalog.json source]]" as catalog
 catalog -->[scopes evidence\ncontract: history roots and source anchors] "Repository Discovery\nResponsibility: Enumerate implementation and document evidence\nContract: Ignored/local evidence excluded\n[[../../../../tools/architecture_assurance/discovery.py source]]" as discovery
 note on link
 [[../../../../tools/architecture_assurance/model_catalog.json relationship source]]

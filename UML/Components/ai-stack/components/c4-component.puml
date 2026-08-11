@@ -27,10 +27,10 @@ component "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and de
 
 executor ..> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 ingress ..> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
-retrieval ..> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
-director ..> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"
+retrieval ..> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+director ..> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 director ..> narrator : "requests realization\ncontract: scene plan and actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]"
-narrator ..> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/runtime_executor/executor_validation_commit.py source]]"
+narrator ..> validator : "submits proposal\ncontract: visible blocks plus proposed delta\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 validator ..> ledger : "records validation evidence\ncontract: typed aspect status\n[[../../../../ai_stack/langgraph/validation/result.py source]]"
 ledger ..> executor : "returns evidence projection\ncontract: proposal package metadata\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py source]]"
 

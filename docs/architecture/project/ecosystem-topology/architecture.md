@@ -171,7 +171,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | Historical MVP Corpus | Architecture Reconciliation | supplies historical claims | read-only dated provenance | Contract-only boundary |
 | Current Code | Architecture Reconciliation | supplies present structure | source anchors | Contract-only boundary |
 | Git History | Architecture Reconciliation | supplies evolution | commit/rename chronology | Contract-only boundary |
-| Identity and Platform | Play Proxy | authorizes launch | player and run binding | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Identity and Platform | Play Proxy | authorizes launch | player and run binding | [`backend/app/api/v1/game_routes_impl.py`](../../../../backend/app/api/v1/game_routes_impl.py) |
 | Proposal Runtime | Live Runtime | returns candidate | validation evidence and no commit | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Play Proxy | Live Runtime | forwards command | signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Architecture Reconciliation | Target Architecture | justifies target options | accepted decision and delta | Contract-only boundary |

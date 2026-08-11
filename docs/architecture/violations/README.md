@@ -121,10 +121,14 @@ ADRs and executable closure evidence.
 
 - **Current evidence:** AI Stack §9 is about 82% of its SAD; MVP completion §9 is about 92%.
 - **Conflict:** chronological ADR text hides goals, decomposition and runtime architecture.
+- **Repair slice:** 31 element/edge bindings that pointed at empty Wave-5 source shards now point
+  to the assembled executable modules. The semantic-model gate rejects retired placeholders so
+  file existence can no longer masquerade as implementation correspondence.
 - **Target:** §9 is a concise decision index; active ADRs own trade-offs; program evidence and
   historical details are separate.
 - **Closure:** synthesis gate checks decision ratio, ordered IDs, active ADR links and non-placeholder
-  arc42 sections.
+  arc42 sections. Placeholder source-anchor rejection is now conforming; decision-ratio repair
+  remains open.
 
 ### AR-V009 — Coverage metric hides unmapped implementation
 

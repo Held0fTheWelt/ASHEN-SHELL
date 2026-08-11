@@ -17,7 +17,7 @@ class "Authorization Grant\nResponsibility: Bind actor, scope and allowed operat
   scope
   expires
 }
-class "Provider Secret\nResponsibility: Represent encrypted provider credential material\nContract: Ciphertext at rest\n[[../../../../backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py source]]" as secret {
+class "Provider Secret\nResponsibility: Represent encrypted provider credential material\nContract: Ciphertext at rest\n[[../../../../backend/app/services/governance/governance_runtime_service_impl.py source]]" as secret {
   provider_id
   ciphertext
   key_version

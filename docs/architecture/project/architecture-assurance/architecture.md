@@ -66,7 +66,7 @@ Only elements that participate in a container or component view are listed as bu
 | Canon Exporter (`canon`) | `component` | Create idempotent AKDB source projection | Hash-stable destination manifest | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
 | Report Exporters (`reports`) | `component` | Emit human, JSON, JUnit and SARIF evidence | Schema-stable deterministic serialization | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
 | Repository Discovery (`discovery`) | `component` | Enumerate implementation and document evidence | Ignored/local evidence excluded | [`tools/architecture_assurance/discovery.py`](../../../../tools/architecture_assurance/discovery.py) |
-| Semantic Model Catalog (`catalog`) | `component` | Define individualized elements, contracts, relations and viewpoints | Validated source-bound JSON | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
+| Semantic Model Catalog (`catalog`) | `component` | Define individualized elements, contracts, relations and viewpoints | Validated source-bound JSON with no retired placeholder evidence | [`tools/architecture_assurance/model_catalog.json`](../../../../tools/architecture_assurance/model_catalog.json) |
 | Semantic View Builder (`views`) | `component` | Project catalog models into PlantUML and companion documents | No generic inferred star graphs | [`tools/architecture_assurance/view_builder.py`](../../../../tools/architecture_assurance/view_builder.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
@@ -222,6 +222,19 @@ No production or developer database is discovered, opened, copied or cleaned
 by this test. Evidence:
 `tests/architecture_assurance/test_disposable_akdb_integration.py`.
 
+### D7: Semantic models require executable source correspondence
+
+**Status:** Accepted
+**Origin:** architecture synthesis repair and DRIFT-012
+
+An existing file is insufficient implementation evidence when the file is a retired or empty
+source placeholder. Element and relationship anchors must resolve to the current executable
+implementation, an active contract, or an authoritative data/document source appropriate to the
+view. The semantic catalog validator rejects known retired-shard markers. A source assembly or
+unsharding migration must update model anchors in the same change that retires the old source.
+Evidence: `tools/architecture_assurance/semantic_models.py` and
+`tests/architecture_assurance/test_semantic_models_and_drift.py`.
+
 <!-- BEGIN BT-SEMANTIC-DEPTH:9 -->
 ### Decision-to-view correspondence
 
@@ -243,7 +256,8 @@ Critical subsystems require complete arc42 structure, full accepted binding and
 representation coverage, a concern-complete individualized viewpoint suite,
 reproducible discovery and a matching canon projection. Pinned census values
 prevent silent regression, while the semantic gate prevents a high file count
-from masking shallow or generic diagrams.
+from masking shallow or generic diagrams. No semantic element or edge may use a retired source
+placeholder as implementation correspondence.
 
 ## 11. Risks & Technical Debt
 

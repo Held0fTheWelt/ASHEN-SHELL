@@ -15,9 +15,9 @@ skinparam maxMessageSize 180
 node "Browser\nResponsibility: Hold protected user session\nContract: Secure cookie and CSRF\n[[../../../../frontend/app/auth.py source]]" as browser_node
 node "Backend Security Boundary\nResponsibility: Authorize and manage encrypted secrets\nContract: Private application process\n[[../../../../backend/Dockerfile source]]" as backend_node
 database "Encrypted Governance Store\nResponsibility: Persist ciphertext and audit events\nContract: Encryption at rest\n[[../../../../backend/app/extensions.py source]]" as store_node
-node "External Model Provider\nResponsibility: Accept authenticated inference call\nContract: TLS and scoped provider key\n[[../../../../backend/app/services/governance/governance_runtime/03_provider_contracts_remote_and_mock.py source]]" as provider_node
+node "External Model Provider\nResponsibility: Accept authenticated inference call\nContract: TLS and scoped provider key\n[[../../../../backend/app/services/governance/governance_runtime_service_impl.py source]]" as provider_node
 
-backend_node --> provider_node : "TLS inference call\ncontract: ephemeral scoped secret\n[[../../../../backend/app/services/governance/governance_runtime/05_provider_probe_http.py source]]"
+backend_node --> provider_node : "TLS inference call\ncontract: ephemeral scoped secret\n[[../../../../backend/app/services/governance/governance_runtime_service_impl.py source]]"
 backend_node --> store_node : "encrypted persistence\ncontract: ciphertext and audit\n[[../../../../backend/app/extensions.py source]]"
 browser_node --> backend_node : "HTTPS\ncontract: secure session and CSRF"
 

@@ -10,7 +10,7 @@
 | Element | Responsibility | Contract | Source |
 | --- | --- | --- | --- |
 | Authorization Grant | Bind actor, scope and allowed operation | Least privilege and expiry | [`backend/app/services/governance/security_governance_service.py`](../../../../backend/app/services/governance/security_governance_service.py) |
-| Provider Secret | Represent encrypted provider credential material | Ciphertext at rest | [`backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py`](../../../../backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py) |
+| Provider Secret | Represent encrypted provider credential material | Ciphertext at rest | [`backend/app/services/governance/governance_runtime_service_impl.py`](../../../../backend/app/services/governance/governance_runtime_service_impl.py) |
 | Security Audit Event | Record safe mutation evidence | No secret payload | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
 
 ## Modeled relationships

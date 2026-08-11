@@ -16,14 +16,14 @@ skinparam maxMessageSize 180
 
 actor "Player\nResponsibility: Authenticate, browse community and start or continue play\nContract: Browser/API session\n[[../../../../docs/architecture/components/backend/architecture.md source]]" as player
 participant "Backend\nResponsibility: Own platform data and governed control-plane operations\nContract: Flask /api/v1\n[[../../../../backend/app/factory_app.py source]]\n[[../components/c4-container.puml drill-down]]" as backend
-participant "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]" as game_api
+participant "Game API\nResponsibility: Create run bindings and proxy live play operations\nContract: No backend-local narrative commit\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]" as game_api
 participant "Game Service\nResponsibility: Call world-engine and map service responses\nContract: Internal HTTP and signed ticket\n[[../../../../backend/app/services/game/game_service.py source]]" as game_service
 participant "World Engine\nResponsibility: Own live story sessions and commits\nContract: Internal story HTTP API plus signed ticket\n[[../../../../world-engine/world_engine/main.py source]]" as world
 participant "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
 
 player -> backend : "uses platform API\ncontract: authenticated HTTP\n[[../../../../backend/app/api/v1/auth_routes.py source]]"
-backend -> game_api : "routes authenticated player turn\ncontract: validated game API request\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
-game_api -> game_service : "delegates live operation\ncontract: proxy-only service seam\n[[../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py source]]"
+backend -> game_api : "routes authenticated player turn\ncontract: validated game API request\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
+game_api -> game_service : "delegates live operation\ncontract: proxy-only service seam\n[[../../../../backend/app/api/v1/game_routes_impl.py source]]"
 game_service -> world : "calls story API\ncontract: ticketed HTTP request\n[[../../../../backend/app/services/game/game_service.py source]]"
 game_service -> observability : "records proxy outcome\ncontract: trace-correlated redacted evidence\n[[../../../../backend/app/services/game/game_service.py source]]"
 

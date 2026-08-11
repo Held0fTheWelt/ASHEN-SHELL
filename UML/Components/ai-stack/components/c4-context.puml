@@ -19,8 +19,8 @@ rectangle "Content Authority\nResponsibility: Supply canonical scenes, actors an
 
 content ..> ai : "supplies canon\ncontract: read-only compiled content\n[[../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py source]]"
 world ..> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]"
-ai ..> provider : "invokes governed model route\ncontract: provider/model/budget policy\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py source]]"
-ai ..> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
+ai ..> provider : "invokes governed model route\ncontract: provider/model/budget policy\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
+ai ..> world : "returns proposal and evidence\ncontract: uncommitted runtime package\n[[../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py source]]"
 
 legend bottom
 Viewpoint: context

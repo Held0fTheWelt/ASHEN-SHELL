@@ -19,8 +19,8 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | World Engine | AI Stack | requests narrative proposal | session context plus semantic input | [`world-engine/world_engine/story_runtime/manager/turn_execution.py`](../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py) |
-| AI Stack | Model Provider | invokes governed model route | provider/model/budget policy | [`ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py`](../../../../ai_stack/langgraph/runtime_executor/executor_model_routing_invocation.py) |
+| AI Stack | Model Provider | invokes governed model route | provider/model/budget policy | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
 | Content Authority | AI Stack | supplies canon | read-only compiled content | [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py) |
-| AI Stack | World Engine | returns proposal and evidence | uncommitted runtime package | [`ai_stack/langgraph/runtime_executor/executor_run_finish.py`](../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py) |
+| AI Stack | World Engine | returns proposal and evidence | uncommitted runtime package | [`ai_stack/langgraph/langgraph_runtime_executor_impl.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor_impl.py) |
 
 Generated deterministically from Better Tomorrow's semantic model catalog; edit the catalog, not this projection.

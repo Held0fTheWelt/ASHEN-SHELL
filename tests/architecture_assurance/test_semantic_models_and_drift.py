@@ -67,6 +67,43 @@ def test_semantic_catalog_is_source_bound_and_individualized() -> None:
     )
 
 
+def test_semantic_catalog_rejects_retired_placeholder_anchor(tmp_path: Path) -> None:
+    retired = tmp_path / "retired.py"
+    retired.write_text(
+        '"""Retired SOURCE segment — logic lives in the assembled impl module."""\n',
+        encoding="utf-8",
+    )
+    catalog = {
+        "subsystems": {
+            "sample": {
+                "elements": {
+                    "runtime": {
+                        "type": "component",
+                        "name": "Runtime",
+                        "responsibility": "Execute behavior",
+                        "contract": "Real implementation evidence",
+                        "anchor": "retired.py",
+                    }
+                },
+                "relationships": {},
+                "views": [
+                    {
+                        "id": "components",
+                        "kind": "component",
+                        "path": "components.puml",
+                        "concern": "Reject placeholder correspondence",
+                        "elements": ["runtime"],
+                        "relationships": [],
+                    }
+                ],
+            }
+        }
+    }
+
+    findings = validate_model_catalog(catalog, tmp_path)
+    assert any("retired placeholder source anchor" in item["error"] for item in findings)
+
+
 def test_view_requirements_capture_semantics_not_fixed_bands() -> None:
     catalog = load_model_catalog(MODEL_CATALOG)
     requirements = view_requirements(catalog, "world-engine")

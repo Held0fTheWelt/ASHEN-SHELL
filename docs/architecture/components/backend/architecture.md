@@ -68,7 +68,7 @@ Only elements that participate in a container or component view are listed as bu
 | --- | --- | --- | --- | --- |
 | Authentication API (`auth`) | `component` | Issue and revoke platform sessions and tokens | Password/session/refresh-token policy | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
 | Content Services (`content_service`) | `component` | Compile, review and publish authored content versions | Immutable version plus active pointer | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
-| Game API (`game_api`) | `component` | Create run bindings and proxy live play operations | No backend-local narrative commit | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Game API (`game_api`) | `component` | Create run bindings and proxy live play operations | No backend-local narrative commit | [`backend/app/api/v1/game_routes_impl.py`](../../../../backend/app/api/v1/game_routes_impl.py) |
 | Game Service (`game_service`) | `component` | Call world-engine and map service responses | Internal HTTP and signed ticket | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Governance Services (`governance`) | `component` | Validate provider, route, security and runtime settings | Audit-producing admin mutation boundary | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
 | API v1 (`api`) | `container` | Expose platform, play-proxy and admin HTTP contracts | Blueprint routes with auth and rate limits | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
@@ -122,7 +122,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | API v1 | Domain Services | invokes use cases | validated request DTOs | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
 | Authentication API | Domain Services | authenticates | identity and token services | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
 | Content Services | Persistence Models | persists package lifecycle | immutable versions and events | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
-| Game API | Game Service | delegates live operation | proxy-only service seam | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
+| Game API | Game Service | delegates live operation | proxy-only service seam | [`backend/app/api/v1/game_routes_impl.py`](../../../../backend/app/api/v1/game_routes_impl.py) |
 | Game Service | World Engine | calls story API | ticketed HTTP request | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Governance Services | Persistence Models | persists settings and audit | validated governance transaction | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
 | Alembic Schema | Persistence Models | versions | Alembic migration history | [`backend/migrations/env.py`](../../../../backend/migrations/env.py) |
