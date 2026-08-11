@@ -102,7 +102,8 @@ ADRs and executable closure evidence.
   optional evidence, source immutability, the public manager injection seam, and the runtime audit
   event. `PersistOutcome` is now exposed by canonical and recoverable turn results, and an in-memory
   revision advances only after the session sink accepts the write. The finalizer remains oversized,
-  so this is progress evidence rather than closure.
+  so this is progress evidence rather than closure. The duplicated callback/cascade/observability/W5
+  sequence is centralized in `commit_side_effects.py`, creating one seam for its later safe reorder.
 - **Closure:** behavior-equivalence tests and no additional sink callsite.
 
 ### AR-V006 — Fragmented cross-service trace
@@ -197,7 +198,8 @@ ADRs and executable closure evidence.
   call returns.
 - **Remaining conflict:** sidecar/observability effects still precede durable confirmation, opening
   creation ignores its returned outcome, and post-write outcome evidence is not part of the same
-  durable session payload.
+  durable session payload. Their order is now centralized and characterized, but intentionally not
+  presented as conforming.
 - **Target:** one atomic session write produces the authoritative revision and explicit outcome;
   only idempotent post-commit hooks and delivery run afterward.
 - **Closure:** fault-injected store tests prove no revision, success envelope, callback, cascade or

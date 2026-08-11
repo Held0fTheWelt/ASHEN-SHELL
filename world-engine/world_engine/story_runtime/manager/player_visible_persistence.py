@@ -5,6 +5,7 @@ Persists player-visible turn events and rendered surfaces after authoritative ru
 from __future__ import annotations
 
 from ._deps import *
+from .commit_side_effects import apply_committed_turn_side_effects
 from world_engine.story_runtime.persist_outcome import persist_outcome_payload
 from .player_visible_canonical_record import build_player_visible_canonical_record
 from .player_visible_event_defaults import (
@@ -88,18 +89,13 @@ class _PlayerVisiblePersistenceMixin:
         canonical_record["lifecycle_state"] = "observed"
         event["lifecycle_state"] = "observed"
         session.history.append(canonical_record)
-        self._refresh_callback_web_after_commit(
+        apply_committed_turn_side_effects(
+            self,
             session=session,
-            event=event,
             graph_state=graph_state,
-        )
-        self._refresh_consequence_cascade_after_commit(
-            session=session,
             event=event,
-            graph_state=graph_state,
+            include_w5_shadow=False,
         )
-        self._emit_observability_path_for_event(session=session, graph_state=graph_state, event=event)
-        session.diagnostics.append(event)
         session.updated_at = datetime.now(timezone.utc)
         persistence_outcome = self._persist_session(session)
         turn_lc.advance("persisted")

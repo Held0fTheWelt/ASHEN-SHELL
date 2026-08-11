@@ -3406,6 +3406,13 @@
           "contract": "Pure read-only projection with no graph or session mutation",
           "anchor": "world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py"
         },
+        "commit_hooks": {
+          "type": "component",
+          "name": "Committed Turn Side-Effect Coordinator",
+          "responsibility": "Centralize callback, cascade, observability and optional W5 hook ordering",
+          "contract": "One compatibility seam; durable-order violation remains explicit as AR-V012",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_side_effects.py"
+        },
         "store": {
           "type": "component",
           "name": "Story Session Store",
@@ -3713,6 +3720,27 @@
           "contract": "trace-ready evidence derived from committed turn state",
           "anchor": "world-engine/world_engine/story_runtime/manager/commit_finalization.py"
         },
+        "validation_commit_hooks": {
+          "from": "validation",
+          "to": "commit_hooks",
+          "label": "supplies committed turn state",
+          "contract": "hooks receive one accepted or recoverable event",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_side_effects.py"
+        },
+        "commit_hooks_store": {
+          "from": "commit_hooks",
+          "to": "store",
+          "label": "currently enriches session before write",
+          "contract": "compatibility order tracked as AR-V012",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_finalization.py"
+        },
+        "commit_hooks_observability": {
+          "from": "commit_hooks",
+          "to": "observability",
+          "label": "emits derived turn evidence",
+          "contract": "best-effort trace projection",
+          "anchor": "world-engine/world_engine/story_runtime/manager/commit_side_effects.py"
+        },
         "session_proposal": {
           "from": "session",
           "to": "proposal",
@@ -3886,6 +3914,7 @@
             "ai_bridge",
             "validation",
             "commit_evidence",
+            "commit_hooks",
             "store",
             "delivery",
             "observability"
@@ -3899,6 +3928,9 @@
             "ai_validation",
             "validation_commit_evidence",
             "commit_evidence_observability",
+            "validation_commit_hooks",
+            "commit_hooks_store",
+            "commit_hooks_observability",
             "validation_store",
             "store_delivery"
           ],

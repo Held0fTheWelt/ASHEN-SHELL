@@ -14,6 +14,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: ai_bridge
 ' bt-element-id: validation
 ' bt-element-id: commit_evidence
+' bt-element-id: commit_hooks
 ' bt-element-id: store
 ' bt-element-id: delivery
 ' bt-element-id: observability
@@ -25,14 +26,18 @@ component "Visible Projection Policy Resolver\nResponsibility: Resolve the bound
 component "AI Proposal Bridge\nResponsibility: Request and normalize AI proposal packets\nContract: Proposal-only anti-corruption layer\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]" as ai_bridge
 component "Commit Resolution\nResponsibility: Validate proposal against world truth and policy\nContract: Accepted/rejected decision with evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]" as validation
 component "Commit Evidence Projection\nResponsibility: Project log-ready model, validation, commit and retrieval evidence\nContract: Pure read-only projection with no graph or session mutation\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py source]]" as commit_evidence
+component "Committed Turn Side-Effect Coordinator\nResponsibility: Centralize callback, cascade, observability and optional W5 hook ordering\nContract: One compatibility seam; durable-order violation remains explicit as AR-V012\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_side_effects.py source]]" as commit_hooks
 component "Story Session Store\nResponsibility: Persist committed state and monotonic revision\nContract: Atomic session update\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]" as store
 component "Delivery Surfaces\nResponsibility: Publish committed blocks and state\nContract: Post-commit events only\n[[../../../../world-engine/world_engine/api/story_ws.py source]]" as delivery
 rectangle "Runtime Observability\nResponsibility: Correlate turn lifecycle and failures\nContract: Redacted trace tree\n[[../../../../world-engine/world_engine/observability/trace.py source]]" as observability
 
 commit_evidence ..> observability : "projects turn audit fields\ncontract: trace-ready evidence derived from committed turn state\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py source]]"
+commit_hooks ..> observability : "emits derived turn evidence\ncontract: best-effort trace projection\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_side_effects.py source]]"
+commit_hooks ..> store : "currently enriches session before write\ncontract: compatibility order tracked as AR-V012\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py source]]"
 governance ..> projection_policy : "supplies bound projection policy\ncontract: visible_projection_policy.v1 or closed generic default\n[[../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py source]]"
 projection_policy ..> delivery : "selects projection adapter\ncontract: configured capabilities without module-ID dispatch\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py source]]"
 validation ..> commit_evidence : "supplies decision evidence\ncontract: accepted or degraded evidence without mutation\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py source]]"
+validation ..> commit_hooks : "supplies committed turn state\ncontract: hooks receive one accepted or recoverable event\n[[../../../../world-engine/world_engine/story_runtime/manager/commit_side_effects.py source]]"
 turn ..> lifecycle : "executes canonical phases\ncontract: ordered lifecycle\n[[../../../../world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py source]]"
 lifecycle ..> governance : "checks authority and policy\ncontract: fail closed\n[[../../../../world-engine/world_engine/story_runtime/live_governance.py source]]"
 governance ..> ai_bridge : "requests bounded proposal\ncontract: proposal-only\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"

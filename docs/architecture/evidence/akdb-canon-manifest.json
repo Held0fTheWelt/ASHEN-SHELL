@@ -531,9 +531,9 @@
       "sha256": "9f09a8b08b802d08b1f9a413a4f8b680bccb79295ecb3dff972694128d476975"
     },
     {
-      "bytes": 5323,
+      "bytes": 5397,
       "path": "UML/Components/world-engine/TRACEABILITY.md",
-      "sha256": "48aa8087bcca4df5ad30843869dbf5ae77a41e9e3fed9334c30ed51702d61dd1"
+      "sha256": "c90259cc18858a10bfc01174579c3733ca2b8b155d51bbe7b871d8899428435a"
     },
     {
       "bytes": 3651,
@@ -556,14 +556,14 @@
       "sha256": "384f677c627241aabdb709d056beaff6f4559c8f25a8ccbbbc74ff86bfe63a9c"
     },
     {
-      "bytes": 5769,
+      "bytes": 7031,
       "path": "UML/Components/world-engine/components/c4-component.md",
-      "sha256": "d1bd806bf1b0665319f377d8a3af8d1b19c25adf30db0bb4c4bb207e3fa25182"
+      "sha256": "852120034b1268e7fe91bb9474ea10ff8dfd49e758e2bdc8a4811953bf35ee36"
     },
     {
-      "bytes": 5151,
+      "bytes": 6147,
       "path": "UML/Components/world-engine/components/c4-component.puml",
-      "sha256": "4933a7be50b62ba02b5b9faffe3a6253bbfd60751035d20a9c78d726cd7c38e7"
+      "sha256": "212029fdff3563e6c5805a01f8a4991521613331e4eafb6763c2c78566ce6971"
     },
     {
       "bytes": 2599,
@@ -1261,14 +1261,14 @@
       "sha256": "9b56d15792eda0253e2e64ad531740d6197c8e68783016e0076ee60b76cb7fdd"
     },
     {
-      "bytes": 243944,
+      "bytes": 244684,
       "path": "docs/architecture/components/world-engine/architecture.bindings.json",
-      "sha256": "5f2e085c94cd3f86b52e2f703e5cfdeca6ebb7694f2271bf64dd3c2796b80447"
+      "sha256": "ecaaed0eb65aa4d8e3857b0608775eabca5734c0a849d0e8d92858c90aaed1f2"
     },
     {
-      "bytes": 35993,
+      "bytes": 37286,
       "path": "docs/architecture/components/world-engine/architecture.md",
-      "sha256": "8583266e7ef9949bf13eb38d7a1ef473c97c2ca56f993e19bb4419227c5548f3"
+      "sha256": "920a37b8b39e70715f8779de908d309326aefda2625eb85bb906d55a1cb1b54d"
     },
     {
       "bytes": 1292,
@@ -1476,9 +1476,9 @@
       "sha256": "42560e20f1ce76216cbe2d0e79ff938038d6ad141fa93342aa70ce898a194a6e"
     },
     {
-      "bytes": 14051,
+      "bytes": 14300,
       "path": "docs/architecture/violations/README.md",
-      "sha256": "1566008f6bb2a318fac53a04f68c11a88891eaafd5cfcbdff08798be9120fdac"
+      "sha256": "630d1cf9aff5af698f407c3bac9c32292050c076bdbbdd19374ad2442707788d"
     },
     {
       "bytes": 4825,
@@ -1626,9 +1626,9 @@
       "sha256": "5b043744c6001ba9ae6fc8d2d95c5e686b4309eb9e0c94b953dcd24146f70108"
     },
     {
-      "bytes": 258008,
+      "bytes": 259544,
       "path": "tools/architecture_assurance/model_catalog.json",
-      "sha256": "76fa435b3335fe2eba49299271a90fd1689d50451c1a54f2233677ebe5278187"
+      "sha256": "e3f9a2e9cd0aac6569eba0ae03c414243e61f824843af9b76c72b0710a7b0933"
     },
     {
       "bytes": 1974,

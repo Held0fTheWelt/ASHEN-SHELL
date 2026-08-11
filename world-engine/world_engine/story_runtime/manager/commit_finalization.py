@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from ._deps import *
 from .commit_evidence_projection import build_commit_evidence_projection
+from .commit_side_effects import apply_committed_turn_side_effects
 from world_engine.story_runtime.persist_outcome import persist_outcome_payload
 from .visible_projection_policy import (
     resolve_visible_projection_policy,
@@ -1239,24 +1240,12 @@ class _CommitFinalizationMixin:
         committed_record["lifecycle_state"] = "observed"
         event["lifecycle_state"] = "observed"
         session.history.append(committed_record)
-        self._refresh_callback_web_after_commit(
+        apply_committed_turn_side_effects(
+            self,
             session=session,
-            event=event,
             graph_state=graph_state,
-        )
-        self._refresh_consequence_cascade_after_commit(
-            session=session,
             event=event,
-            graph_state=graph_state,
-        )
-        self._emit_observability_path_for_event(session=session, graph_state=graph_state, event=event)
-        session.diagnostics.append(event)
-        # ADR-0063: W5 Actor Situation Tracker shadow extraction (Phase 1).
-        # Best-effort; never fails the turn. No consumer reads w5_history yet.
-        self._w5_shadow_extract_after_commit(
-            session=session,
-            graph_state=graph_state if isinstance(graph_state, dict) else {},
-            event=event,
+            include_w5_shadow=True,
         )
         persistence_outcome = self._persist_session(session)
         turn_lc.advance("persisted")

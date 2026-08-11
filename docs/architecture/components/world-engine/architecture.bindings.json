@@ -3942,6 +3942,18 @@
     },
     {
       "anchor": {
+        "file": "world-engine/world_engine/story_runtime/manager/commit_side_effects.py",
+        "kind": "python",
+        "line": 14,
+        "module": "world-engine.world_engine.story_runtime.manager.commit_side_effects",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "apply_committed_turn_side_effects"
+      },
+      "id": "python:world-engine.world_engine.story_runtime.manager.commit_side_effects:apply_committed_turn_side_effects",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "world-engine/world_engine/story_runtime/manager/committed_dramatic_context_parts.py",
         "kind": "python",
         "line": 107,
@@ -5276,6 +5288,7 @@
     "python:world-engine.world_engine.story_runtime.manager.actor_tracking.session_state_w5_view:build_w5_player_view_for_session": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.actor_tracking.ws_runtime_snapshot_w5_view:build_ws_runtime_snapshot_w5_player_view": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.commit_evidence_projection:build_commit_evidence_projection": "B-story-runtime-manager",
+    "python:world-engine.world_engine.story_runtime.manager.commit_side_effects:apply_committed_turn_side_effects": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.committed_dramatic_context_parts:beat_context": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.committed_dramatic_context_parts:dramatic_outcome_context": "B-story-runtime-manager",
     "python:world-engine.world_engine.story_runtime.manager.committed_dramatic_context_parts:narrative_thread_context": "B-story-runtime-manager",
@@ -5420,6 +5433,7 @@
         "world-engine/world_engine/story_runtime/live_governance.py",
         "world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py",
         "world-engine/world_engine/story_runtime/manager/commit_finalization.py",
+        "world-engine/world_engine/story_runtime/manager/commit_side_effects.py",
         "world-engine/world_engine/story_runtime/manager/turn_execution.py",
         "world-engine/world_engine/story_runtime/manager/visible_projection_policy.py",
         "world-engine/world_engine/story_runtime/narrative_commit_resolution.py",
@@ -5433,12 +5447,12 @@
         "D6",
         "D15"
       ],
-      "element_count": 10,
+      "element_count": 11,
       "id": "turn-components",
       "kind": "component",
       "level": "component",
       "path": "UML/Components/world-engine/components/c4-component.puml",
-      "relationship_count": 10,
+      "relationship_count": 13,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {
