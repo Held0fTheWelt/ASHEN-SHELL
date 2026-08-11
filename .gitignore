@@ -93,3 +93,8 @@ __init__.cpython-310.pyc
 # Retained local state from the retired embedded AKDB; never ingest or commit.
 /ArchitecturalKnowledgeDB/.akdb/
 /ArchitecturalKnowledgeDB/Temp/
+# Reproducible architecture-assurance output and disposable AKDB export.
+/reports/architecture.json
+/reports/architecture.junit.xml
+/reports/architecture.sarif
+/reports/akdb-canon/

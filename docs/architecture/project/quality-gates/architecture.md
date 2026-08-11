@@ -67,30 +67,21 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | `test_goc_mvp04_observability_diagnostics_gate.py` | MVP4 observability |
 | `test_adr0039_*` | Oracle governance |
 | `test_architecture_documentation_gate.py` | SAD/UML completeness |
+| Assurance implementation | `tools/architecture_assurance/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Developer (`developer`) | `actor` | Run focused and complete verification | Central runner profile | [`tests/TESTING.md`](../../../../tests/TESTING.md) |
-| Quality Finding (`finding`) | `class` | Explain failure or coverage omission | Actionable source location | [`tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md`](../../../../tests/reports/WEAK_TESTS_AND_STUBS_AUDIT.md) |
-| Suite Definition (`suite`) | `class` | Declare scope, prerequisites and owner | Stable suite id | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
-| Test Execution (`execution`) | `class` | Record exact selected and observed result | Command and environment evidence | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
 | Architecture and Contract Gates (`gates`) | `component` | Enforce boundaries and anti-hardcoding policy | Behavioral assertions | [`tests/gates/test_table_b_anti_hardcoding_gate.py`](../../../../tests/gates/test_table_b_anti_hardcoding_gate.py) |
 | CI Policy (`ci`) | `component` | Apply required gates to repository changes | Blocking workflow matrix | [`.github/workflows/quality-gate.yml`](../../../../.github/workflows/quality-gate.yml) |
 | Central Runner (`runner`) | `component` | Execute subsystem and cross-system suites | One authoritative orchestration path | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
 | Evidence Reporter (`report`) | `component` | Expose selected, executed, skipped and failed scope | Machine-readable and human summary | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
 | Integration and E2E (`integration`) | `component` | Prove real authority boundaries and user paths | Disposable dependencies and production path | [`tests/integration/test_story_runtime_experience.py`](../../../../tests/integration/test_story_runtime_experience.py) |
 | Test Selector (`selector`) | `component` | Map changes and profiles to declared suites | No silent omission | [`scripts/test_changed.py`](../../../../scripts/test_changed.py) |
-| Accepted (`accepted`) | `state` | Permit promotion | All required gates pass | [`.github/workflows/quality-gate.yml`](../../../../.github/workflows/quality-gate.yml) |
-| Declared (`declared`) | `state` | Register suite and purpose | Discoverable by central runner | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
-| Executed (`executed`) | `state` | Run all selected tests | No hidden skip | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
-| Failed (`failed`) | `state` | Block promotion with evidence | Actionable finding | [`tests/reports/RUNNER_CI_TRUTH_MATRIX.md`](../../../../tests/reports/RUNNER_CI_TRUTH_MATRIX.md) |
-| Selected (`selected`) | `state` | Include suite for current scope | Selection reason visible | [`scripts/test_changed.py`](../../../../scripts/test_changed.py) |
-| Quality Gate System (`quality`) | `system` | Select, execute and report proportionate verification | Stable suite and exit semantics | [`tests/run_tests.py`](../../../../tests/run_tests.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -105,7 +96,7 @@ CI workflow invokes `pytest tests/gates` on engine/pre-deployment paths ([gate o
 | Every selected suite is executed and reported before promotion | `activity` | [Quality Gates - Validation Flow](../../../../UML/Project/quality-gates/activity/validation-flow.md) | 6 |
 | Declared and selected suites cannot silently bypass execution | `state` | [Quality Gates - Lifecycle](../../../../UML/Project/quality-gates/states/gate-lifecycle.md) | 5 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

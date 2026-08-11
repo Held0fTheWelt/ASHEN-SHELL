@@ -7,8 +7,11 @@ Acceptance bar for documents under `docs/architecture/`. Adapted from Tiny Tool 
 
 Applies to:
 
+- the canonical system SAD under `system/architecture.md`;
 - component SADs under `components/<system>/architecture.md`;
-- project SADs under `project/<system>/architecture.md`;
+- crosscutting and evidence portfolios under `project/<system>/architecture.md`;
+- active decisions under `decisions/`, runtime scenarios under `scenarios/`, data ownership under
+  `data/`, and known nonconformance under `violations/`;
 - `contracts/`, `gates/`, `boundaries/`, `integrations/`, `combinations/`, `operations/`, `evidence/`, `views/`;
 - `project/TRACEABILITY.md`, `project/ROLLOUT.md`, `DOC-HEALTH.md`.
 
@@ -16,14 +19,23 @@ Applies to:
 
 | Document kind | Owner |
 | --- | --- |
+| Whole-system architecture | `system/architecture.md` |
 | Deployable component | `components/<system>/architecture.md` |
-| Cross-cutting process | `project/<system>/architecture.md` |
+| Shared library or in-process module | Owning deployable SAD plus a subordinate implementation portfolio when needed |
+| Cross-cutting concept or evidence program | `project/<system>/architecture.md`, subordinate to system SAD and active ADR |
+| Active decision | `decisions/ADR-NNNN-*.md` |
+| Known implementation conflict | `violations/README.md` |
+| Implementation-facing runtime slice | `scenarios/<scenario>.md` |
 | Normative contract | `contracts/` linked from owning SADs |
 | Gate | `gates/` linked from contract or SAD |
 | Boundary / integration | `boundaries/` or `integrations/` routing to SAD §9 |
 | Migration audit | `evidence/` with inputs, findings, follow-up |
 
 One source of truth per topic. Cross-category documents route to the owning SAD decision.
+
+Every material statement is classifiable as `Observed`, `Normative`, `Target`, `Violation` or
+`Historical`. Observed code is not silently promoted to normative architecture. An accepted target
+with nonconforming code links an open violation and executable closure evidence.
 
 ## 3. SAD acceptance bar
 
@@ -49,7 +61,10 @@ Sections must be **useful**, not placeholders:
 - building blocks and runtime link to UML or document a pending UML gap;
 - §9 decisions are testable, consolidated, evidence-linked;
 
-Each `### Dn:` block in §9 must include:
+Section 9 is a concise decision synthesis and index. Full context, options and trade-offs belong to
+an active ADR. Large historical ADR bodies must not be concatenated into a SAD.
+
+Each locally owned `### Dn:` block in §9 must include:
 
 | Field | Required |
 | --- | --- |
@@ -62,6 +77,10 @@ Each `### Dn:` block in §9 must include:
 | **Supersedes:** | Prior `Dx` when applicable |
 
 During ADR retirement, register every ex-ADR in [`project/DECISION_REGISTRY.md`](project/DECISION_REGISTRY.md).
+
+Active target decisions use [`decisions/ADR-TEMPLATE.md`](decisions/ADR-TEMPLATE.md) and keep
+decision status separate from implementation state. Historical mappings remain in the retired
+registry but do not require prose duplication in current SADs.
 
 - risks list drift hazards and mitigation.
 
@@ -95,17 +114,44 @@ runtime authority, commit, readiness, or security boundaries.
 
 | Status | Meaning |
 | --- | --- |
-| `Implemented` | Linked implementation and verification exist |
+| `Implemented` | Linked implementation exists; this does not by itself prove conformance |
 | `Partially implemented` | Implemented vs missing parts separated |
 | `Target-state` | Must not imply production readiness |
+| `Nonconforming` | Current implementation conflicts with an accepted target and links a violation |
+| `Conforming` | Current production-path implementation and executable closure evidence agree with the target |
 
 Non-trivial workflows need UML or an explicit pending gap in the SAD.
+
+Coverage is reported in separate categories:
+
+- **directly represented:** owned by an architectural element or scenario;
+- **explicitly excluded:** outside the bounded architecture scope with reason;
+- **unmapped current implementation:** discovered in scope but not yet owned;
+- **known violation:** deliberately represented as nonconforming code.
+
+Only the first category counts as representation coverage. Classification coverage may combine all
+four but must never be labeled architectural coverage.
+
+Every discovered in-scope semantic unit must resolve to a building block. Ownership is declarative:
+the most specific source path wins, while an explicitly documented aggregate block may own supporting
+implementation below its bounded root. Aggregate ownership is not proof of conformance; known wrong
+implementations remain linked through the violation register. The configured
+`critical_floor.representation_coverage` is `1.0`, so a new unit outside all declared block paths
+breaks the architecture gate instead of being silently accepted as `unmapped`.
 
 ## 5. Link quality
 
 - Descriptive link text (`Governance SAD D3`, not bare `architecture.md`).
 - Evidence, UML, gate, and source mentions are Markdown links.
 - After moves, repair inbound links and run architecture documentation gate.
+- One concern has one active model path. Replaced views remain in Git, not beside the current view.
+- End-to-end sequence views form a connected stimulus-to-response path and include critical
+  no-write/degradation alternatives.
+
+## 5.1 Freshness
+
+Normative SADs record a reconciled Git commit. A change to an owned source path after that commit
+marks the document stale until reviewed. Dates are display metadata, not a freshness proof.
 
 ## 6. Publication boundary
 
@@ -123,10 +169,13 @@ Direction of truth:
 | Ownership | One authoritative SAD per system |
 | Completeness | 12 sections meaningful |
 | No linklist SAD | Narrative explains context before tables |
-| Status honesty | Implemented/partial/target explicit |
+| Status honesty | Observed/normative/target/violation/historical and implementation state explicit |
 | Evidence | Claims link tests, UML, gates |
 | Links | Resolve locally |
 | Agent usability | Read order, owner, gaps clear without hidden context |
+| Synthesis | §9 is an index, not the dominant body; abstraction levels are not mixed |
+| Runtime closure | Critical sequence has connected request, response, failures and write boundary |
+| Freshness | Reconciled commit and changed owned paths are checked |
 
 ## 8. Severity model
 

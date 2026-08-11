@@ -23,6 +23,7 @@ participant "Authoritative Commit\nResponsibility: Apply accepted dramatic outco
 participant "Player Rendering\nResponsibility: Expose speaker, action and dramatic blocks\nContract: Committed typed blocks\n[[../../../../frontend/static/play_block_renderer.js source]]" as render
 participant "Operational Evidence\nResponsibility: Prove the same path through tests and trace artifacts\nContract: Reproducible source-located evidence\n[[../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md source]]" as evidence
 
+player -> launch : "starts bound experience\ncontract: real browser/runtime entry path\n[[../../../../frontend/static/play_session_start.js source]]"
 launch -> semantics : "opens interaction\ncontract: bound role and session\n[[../../../../frontend/static/play_session_start.js source]]"
 semantics -> agency : "triggers dramatic response\ncontract: interpreted intent and context\n[[../../../../ai_stack/story_runtime/player_action_resolution.py source]]"
 agency -> commit : "proposes outcome\ncontract: uncommitted candidate\n[[../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py source]]"

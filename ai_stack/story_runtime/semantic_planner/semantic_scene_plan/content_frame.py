@@ -211,6 +211,59 @@ def _must_not_from_step(step: dict[str, Any]) -> list[str]:
     return _unique_clean(values)
 
 
+def _active_narrative_governance(
+    module_runtime_policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    policy = _as_dict(module_runtime_policy)
+    governance = _as_dict(policy.get("narrative_governance_policy"))
+    if governance:
+        return governance
+    return _as_dict(_as_dict(policy.get("runtime_governance_policy")).get("narrative_governance"))
+
+
+def _is_live_player_turn(turn_input_class: str) -> bool:
+    turn_kind = _clean(turn_input_class).lower()
+    return turn_kind not in {"opening", "engine_opening", "system", "bootstrap"}
+
+
+def _apply_narrative_governance(
+    frame: dict[str, Any],
+    *,
+    module_runtime_policy: dict[str, Any] | None,
+    turn_input_class: str,
+) -> dict[str, Any]:
+    governance = _active_narrative_governance(module_runtime_policy)
+    frame["narrative_governance"] = dict(governance)
+    if not (
+        _is_live_player_turn(turn_input_class)
+        and _clean(governance.get("active_mode")) == "bounded_emergence"
+        and _clean(governance.get("canonical_path_role")) == "reference_arc"
+    ):
+        return frame
+
+    # Canonical material remains available as evidence and inspiration, but it
+    # may no longer become an implicit output obligation on a free player turn.
+    frame["reference_canonical_path_mode"] = frame.get("canonical_path_mode")
+    frame["reference_dialogue_profile"] = frame.get("dialogue_profile")
+    frame["reference_quote_anchor_refs"] = list(frame.get("quote_anchor_refs") or [])
+    frame["reference_action_opportunities"] = list(frame.get("action_beats") or [])
+    frame["reference_narrator_opportunities"] = list(frame.get("narrator_tasks") or [])
+    frame["reference_avoidances"] = list(frame.get("must_not") or [])
+    frame["reference_next_step_id"] = frame.get("next_step_id")
+    frame["reference_next_transition"] = frame.get("next_transition")
+    frame["canonical_path_mode"] = None
+    frame["dialogue_profile"] = {}
+    frame["quote_anchor_refs"] = []
+    frame["action_beats"] = []
+    frame["player_windows"] = ["continuous_player_agency"]
+    frame["narrator_tasks"] = []
+    frame["must_not"] = []
+    frame["next_step_id"] = None
+    frame["next_transition"] = None
+    frame["carry_forward_markers"] = []
+    return frame
+
+
 def _content_frame(
     *,
     canonical_path: dict[str, Any] | None,
@@ -224,6 +277,8 @@ def _content_frame(
     current_scene_id: str,
     narrative_scene_function: str,
     selection_source: str,
+    module_runtime_policy: dict[str, Any] | None = None,
+    turn_input_class: str = "",
 ) -> dict[str, Any]:
     step, node = _active_canonical_step(
         canonical_path=canonical_path,
@@ -258,7 +313,7 @@ def _content_frame(
     ]
     target_ids = [location_id, *object_ids]
 
-    return {
+    frame = {
         "canonical_path_step_id": step.get("id"),
         "canonical_path_sequence": step.get("sequence"),
         "canonical_path_mode": step.get("mode"),
@@ -294,6 +349,11 @@ def _content_frame(
             "access_policy": "knowledge/content_access_policy.yaml",
         },
     }
+    return _apply_narrative_governance(
+        frame,
+        module_runtime_policy=module_runtime_policy,
+        turn_input_class=turn_input_class,
+    )
 
 
 def _speech_cues(content_frame: dict[str, Any]) -> list[str]:

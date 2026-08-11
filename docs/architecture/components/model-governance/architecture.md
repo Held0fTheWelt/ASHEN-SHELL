@@ -74,7 +74,7 @@ Keep routing and governance session serialization in one backend package; prove 
 
 | Block | Path |
 | --- | --- |
-| Package root | `backend/app/model_governance/__init__.py` |
+| Package root | `backend/app/model_governance/` |
 | Model routing | `backend/app/model_governance/model_routing.py` |
 | Adapter registry | `backend/app/model_governance/adapter_registry.py` |
 | Routing contracts | `backend/app/model_governance/model_routing_contracts.py` |
@@ -82,24 +82,17 @@ Keep routing and governance session serialization in one backend package; prove 
 | Runtime models | `backend/app/model_governance/runtime_models.py` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator / Platform (`operator`) | `actor` | Configure and invoke model routing without owning live commits | Privileged or internal platform call | [`backend/app/model_governance/__init__.py`](../../../../backend/app/model_governance/__init__.py) |
-| Routing Decision (`decision`) | `class` | Explain adapter selection | Auditable routing evidence | [`backend/app/model_governance/model_routing.py`](../../../../backend/app/model_governance/model_routing.py) |
-| Runtime Models (`models`) | `class` | Carry SessionState and turn deltas for governance pipelines | Pydantic value objects | [`backend/app/model_governance/runtime_models.py`](../../../../backend/app/model_governance/runtime_models.py) |
 | Adapter Registry (`registry`) | `component` | Register available AI adapters | Explicit registry bootstrap | [`backend/app/model_governance/adapter_registry.py`](../../../../backend/app/model_governance/adapter_registry.py) |
 | Governance Session Persistence (`session`) | `component` | Serialize in-process governance session shape | JSON-compatible snapshot; not live WE authority | [`backend/app/model_governance/session/session_persistence.py`](../../../../backend/app/model_governance/session/session_persistence.py) |
 | Model Routing (`routing`) | `component` | Choose adapters and record routing decisions | Routing policy without commit side effects | [`backend/app/model_governance/model_routing.py`](../../../../backend/app/model_governance/model_routing.py) |
 | Routing Contracts (`contracts`) | `component` | Define routing decision vocabulary | Serializable contract types | [`backend/app/model_governance/model_routing_contracts.py`](../../../../backend/app/model_governance/model_routing_contracts.py) |
-| Configured (`configured`) | `state` | Hold registry and policy | Ready for routing | [`backend/app/model_governance/routing_registry_bootstrap.py`](../../../../backend/app/model_governance/routing_registry_bootstrap.py) |
-| Governance Snapshot Persisted (`persisted`) | `state` | Store governance session snapshot | Non-authoritative relative to world-engine | [`backend/app/model_governance/session/session_persistence.py`](../../../../backend/app/model_governance/session/session_persistence.py) |
-| Routed (`routed`) | `state` | Adapter selected for a call | No narrative commit | [`backend/app/model_governance/model_routing.py`](../../../../backend/app/model_governance/model_routing.py) |
 | Model Governance (`governance`) | `system` | Route adapters and shape in-process governance sessions | Python package under backend/app/model_governance | [`backend/app/model_governance/__init__.py`](../../../../backend/app/model_governance/__init__.py) |
-| World Engine (`world`) | `system` | Own live story commits | Authoritative play service | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -115,7 +108,7 @@ No world-engine commit occurs on this path.
 | Adapter selection without live commit | `sequence` | [Model Governance - Routing Sequence](../../../../UML/Components/model-governance/sequence/routing-sequence.md) | 5 |
 | Configure, route and persist governance snapshots only | `state` | [Model Governance - Routing Lifecycle](../../../../UML/Components/model-governance/states/routing-lifecycle.md) | 4 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

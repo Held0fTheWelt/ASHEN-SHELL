@@ -10,4 +10,4 @@
 3. [Canonical turn lifecycle](sequence/canonical-turn-lifecycle-sequence.md)
 4. [TRACEABILITY](TRACEABILITY.md)
 
-See also [world-engine primary sequence](../../Components/world-engine/sequence/world-engine-primary-turn-sequence.md).
+See also [world-engine primary sequence](../../Components/world-engine/sequence/primary-turn-sequence.md).

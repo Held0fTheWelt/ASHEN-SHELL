@@ -29,8 +29,8 @@ handlers ..> fs : "delegates local operation\ncontract: scoped filesystem reques
 server ..> router : "dispatches method\ncontract: protocol envelope\n[[../../../../tools/mcp_server/rpc_method_router.py source]]"
 router ..> registry : "resolves capability\ncontract: registered canonical name\n[[../../../../tools/mcp_server/registry.py source]]"
 registry ..> handlers : "binds handler\ncontract: schema-compatible callable\n[[../../../../tools/mcp_server/tools_registry.py source]]"
-handlers ..> rate_limit : "checks policy\ncontract: budget before execution\n[[../../../../tools/mcp_server/rate_limiter.py source]]"
 handlers ..> backend_client : "delegates remote operation\ncontract: normalized backend request\n[[../../../../tools/mcp_server/backend_client.py source]]"
+handlers ..> rate_limit : "checks policy\ncontract: budget before execution\n[[../../../../tools/mcp_server/rate_limiter.py source]]"
 handlers ..> observability : "emits call evidence\ncontract: redacted trace\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]"
 
 legend bottom

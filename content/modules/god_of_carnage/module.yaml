@@ -14,6 +14,13 @@ description: |-
 version: "0.1.0"
 contract_version: "0.2.0"
 
+# Language authority. Translation is a boundary concern: authored content and
+# semantic resolution use the declared module languages; session output may differ.
+language:
+  authoring_language: en
+  internal_resolution_language: en
+  default_session_output_language: en
+
 # Content specification
 content:
   # Duration and structure
@@ -181,6 +188,32 @@ quality_principles:
 # these generic switches; it must not branch on this module's concrete actors,
 # rooms, phases, beats, or prose.
 runtime_intelligence:
+  narrative_governance:
+    schema_version: narrative_governance_policy.v1
+    default_mode: bounded_emergence
+    supported_modes:
+      - reenactment
+      - bounded_emergence
+      - sandbox
+    modes:
+      reenactment:
+        canonical_path_role: mandatory_spine
+        progression_authority: canonical_step
+        off_path_policy: hold_or_reject
+        mandatory_beats_role: required_output
+        player_agency: declared_windows
+      bounded_emergence:
+        canonical_path_role: reference_arc
+        progression_authority: dramatic_state
+        off_path_policy: absorb_and_replan
+        mandatory_beats_role: dramatic_opportunities
+        player_agency: continuous
+      sandbox:
+        canonical_path_role: optional_reference
+        progression_authority: committed_world_state
+        off_path_policy: accept_if_world_valid
+        mandatory_beats_role: unused_unless_selected
+        player_agency: continuous
   off_stage_updates:
     auto_commit_enabled: false
     allowed_candidate_kinds:

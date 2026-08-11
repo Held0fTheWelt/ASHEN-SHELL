@@ -184,9 +184,10 @@ def build_manifest(
             )
 
             out_of_scope[str(unit["id"])] = format_out_of_scope_reason(
-                "archived",
+                "unmapped",
                 "Discovered inside the subsystem scan boundary but no declared "
-                "building block owns its path; retained as an explicit architecture backlog item.",
+                "building block owns its path. This is classified inventory, "
+                "not architecture representation; see AR-V009.",
             )
 
     manifest = {

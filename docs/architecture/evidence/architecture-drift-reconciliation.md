@@ -39,6 +39,11 @@ Historical MVPs and work orders are classified against current source and Git ev
 - The canonical player path and the explicit runtime/beat path were not the same path.
 - Runtime tests expected story truth in a runtime profile.
 
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+- `WOS_COMBINED_FOUNDATION_REPAIR_AND_REPLACEMENT_BUNDLE_TASK.md` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`world-engine/world_engine/story_runtime/manager/runtime_manager.py`](../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py)
@@ -63,6 +68,10 @@ Keep live_story_session and live_run_instance as distinct resources with one sin
 
 - Graph commit and authoritative session commit were separate seams.
 - Validation knew more than the authoritative commit.
+
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 
@@ -90,6 +99,10 @@ Define an explicit ProposalDecision/ValidatedProposal contract. Rename AI-intern
 - Authoritative session commit ignored most dramatic planner state.
 - Validation-to-commit asymmetry suppressed richer behavior.
 
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`world-engine/world_engine/story_runtime/manager/turn_execution.py`](../../../world-engine/world_engine/story_runtime/manager/turn_execution.py)
@@ -115,6 +128,11 @@ Use one versioned turn envelope from planner selection through proposal, validat
 
 - Canonical YAML resolution and the active path were only partially aligned.
 - Tests expected story truth in god_of_carnage_solo runtime code.
+
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+- `WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 
@@ -142,6 +160,10 @@ Keep YAML modules as authored truth, generate or validate a versioned compiled c
 - The beat system existed, but the canonical player path did not carry explicit beat state.
 - Beat influence partly survived while commitment and rendering lost parts.
 
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`content/modules/god_of_carnage/canonical_path/_schema.yaml`](../../../content/modules/god_of_carnage/canonical_path/_schema.yaml)
@@ -166,6 +188,11 @@ Model authored canonical constraints separately from live beat state. World-engi
 **Historical assertions**
 
 - Whole-system repair waves repeatedly split and reconciled the runtime manager.
+
+**Historical Git/source lineage**
+
+- `world_of_shadows_repaired_package_2026-04-21` (historical source label; resolve through Git/AKDB lineage)
+- `WOS_FOUNDATION_STABILIZATION_REPAIR_PROMPT.md` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 
@@ -193,6 +220,10 @@ Replace dynamic legacy assembly with explicit cohesive modules organized by sess
 - The player shell underrepresented runtime intelligence.
 - Story-window entries lost responder identity and dramatic context.
 
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`world-engine/world_engine/story_runtime/manager/story_window_entries.py`](../../../world-engine/world_engine/story_runtime/manager/story_window_entries.py)
@@ -218,6 +249,11 @@ Adopt one player-visible block schema versioned at the world-engine delivery bou
 
 - Operator diagnostics were more coherent than the actual player runtime path.
 - Langfuse evidence needed end-to-end traceable decisions.
+
+**Historical Git/source lineage**
+
+- `world_of_shadows_narrative_system_audit_2026-04-22.md` (historical source label; resolve through Git/AKDB lineage)
+- `WOS_MVP04_OBSERVABILITY_DIAGNOSTICS_LANGFUSE_IMPLEMENTATION_PROMPT.md` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 
@@ -245,6 +281,11 @@ Define a minimal TurnTrace contract with propagated identity, owned spans, expli
 - Undiscovered tests, weak presence assertions and mock-only integration existed.
 - Runner and CI truth needed a single explicit matrix.
 
+**Historical Git/source lineage**
+
+- `WOS_LEGACY_DEBT_AND_TEST_TRUTH_AUDIT_PROMPT.md` (historical source label; resolve through Git/AKDB lineage)
+- `WOS_GLOBAL_TEST_INTEGRITY_AUDIT_PROMPT.md` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`tests/run_tests.py`](../../../tests/run_tests.py)
@@ -270,6 +311,10 @@ Generate the CI/test matrix from one suite catalog. Gate orphan test files, hidd
 
 - April repair packages represented their own canonical MVP directory.
 
+**Historical Git/source lineage**
+
+- `world_of_shadows_repaired_package_2026-04-21` (historical source label; resolve through Git/AKDB lineage)
+
 **Current evidence**
 
 - [`docs/architecture/evidence/architecture-drift-baseline.json`](../../../docs/architecture/evidence/architecture-drift-baseline.json)
@@ -291,6 +336,10 @@ Retain hashes, claim headings and path-diff evidence. Port only a claim or behav
 **Historical assertions**
 
 - Many wave packages and repair bundles used final, complete or canonical in their filenames.
+
+**Historical Git/source lineage**
+
+- `E:\New folder top-level artifact inventory` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 
@@ -314,6 +363,10 @@ Use capability lifecycle states proposed, implemented, integrated, proven and re
 **Historical assertions**
 
 - Architecture exports reported complete file and view coverage.
+
+**Historical Git/source lineage**
+
+- `Previous Better Tomorrow AKDB modernization pass` (historical source label; resolve through Git/AKDB lineage)
 
 **Current evidence**
 

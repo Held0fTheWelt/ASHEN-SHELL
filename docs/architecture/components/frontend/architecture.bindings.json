@@ -43,6 +43,22 @@
     {
       "anchors": [
         {
+          "declared_path": "frontend/",
+          "file": "frontend/app/__init__.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Frontend application"
+        }
+      ],
+      "id": "B-frontend-application",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Frontend application"
+    },
+    {
+      "anchors": [
+        {
           "declared_path": "frontend/app/player_backend.py",
           "file": "frontend/app/player_backend.py",
           "kind": "python",
@@ -1525,23 +1541,7 @@
     "api",
     "web"
   ],
-  "out_of_scope": {
-    "web:frontend/templates/base.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/community.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/dashboard.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/forgot_password.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/game_menu.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/home.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/login.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/news.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/register.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/register_pending.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/resend_verification.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/reset_password.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/session_shell.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/session_start.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "web:frontend/templates/wiki.html": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
-  },
+  "out_of_scope": {},
   "representation_map": {
     "api:ANY:/:frontend/app/routes.py:63": "B-app-routes",
     "api:ANY:/api/story/sessions/<session_id>/stream-narrator:frontend/app/routes_play.py:875": "B-app-routes",
@@ -1619,7 +1619,22 @@
     "web:frontend/static/splitting-init.js": "B-block-renderer",
     "web:frontend/static/splitting.min.js": "B-block-renderer",
     "web:frontend/static/style.css": "B-block-renderer",
-    "web:frontend/static/void-slogan-rotator.js": "B-block-renderer"
+    "web:frontend/static/void-slogan-rotator.js": "B-block-renderer",
+    "web:frontend/templates/base.html": "B-frontend-application",
+    "web:frontend/templates/community.html": "B-frontend-application",
+    "web:frontend/templates/dashboard.html": "B-frontend-application",
+    "web:frontend/templates/forgot_password.html": "B-frontend-application",
+    "web:frontend/templates/game_menu.html": "B-frontend-application",
+    "web:frontend/templates/home.html": "B-frontend-application",
+    "web:frontend/templates/login.html": "B-frontend-application",
+    "web:frontend/templates/news.html": "B-frontend-application",
+    "web:frontend/templates/register.html": "B-frontend-application",
+    "web:frontend/templates/register_pending.html": "B-frontend-application",
+    "web:frontend/templates/resend_verification.html": "B-frontend-application",
+    "web:frontend/templates/reset_password.html": "B-frontend-application",
+    "web:frontend/templates/session_shell.html": "B-frontend-application",
+    "web:frontend/templates/session_start.html": "B-frontend-application",
+    "web:frontend/templates/wiki.html": "B-frontend-application"
   },
   "required_views": [
     {
@@ -1686,7 +1701,7 @@
       "kind": "sequence",
       "level": "sequence",
       "path": "UML/Components/frontend/sequence/player-turn-sequence.puml",
-      "relationship_count": 4,
+      "relationship_count": 6,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {

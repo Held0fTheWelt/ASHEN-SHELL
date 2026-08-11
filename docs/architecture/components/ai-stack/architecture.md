@@ -90,20 +90,17 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Contracts | `ai_stack/contracts/` |
 | Research | `ai_stack/research/` |
 | MCP surface | `ai_stack/mcp/mcp_canonical_surface.py` |
+| AI runtime support | `ai_stack/` |
 
 Authoritative: [C4 container](../../../../UML/Components/ai-stack/components/c4-container.md) · [Mechanism catalog](mechanism-catalog.md)
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| RetrievalContextBundle (`context_pack`) | `class` | Carry bounded retrieval results | Provenance-preserving ranked context | [`ai_stack/rag/retrieval_context_bundles.py`](../../../../ai_stack/rag/retrieval_context_bundles.py) |
-| Runtime Proposal (`proposal`) | `class` | Carry visible blocks and state-delta proposal | Must pass world-engine validation before commit | [`ai_stack/langgraph/langgraph_runtime_package_output.py`](../../../../ai_stack/langgraph/langgraph_runtime_package_output.py) |
-| RuntimeAspectRecord (`aspect`) | `class` | Carry one grounded runtime aspect | Typed source, status and evidence | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
-| SemanticScenePlan (`plan`) | `class` | Carry intended scene target, beats and directives | Immutable proposal structure | [`ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py`](../../../../ai_stack/story_runtime/semantic_planner/semantic_scene_plan/__init__.py) |
 | Capability Registry (`capabilities`) | `component` | Select allowed runtime capabilities | Evidence-gated capability plan | [`ai_stack/capabilities/capability_selector.py`](../../../../ai_stack/capabilities/capability_selector.py) |
 | Director (`director`) | `component` | Select dramatic direction and capability plan | Scene plan and ordered actor directives | [`ai_stack/story_runtime/director/director_realization_composer.py`](../../../../ai_stack/story_runtime/director/director_realization_composer.py) |
 | Narrator (`narrator`) | `component` | Realize visible narrative blocks | Proposal-only block stream | [`ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py`](../../../../ai_stack/story_runtime/narrator/god_of_carnage_narrator_path.py) |
@@ -114,14 +111,6 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Runtime Aspect Ledger (`ledger`) | `component` | Project aspect evidence and decision metadata | Typed, non-authoritative evidence records | [`ai_stack/story_runtime/runtime_aspect_ledger/records.py`](../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py) |
 | Semantic Input Translation (`ingress`) | `component` | Translate player text into bounded intent evidence | Semantic input record without invented state | [`ai_stack/langgraph/runtime_executor/semantic_input_translation.py`](../../../../ai_stack/langgraph/runtime_executor/semantic_input_translation.py) |
 | LangGraph Runtime Executor (`executor`) | `container` | Coordinate the proposal pipeline | Prepared state in; proposal package out | [`ai_stack/langgraph/runtime_executor/public.py`](../../../../ai_stack/langgraph/runtime_executor/public.py) |
-| Gathering Paused (`paused`) | `state` | Suspend mandatory beat consumption while player remains free | No forced actor return | [`ai_stack/story_runtime/session_loop/replanning.py`](../../../../ai_stack/story_runtime/session_loop/replanning.py) |
-| Idle (`idle`) | `state` | No director pulse is active | No background state mutation | [`ai_stack/story_runtime/director/director_pulse_shadow.py`](../../../../ai_stack/story_runtime/director/director_pulse_shadow.py) |
-| Live Proposal (`live`) | `state` | Produce ordered visible blocks | Proposal-only output | [`ai_stack/story_runtime/block_stream_dual_mode.py`](../../../../ai_stack/story_runtime/block_stream_dual_mode.py) |
-| Shadow Evaluation (`shadow`) | `state` | Evaluate pulse without visible delivery | Evidence only | [`ai_stack/story_runtime/block_stream_dual_mode.py`](../../../../ai_stack/story_runtime/block_stream_dual_mode.py) |
-| AI Stack (`ai`) | `system` | Produce bounded narrative proposals and evidence | No direct authoritative session write | [`ai_stack/__init__.py`](../../../../ai_stack/__init__.py) |
-| Content Authority (`content`) | `system` | Supply canonical scenes, actors and policies | Compiled immutable content inputs | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
-| Model Provider (`provider`) | `system` | Generate model completion | Governed route, budget and timeout | [`ai_stack/operational_profile.py`](../../../../ai_stack/operational_profile.py) |
-| World Engine (`world`) | `system` | Provide authoritative session context and accept or reject proposals | Turn request and validated proposal boundary | [`world-engine/world_engine/story_runtime/manager/runtime_manager.py`](../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -145,11 +134,11 @@ Shadow/dual-mode pulse emits `block_stream_events` parallel to canonical bundle 
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) | 10 |
+| Ordered proposal production from semantic input to validation evidence | `sequence` | [AI Stack — Primary Turn Proposal](../../../../UML/Components/ai-stack/sequence/ai-stack-primary-turn-sequence.md) | 11 |
 | How a runtime query becomes a bounded provenance-preserving context pack | `sequence` | [AI Stack — RAG Context Fabric](../../../../UML/Components/ai-stack/sequence/rag-context-fabric-sequence.md) | 4 |
 | Shadow/live dual mode and gathering pause semantics | `state` | [AI Stack — Director Pulse Lifecycle](../../../../UML/Components/ai-stack/states/director-pulse-lifecycle.md) | 7 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
@@ -215,6 +204,29 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 | D14 | Adaptive meta-narrative awareness | Accepted | ADR-0043 |
 | D15 | Director-pause gathering mode | Proposed | ADR-0061 |
 | D16 | Director pulse and block-stream bus | Accepted | ADR-0058, ADR-0059 |
+| D17 | Bounded emergent narration | Accepted; Partial | ADR-0007 |
+| D18 | Module-owned language boundaries | Accepted; Partial | ADR-0008 |
+
+### D17: Canonical material is reference input in bounded emergence
+
+**Status:** Accepted; production scenario proof remains open
+**Origin:** [ADR-0007](../../decisions/ADR-0007-bounded-emergent-narration.md)
+
+The Director owns dramatic choice inside module-declared bounds. For a live player turn in
+`bounded_emergence`, semantic scene planning exposes canonical steps, quotes and authored beats as
+reference opportunities and derives the actual move from player intent plus dramatic state. It
+must not convert those references into mandatory dialogue. `AR-V010` tracks remaining end-to-end
+proof and compatibility paths.
+
+### D18: Language is declared by the module, not by the engine
+
+**Status:** Accepted; neutral-field migration incomplete
+**Origin:** [ADR-0008](../../decisions/ADR-0008-module-language-boundaries.md)
+
+Ingress normalizes to the module's internal resolution language only when needed. Egress translates
+from explicit source provenance only when source and session output differ. The neutral field is
+`normalized_internal_text`; English-named aliases are compatibility surfaces recorded by
+`AR-V011`.
 
 ### D1: Proposal-only outputs
 
@@ -224,7 +236,7 @@ A deployment boundary is not inferred from a directory. Process, store, transpor
 
 **Decision.** LangGraph and model stages emit proposals only; world-engine validate/commit seams gate all canon mutations. Blocked turns are first-class with degradation markers.
 
-**Evidence.** [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_turn_seams.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_turn_seams.py), [world-engine SAD D2](../world-engine/architecture.md#d2-runtime-model-output-is-proposal-only-until-validator-approval).
+**Evidence.** [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_turn_seams.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_turn_seams.py), [world-engine SAD D2](../world-engine/architecture.md#d2-ai-results-remain-proposals-until-world-engine-accepts-them).
 
 ### D2: Quality Lab MCP Runtime Diagnostics and Judge-Guided Improvement
 
@@ -474,7 +486,7 @@ Without explicit **write contracts**, a memory index could be populated from **p
 
 **Decision.** Resolver → Director → Narrator thin path produces realization proposals consumed by validate/commit seams; shared with world-engine D4.
 
-**Evidence.** [`ai_stack/story_runtime/director/`](../../../../ai_stack/story_runtime/director/), [world-engine SAD D4](../world-engine/architecture.md#d4-director-realization-thin-path-resolver-director-narrator).
+**Evidence.** [`ai_stack/story_runtime/director/`](../../../../ai_stack/story_runtime/director/), [world-engine SAD D4](../world-engine/architecture.md#d4-realization-is-subordinate-to-the-canonical-turn).
 
 ### D6: Bounded Semantic Scene Planner
 

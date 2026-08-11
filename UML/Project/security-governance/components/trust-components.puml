@@ -25,9 +25,9 @@ component "MCP Boundary\nResponsibility: Validate local tool scope and delegate 
 
 mcp ..> routes : "delegates governed operation\ncontract: same authorization policy\n[[../../../../tools/mcp_server/backend_client.py source]]"
 frontend ..> routes : "submits authenticated intent\ncontract: session, CSRF and role\n[[../../../../frontend/app/auth.py source]]"
+credentials ..> runtime_secret : "resolves for provider call\ncontract: scoped in-memory secret\n[[../../../../backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py source]]"
 routes ..> service : "delegates authorized operation\ncontract: validated request\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
 service ..> credentials : "seals or rotates credential\ncontract: plaintext ephemeral only\n[[../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py source]]"
-credentials ..> runtime_secret : "resolves for provider call\ncontract: scoped in-memory secret\n[[../../../../backend/app/services/governance/governance_runtime/28_operational_activity_and_runtime_secret.py source]]"
 service ..> audit : "records outcome\ncontract: redacted security event\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
 
 legend bottom

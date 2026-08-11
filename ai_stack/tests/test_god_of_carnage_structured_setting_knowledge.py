@@ -446,7 +446,9 @@ def test_semantic_interaction_surface_is_derived_from_content_authorities() -> N
 def test_semantic_resolution_contract_replaces_old_relationship_tables() -> None:
     sa = load_goc_scene_affordances_yaml_inner()
     contract = sa.get("semantic_resolution_contract") or {}
-    assert contract.get("schema_version") == "semantic_language_adapter.player_action_resolution.v1"
+    assert contract.get("schema_version") == "semantic_language_adapter.player_action_resolution.v2"
     assert contract.get("policy", {}).get("infer_meaning_from_player_utterance_and_content_catalog") is True
     assert contract.get("policy", {}).get("do_not_translate_by_lookup_table") is True
+    assert contract.get("policy", {}).get("internal_resolution_language") == "en"
+    assert contract.get("expected_ai_output", {}).get("normalized_internal_text")
     assert contract.get("expected_ai_output", {}).get("resolved_target_id")

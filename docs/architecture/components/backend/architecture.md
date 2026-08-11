@@ -56,19 +56,16 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Content | `backend/app/content/` |
 | Governance | `backend/app/services/governance/` |
 | Retired transitional runtime | `tests/gates/test_runtime_sessions_table_absent.py` (former `backend/app/runtime/` removed in Wave 6 G2) |
+| Platform services | `backend/app/` |
+| Schema history | `backend/migrations/`, `backend/alembic/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator (`operator`) | `actor` | Manage content, providers, policies and diagnostics | Privileged authenticated request | [`docs/architecture/project/security-governance/architecture.md`](../../project/security-governance/architecture.md) |
-| Player (`player`) | `actor` | Authenticate, browse community and start or continue play | Browser/API session | [`docs/architecture/components/backend/architecture.md`](architecture.md) |
-| Alembic Schema (`migration`) | `class` | Version backend persistence | Forward migration sequence | [`backend/migrations/env.py`](../../../../backend/migrations/env.py) |
-| Narrative Governance Models (`narrative_models`) | `class` | Persist packages, revisions, evaluations and runtime read models | Governance truth, not live session authority | [`backend/app/models/world_engine/narrative_contracts.py`](../../../../backend/app/models/world_engine/narrative_contracts.py) |
-| Platform Models (`platform_models`) | `class` | Persist identity, community and site state | Backend database ownership | [`backend/app/models/backend/user.py`](../../../../backend/app/models/backend/user.py) |
 | Authentication API (`auth`) | `component` | Issue and revoke platform sessions and tokens | Password/session/refresh-token policy | [`backend/app/api/v1/auth_routes.py`](../../../../backend/app/api/v1/auth_routes.py) |
 | Content Services (`content_service`) | `component` | Compile, review and publish authored content versions | Immutable version plus active pointer | [`backend/app/services/game/game_content_service.py`](../../../../backend/app/services/game/game_content_service.py) |
 | Game API (`game_api`) | `component` | Create run bindings and proxy live play operations | No backend-local narrative commit | [`backend/app/api/v1/game/player_turn_execution_and_flush.py`](../../../../backend/app/api/v1/game/player_turn_execution_and_flush.py) |
@@ -79,13 +76,6 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Observability (`observability`) | `container` | Record platform traces, metrics and diagnostic evidence | Trace correlation with redaction | [`backend/app/observability/__init__.py`](../../../../backend/app/observability/__init__.py) |
 | Persistence Models (`models`) | `container` | Represent backend and narrative-governance durable truth | SQLAlchemy models and Alembic schema | [`backend/app/models/__init__.py`](../../../../backend/app/models/__init__.py) |
 | Retired Transitional Runtime (`compat`) | `container` | Document absence of former backend/app/runtime live-session surfaces | Retired; never player truth authority | [`tests/gates/test_runtime_sessions_table_absent.py`](../../../../tests/gates/test_runtime_sessions_table_absent.py) |
-| Backend Database (`database`) | `database` | Persist platform and governance truth | SQLAlchemy/Alembic | [`backend/app/extensions.py`](../../../../backend/app/extensions.py) |
-| Redis (`redis`) | `database` | Share governed runtime configuration and rate-limit state | Explicit bootstrap and health policy | [`docker-compose.yml`](../../../../docker-compose.yml) |
-| Backend Process (`backend_node`) | `node` | Serve Flask API and platform pages | Port 5000 | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
-| Browser Clients (`browser`) | `node` | Host player and operator sessions | HTTPS | [`frontend/app/routes.py`](../../../../frontend/app/routes.py) |
-| World Engine Process (`world_node`) | `node` | Execute authoritative play | Internal HTTP | [`world-engine/Dockerfile`](../../../../world-engine/Dockerfile) |
-| Administration Tool (`admin`) | `system` | Present operator intent | Backend proxy only | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
-| Backend (`backend`) | `system` | Own platform data and governed control-plane operations | Flask /api/v1 | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
 | World Engine (`world`) | `system` | Own live story sessions and commits | Internal story HTTP API plus signed ticket | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
@@ -98,10 +88,10 @@ Player turn: frontend → `game_routes` → `game_service` HTTP → world-engine
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| How backend creates trace/ticket context and delegates the live turn | `sequence` | [Backend — Player Turn Proxy](../../../../UML/Components/backend/sequence/play-proxy-sequence.md) | 4 |
+| How backend creates trace/ticket context and delegates the live turn | `sequence` | [Backend — Player Turn Proxy](../../../../UML/Components/backend/sequence/play-proxy-sequence.md) | 5 |
 | Authorization, validation, persistence and audit of operator changes | `sequence` | [Backend — Governed Admin Mutation](../../../../UML/Components/backend/sequence/governed-admin-mutation-sequence.md) | 3 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

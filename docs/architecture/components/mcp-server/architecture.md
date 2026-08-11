@@ -48,15 +48,15 @@ session shapes. Rate-limit inventory from ADR-0048 is checked when adding new pu
 | Handlers | `tools/mcp_server/handlers/` |
 | Session factories | `backend_session_mcp_handler_factories.py` |
 | Tests | `tools/mcp_server/tests/` |
+| MCP runtime | `tools/mcp_server/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| MCP Client (`client`) | `actor` | Discover and invoke Better Tomorrow tools | JSON-RPC over stdio | [`tools/mcp_server/README.md`](../../../../tools/mcp_server/README.md) |
 | Backend Client (`backend_client`) | `component` | Delegate governed session and platform operations | Authenticated HTTP with normalized errors | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
 | Capability Registry (`registry`) | `component` | Publish stable tool, resource and prompt metadata | Unique names and schemas | [`tools/mcp_server/registry.py`](../../../../tools/mcp_server/registry.py) |
 | Filesystem Tools (`fs`) | `component` | Inspect explicitly allowed repository paths | Resolved-root containment | [`tools/mcp_server/handlers/tools_registry_handlers_filesystem.py`](../../../../tools/mcp_server/handlers/tools_registry_handlers_filesystem.py) |
@@ -64,12 +64,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Langfuse Tracing (`observability`) | `component` | Correlate MCP calls without leaking credentials | Redacted trace events | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
 | RPC Router (`router`) | `component` | Decode methods and produce protocol errors | JSON-RPC request/response | [`tools/mcp_server/rpc_method_router.py`](../../../../tools/mcp_server/rpc_method_router.py) |
 | Rate Limiter (`rate_limit`) | `component` | Bound expensive or mutating calls | Per-operation policy | [`tools/mcp_server/rate_limiter.py`](../../../../tools/mcp_server/rate_limiter.py) |
-| Backend Process (`backend_node`) | `node` | Execute governed remote actions | HTTP | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
-| Local Stdio Process (`stdio`) | `node` | Host MCP protocol adapter | One client transport | [`scripts/wos_mcp_stdio_launcher.py`](../../../../scripts/wos_mcp_stdio_launcher.py) |
-| Repository Workspace (`repo`) | `node` | Provide scoped read/write targets | Configured root containment | [`tools/mcp_server/repo_dotenv.py`](../../../../tools/mcp_server/repo_dotenv.py) |
-| Backend (`backend`) | `system` | Authorize and execute platform mutations | Authenticated backend API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
 | MCP Server (`server`) | `system` | Validate protocol and dispatch registered capabilities | MCP JSON-RPC | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
-| World Engine (`world`) | `system` | Expose safe session inspection and commands | Runtime API | [`world-engine/world_engine/api/http.py`](../../../../world-engine/world_engine/api/http.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -82,9 +77,9 @@ Operator/dev invokes MCP → server → backend/world-engine read surfaces per t
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
 | Protocol validation through bounded handler execution | `sequence` | [MCP Server - JSON-RPC Call](../../../../UML/Components/mcp-server/sequence/json-rpc-call-sequence.md) | 6 |
-| Mutation requests remain under backend authority | `sequence` | [MCP Server - Governed Delegation](../../../../UML/Components/mcp-server/sequence/governed-delegation-sequence.md) | 5 |
+| Mutation requests remain under backend authority | `sequence` | [MCP Server - Governed Delegation](../../../../UML/Components/mcp-server/sequence/governed-delegation-sequence.md) | 6 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

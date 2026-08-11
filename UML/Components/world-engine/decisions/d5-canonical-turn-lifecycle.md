@@ -1,6 +1,6 @@
 # D5: Canonical turn lifecycle
 
-**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d5-canonical-turn-lifecycle-and-single-commit-persist-project-path)
+**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d5-one-canonical-lifecycle-and-one-persistence-edge)
 **Origin:** ADR-0038 (retired)
 **Status:** Accepted
 

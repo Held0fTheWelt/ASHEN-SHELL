@@ -237,9 +237,13 @@ def _subsystem_report(
             )
 
     discovered = len(manifest.get("discovered_units", []))
-    represented = len(manifest.get("representation_map", {})) + len(
-        manifest.get("out_of_scope", {})
+    represented = len(manifest.get("representation_map", {}))
+    classifications = Counter(
+        str(reason).split(":", 1)[0]
+        for reason in manifest.get("out_of_scope", {}).values()
     )
+    classified_outside = sum(classifications.values())
+    classified = represented + classified_outside
     orphan_ids = sorted(
         {
             str(unit["id"]) for unit in manifest.get("discovered_units", [])
@@ -311,6 +315,9 @@ def _subsystem_report(
         "discovered": discovered,
         "represented": represented,
         "representation_coverage": represented / discovered if discovered else 1.0,
+        "classified": classified,
+        "classification_coverage": classified / discovered if discovered else 1.0,
+        "outside_representation": dict(sorted(classifications.items())),
         "orphan_units": orphan_ids,
         "views": views,
         "view_model_coverage": model_views / len(views) if views else 1.0,
@@ -328,6 +335,20 @@ def _rollup(subsystems: list[dict[str, Any]]) -> dict[str, Any]:
     accepted_bound = sum(item["accepted_bound"] for item in subsystems)
     discovered = sum(item["discovered"] for item in subsystems)
     represented = sum(item["represented"] for item in subsystems)
+    classified = sum(item["classified"] for item in subsystems)
+    outside_representation = Counter(
+        {
+            category: sum(
+                item["outside_representation"].get(category, 0)
+                for item in subsystems
+            )
+            for category in {
+                category
+                for item in subsystems
+                for category in item["outside_representation"]
+            }
+        }
+    )
     views = [
         view["status"]
         for item in subsystems
@@ -347,6 +368,9 @@ def _rollup(subsystems: list[dict[str, Any]]) -> dict[str, Any]:
         "discovered": discovered,
         "represented": represented,
         "representation_coverage": represented / discovered if discovered else 1.0,
+        "classified": classified,
+        "classification_coverage": classified / discovered if discovered else 1.0,
+        "outside_representation": dict(sorted(outside_representation.items())),
         "views": len(views),
         "view_counts": dict(sorted(view_counts.items())),
         "view_model_coverage": view_counts["model"] / len(views) if views else 1.0,
@@ -472,6 +496,22 @@ def build_report(config_path: Path, repo_root: Path) -> dict[str, Any]:
         "canon": canon,
         "drift_edges": drift_edges,
         "findings": findings,
+    }
+    claim_counts = Counter(
+        str(claim["status"]) for claim in claim_catalog["claims"]
+    )
+    report["architecture_posture"] = {
+        "status": (
+            "KNOWN_VIOLATIONS"
+            if claim_counts["conflicting"] or claim_counts["open_target"]
+            else "CONFORMING"
+        ),
+        "claim_status_counts": dict(sorted(claim_counts.items())),
+        "register": "docs/architecture/violations/README.md",
+        "meaning": (
+            "The evidence pipeline is operational; current implementation "
+            "still differs from accepted or proposed target architecture."
+        ),
     }
     report["gate"] = evaluate_gate(report, config["gate"])
     return report

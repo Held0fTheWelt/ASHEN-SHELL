@@ -146,6 +146,8 @@ def _content_frame_for_scene_plan(
     content_access_policy: dict[str, Any] | None,
     environment_state: dict[str, Any] | None,
     selection_source: str,
+    module_runtime_policy: dict[str, Any] | None,
+    turn_input_class: str,
 ) -> dict[str, Any]:
     content_frame = _content_frame(
         canonical_path=canonical_path,
@@ -160,6 +162,8 @@ def _content_frame_for_scene_plan(
         or _clean(state["scene"].get("current_scene_id") or state["scene"].get("scene_id")),
         narrative_scene_function=state["narrative_scene_function"],
         selection_source=selection_source,
+        module_runtime_policy=module_runtime_policy,
+        turn_input_class=turn_input_class,
     )
     if content_frame.get("canonical_path_step_id"):
         state["scene_target"]["canonical_path_step_id"] = content_frame.get("canonical_path_step_id")
@@ -469,6 +473,7 @@ def build_semantic_scene_plan_enrichment(
     opening_quote_anchors: dict[str, Any] | None = None,
     actor_lane_context: dict[str, Any] | None = None,
     environment_state: dict[str, Any] | None = None,
+    module_runtime_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build bounded scene-plan fields from structured planner records."""
 
@@ -497,6 +502,8 @@ def build_semantic_scene_plan_enrichment(
         content_access_policy=content_access_policy,
         environment_state=environment_state,
         selection_source=selection_source,
+        module_runtime_policy=module_runtime_policy,
+        turn_input_class=turn_input_class,
     )
     speech_policy, dialogue_plan, quote_moment_policy = _speech_and_dialogue_plan(
         state=state,

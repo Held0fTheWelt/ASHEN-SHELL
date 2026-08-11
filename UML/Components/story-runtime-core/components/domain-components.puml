@@ -26,8 +26,8 @@ component "Runtime Delivery\nResponsibility: Adapt portable outcomes to callback
 component "Boundary Adapters\nResponsibility: Map host-specific data to shared contracts\nContract: Anti-corruption mapping\n[[../../../../story_runtime_core/adapters.py source]]" as adapters
 
 core ..> models : "exports\ncontract: stable public values\n[[../../../../story_runtime_core/__init__.py source]]"
-models ..> intent : "constrains\ncontract: semantic action vocabulary\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]"
 adapters ..> models : "maps host values\ncontract: explicit anti-corruption layer\n[[../../../../story_runtime_core/adapters.py source]]"
+models ..> intent : "constrains\ncontract: semantic action vocabulary\n[[../../../../story_runtime_core/player_input_intent_contract.py source]]"
 intent ..> truth : "is evaluated against\ncontract: confirmed facts only\n[[../../../../story_runtime_core/input_interpreter.py source]]"
 truth ..> consequences : "bounds cascade\ncontract: pure deterministic input\n[[../../../../story_runtime_core/consequences/consequence_cascade.py source]]"
 consequences ..> branching : "feeds alternatives\ncontract: hypothetical only\n[[../../../../story_runtime_core/branching/forecast.py source]]"

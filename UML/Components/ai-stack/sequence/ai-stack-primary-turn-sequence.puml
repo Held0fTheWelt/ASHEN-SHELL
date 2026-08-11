@@ -29,8 +29,9 @@ participant "Narrator\nResponsibility: Realize visible narrative blocks\nContrac
 participant "Proposal Validator\nResponsibility: Evaluate seams, capabilities and retry feedback\nContract: Accepted proposal or actionable rejection\n[[../../../../ai_stack/langgraph/validation/builder.py source]]" as validator
 participant "Runtime Aspect Ledger\nResponsibility: Project aspect evidence and decision metadata\nContract: Typed, non-authoritative evidence records\n[[../../../../ai_stack/story_runtime/runtime_aspect_ledger/records.py source]]" as ledger
 
-executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
 world -> ai : "requests narrative proposal\ncontract: session context plus semantic input\n[[../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py source]]"
+ai -> executor : "dispatches proposal run\ncontract: one governed executor invocation per proposal request\n[[../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py source]]"
+executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
 ingress -> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
 retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
 director -> capabilities : "requests capability plan\ncontract: evidence-gated selection\n[[../../../../ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py source]]"

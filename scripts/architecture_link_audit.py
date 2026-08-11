@@ -10,10 +10,21 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCAN_PATHS = [
+    REPO_ROOT / "docs" / "architecture" / "system",
     REPO_ROOT / "docs" / "architecture" / "components",
     REPO_ROOT / "docs" / "architecture" / "project",
+    REPO_ROOT / "docs" / "architecture" / "scenarios",
+    REPO_ROOT / "docs" / "architecture" / "data",
+    REPO_ROOT / "docs" / "architecture" / "concepts",
+    REPO_ROOT / "docs" / "architecture" / "decisions",
+    REPO_ROOT / "docs" / "architecture" / "violations",
+    REPO_ROOT / "docs" / "architecture" / "evidence",
     REPO_ROOT / "docs" / "architecture" / "START-HERE.md",
     REPO_ROOT / "docs" / "architecture" / "README.md",
+    REPO_ROOT / "docs" / "architecture" / "QUALITY-STANDARD.md",
+    REPO_ROOT / "docs" / "architecture" / "DOC-HEALTH.md",
+    REPO_ROOT / "docs" / "architecture" / "AKDB-AUTHORITY.md",
+    REPO_ROOT / "docs" / "architecture" / "AKDB-MIGRATION.md",
     REPO_ROOT / "docs" / "ADR" / "README.md",
     REPO_ROOT / "docs" / "dev" / "contracts" / "normative-contracts-index.md",
     REPO_ROOT / "UML",

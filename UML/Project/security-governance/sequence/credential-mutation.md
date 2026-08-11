@@ -22,6 +22,7 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Operator | Security Governance | requests privileged mutation | role and CSRF checks | catalog contract |
+| Security Governance | Frontend Auth | accepts authenticated browser intent | frontend proves session and CSRF context only | [`frontend/app/auth.py`](../../../../frontend/app/auth.py) |
 | Frontend Auth | Security Governance API | submits authenticated intent | session, CSRF and role | [`frontend/app/auth.py`](../../../../frontend/app/auth.py) |
 | Security Governance API | Security Governance Service | delegates authorized operation | validated request | [`backend/app/api/v1/security_governance_routes.py`](../../../../backend/app/api/v1/security_governance_routes.py) |
 | Security Governance Service | Provider Credential Service | seals or rotates credential | plaintext ephemeral only | [`backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py`](../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py) |

@@ -25,6 +25,7 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | World Engine | AI Stack | requests narrative proposal | session context plus semantic input | [`world-engine/world_engine/story_runtime/manager/turn_execution.py`](../../../../world-engine/world_engine/story_runtime/manager/turn_execution.py) |
+| AI Stack | LangGraph Runtime Executor | dispatches proposal run | one governed executor invocation per proposal request | [`ai_stack/langgraph/runtime_executor/executor_run_finish.py`](../../../../ai_stack/langgraph/runtime_executor/executor_run_finish.py) |
 | LangGraph Runtime Executor | Semantic Input Translation | interprets input | semantic intent envelope | [`ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py`](../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py) |
 | Semantic Input Translation | RAG Context Fabric | queries grounded context | bounded retrieval query | [`ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py`](../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py) |
 | RAG Context Fabric | Director | provides context pack | citations and continuity facts | [`ai_stack/langgraph/runtime_executor/executor_director_selection_context.py`](../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py) |

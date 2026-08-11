@@ -38,7 +38,7 @@ This SAD explains how those deployables compose and which service owns which cla
 
 ## 2. Constraints
 
-- Play authority in world-engine ([world-engine SAD D1](../../components/world-engine/architecture.md#d1-runtime-authority-in-world-engine)).
+- Play authority in world-engine ([world-engine SAD D1](../../components/world-engine/architecture.md#d1-world-engine-owns-live-story-commit-authority)).
 - Backend transitional runtime is not production play host ([backend-runtime-classification](../../../technical/architecture/backend-runtime-classification.md)).
 - GoC slice contracts stay under `docs/MVPs/MVP_VSL_And_GoC_Contracts/`.
 
@@ -100,16 +100,15 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | AI stack | `ai_stack/` | Graph, RAG, capabilities, research |
 | Content | `content/modules/` | YAML modules |
 | MCP | `tools/mcp_server/` | Operator/dev tools |
+| Local composition | `docker-compose.yml`, `docker-up.py` | Start and connect the repository-local service topology |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator (`operator`) | `actor` | Inspect and govern the platform | Privileged audited operation | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
-| Player (`player`) | `actor` | Experience and influence a live dramatic scene | Authenticated semantic interaction | [`frontend/templates/session_shell.html`](../../../../frontend/templates/session_shell.html) |
 | Current Code (`current_code`) | `artifact` | Show executable present structures | HEAD plus source anchors | [`README.md`](../../../../README.md) |
 | Git History (`git_history`) | `artifact` | Show movement, replacement and hotspot chronology | Commit and rename evidence | [`.git`](../../../../.git) |
 | Historical MVP Corpus (`archive`) | `artifact` | Preserve earlier goals, audits, snapshots and work orders | Non-authoritative read-only archaeology snapshot | [`docs/architecture/evidence/README.md`](../../evidence/README.md) |
@@ -120,18 +119,6 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Live Runtime (`live_runtime`) | `container` | Coordinate and commit canonical turns | World-engine ownership | [`world-engine/world_engine/story_runtime/manager/runtime_manager.py`](../../../../world-engine/world_engine/story_runtime/manager/runtime_manager.py) |
 | Play Proxy (`play_proxy`) | `container` | Bridge player requests to live authority | No local story commit | [`backend/app/services/game/game_service.py`](../../../../backend/app/services/game/game_service.py) |
 | Proposal Runtime (`proposal_runtime`) | `container` | Interpret, retrieve, plan, realize and validate candidates | AI proposal only | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
-| Confirmed Current (`confirmed`) | `state` | Match current code and accepted decision | Live source anchors | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
-| Conflicting (`conflicting`) | `state` | Expose concurrent incompatible truths | Decision required | [`docs/architecture/project/ecosystem-topology/architecture.md`](architecture.md) |
-| Obsolete (`obsolete`) | `state` | Explain superseded historical material | Replacement evidence | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
-| Open Target Question (`open`) | `state` | Preserve valuable intent not yet implemented | Explicit option and acceptance evidence | [`docs/architecture/project/ecosystem-topology/mechanism-catalog.md`](mechanism-catalog.md) |
-| Unclassified Claim (`unclassified`) | `state` | Hold an archaeological assertion before verification | Source and date recorded | [`docs/architecture/project/ecosystem-topology/evidence-matrix.md`](evidence-matrix.md) |
-| AI Stack (`ai`) | `system` | Propose dramatically informed outcomes | Proposal-only runtime | [`ai_stack/langgraph/langgraph_runtime_executor.py`](../../../../ai_stack/langgraph/langgraph_runtime_executor.py) |
-| Administration Tool (`admin`) | `system` | Present governed operator workflows | Backend-delegated mutations | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
-| Backend (`backend`) | `system` | Own identity, community and control-plane truth | Flask API | [`backend/app/factory_app.py`](../../../../backend/app/factory_app.py) |
-| Content Authority (`content`) | `system` | Own authored experience facts and policy | Versioned YAML modules | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
-| Frontend (`frontend`) | `system` | Present player interaction and transient UI state | Browser shell | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
-| MCP Server (`mcp`) | `system` | Expose bounded local automation capabilities | JSON-RPC adapter | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
-| World Engine (`world`) | `system` | Own live sessions and commit story truth | Story HTTP/WebSocket API | [`world-engine/world_engine/main.py`](../../../../world-engine/world_engine/main.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -147,7 +134,7 @@ Typical player turn: browser → frontend → backend game routes → world-engi
 | Historical claims become confirmed, obsolete, conflicting or open target options | `state` | [Better Tomorrow - Historical Claim Classification](../../../../UML/Project/ecosystem-topology/states/claim-classification.md) | 6 |
 | Player experience, operator governance and automated inspection remain separated | `usecase` | [Better Tomorrow - Authority Use Cases](../../../../UML/Project/ecosystem-topology/usecases/authority-use-cases.md) | 4 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

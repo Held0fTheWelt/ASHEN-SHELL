@@ -23,8 +23,10 @@ participant "Runtime Bootstrap\nResponsibility: Hydrate browser shell from launc
 participant "Narrative Stream\nResponsibility: Receive ordered live events\nContract: Reconnect-aware WebSocket stream\n[[../../../../frontend/static/play_narrative_stream.js source]]" as stream
 participant "Block Renderer\nResponsibility: Render typed narrative blocks safely\nContract: Escaped block display model\n[[../../../../frontend/static/play_block_renderer.js source]]" as renderer
 
+player -> controls : "enters semantic intent\ncontract: one explicit player command\n[[../../../../frontend/static/play_controls.js source]]"
 controls -> play_routes : "submits semantic input\ncontract: one command per turn\n[[../../../../frontend/static/play_controls.js source]]"
 play_routes -> api_client : "launches session\ncontract: validated launch payload\n[[../../../../frontend/app/routes_play.py source]]"
+api_client -> bootstrap : "returns accepted session binding\ncontract: session id, ticket and initial cursor\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]"
 bootstrap -> stream : "opens event channel\ncontract: session ticket and cursor\n[[../../../../frontend/static/play_runtime_bootstrap.js source]]"
 stream -> renderer : "delivers typed block\ncontract: monotonic event order\n[[../../../../frontend/static/play_narrative_stream.js source]]"
 

@@ -47,24 +47,21 @@ Every destructive operator action routes through backend confirmation endpoints.
 | --- | --- |
 | Routes | `route_registration.py`, `route_registration_*.py` |
 | Manage UI | `templates/`, `static/manage_*.js` |
+| Control-plane application | `administration-tool/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator (`operator`) | `actor` | Inspect health and request governed changes | Authenticated browser session with explicit confirmation | [`docs/architecture/components/administration-tool/architecture.md`](architecture.md) |
 | Backend Proxy (`proxy`) | `component` | Forward allow-listed reads and mutations to backend | Method, path, timeout and response policy | [`administration-tool/route_registration_proxy.py`](../../../../administration-tool/route_registration_proxy.py) |
 | Manage Route Catalog (`manage`) | `component` | Expose named operator workbench surfaces | Stable /manage route vocabulary | [`administration-tool/route_registration_manage_sections.py`](../../../../administration-tool/route_registration_manage_sections.py) |
 | Page Routes (`pages`) | `component` | Route public and manage page requests to bounded templates | GET-only page composition | [`administration-tool/route_registration_pages.py`](../../../../administration-tool/route_registration_pages.py) |
 | Proxy Policy (`policy`) | `component` | Classify mutation endpoints and confirmation requirements | Default-deny unsafe or undeclared proxy operations | [`administration-tool/route_registration_proxy_policy.py`](../../../../administration-tool/route_registration_proxy_policy.py) |
 | Security Routes (`security`) | `component` | Apply session and operator security checks | Authenticated, CSRF-aware browser mutation boundary | [`administration-tool/route_registration_security.py`](../../../../administration-tool/route_registration_security.py) |
 | Manage Templates (`templates`) | `container` | Present backend-derived read models and mutation forms | Escaped HTML and explicit form intent | [`administration-tool/templates/manage/dashboard.html`](../../../../administration-tool/templates/manage/dashboard.html) |
-| Administration Flask Process (`admin_process`) | `node` | Serve pages and proxy requests | Port 5002 in local Compose | [`administration-tool/Dockerfile`](../../../../administration-tool/Dockerfile) |
-| Backend Flask Process (`backend_process`) | `node` | Provide authoritative control-plane APIs | Internal HTTP service | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
-| Browser (`browser`) | `node` | Host the operator session | HTTPS, cookies and CSRF token | [`administration-tool/templates/manage/dashboard.html`](../../../../administration-tool/templates/manage/dashboard.html) |
 | Administration Tool (`admin`) | `system` | Render operator workbenches and translate intent into backend requests | Flask routes; no direct domain persistence | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
 | Backend Admin API (`backend`) | `system` | Authorize and execute governed mutations | HTTP /api/v1/admin and operator endpoints | [`backend/app/api/v1/security_governance_routes.py`](../../../../backend/app/api/v1/security_governance_routes.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
@@ -78,9 +75,9 @@ Operator browser → administration-tool → backend governance routes → optio
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| End-to-end authorization and delegation of an operator mutation | `sequence` | [Administration Tool — Governed Mutation](../../../../UML/Components/administration-tool/sequence/governed-mutation-sequence.md) | 5 |
+| End-to-end authorization and delegation of an operator mutation | `sequence` | [Administration Tool — Governed Mutation](../../../../UML/Components/administration-tool/sequence/governed-mutation-sequence.md) | 6 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

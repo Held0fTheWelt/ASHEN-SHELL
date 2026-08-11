@@ -7,7 +7,10 @@ from story_runtime_core.adapters import BaseModelAdapter, ModelCallResult
 from story_runtime_core.model_registry import RoutingPolicy, build_default_registry
 
 from ai_stack.langgraph.langgraph_runtime import RuntimeTurnGraphExecutor
-from ai_stack.language_io.language_adapter import load_session_language_model_directive
+from ai_stack.language_io.language_adapter import (
+    build_semantic_resolution_contract,
+    load_session_language_model_directive,
+)
 
 
 class OutputTranslationAdapter(BaseModelAdapter):
@@ -102,9 +105,26 @@ def test_session_language_directive_keeps_output_language_as_metadata() -> None:
 
     assert "session_input_language=de" in text
     assert "session_output_language=en" in text
-    assert "translate/normalize it to English" in text
+    assert "internal_resolution_language=en" in text
+    assert "authoring_language=en" in text
     assert "output translation gateway" in text
     assert "player-visible narration in session_output_language" not in text
+
+
+def test_semantic_contract_uses_declared_internal_language_without_english_rule() -> None:
+    contract = build_semantic_resolution_contract(
+        raw_text="Ouvre la porte.",
+        session_input_language="fr",
+        session_output_language="de",
+        module_authoring_language="fr",
+        internal_resolution_language="fr",
+    )
+
+    assert contract["input"]["translation_required"] is False
+    assert contract["policy"]["internal_resolution_language"] == "fr"
+    assert contract["policy"]["module_authoring_language"] == "fr"
+    assert "normalized_internal_text" in contract["expected_ai_output"]
+    assert "translate_input_to_internal_english_before_grounding" not in contract["policy"]
 
 
 def test_translate_output_skips_adapter_for_english_output() -> None:
@@ -156,6 +176,32 @@ def test_translate_output_updates_only_visible_text_fields() -> None:
     ]
     assert original_bundle["gm_narration"] == ["The room is quiet."]
     assert original_bundle["spoken_lines"][0]["text"] == '"Hello."'
+
+
+def test_translate_output_uses_declared_non_english_source_for_english_target() -> None:
+    translator = OutputTranslationAdapter(["The room is quiet."])
+    graph = _executor(translator)
+
+    update = graph._translate_output(
+        {
+            "session_output_language": "en",
+            "module_runtime_policy": {
+                "language_policy": {
+                    "internal_resolution_language": "fr",
+                    "default_session_output_language": "fr",
+                }
+            },
+            "visible_output_bundle": {
+                "source_language": "fr",
+                "gm_narration": ["La pièce est silencieuse."],
+            },
+        }
+    )
+
+    assert update["output_translation"]["status"] == "translated"
+    assert update["output_translation"]["source_language"] == "fr"
+    assert update["visible_output_bundle"]["source_language"] == "en"
+    assert "from French to English" in translator.prompts[0]
 
 
 def test_translate_output_passthrough_statuses_leave_bundle_unmodified() -> None:

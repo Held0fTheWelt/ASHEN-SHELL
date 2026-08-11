@@ -85,25 +85,20 @@ Direction of truth:
 | Inventory | `scripts/architecture_migration_inventory.py` |
 | Rollout | `project/ROLLOUT.md`, `DOC-HEALTH.md` |
 | Quality bar | `QUALITY-STANDARD.md` |
+| Site configuration | `mkdocs.yml` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Document Author (`author`) | `actor` | Maintain architecture intent and operating knowledge | Role-correct Markdown source | [`docs/architecture/START-HERE.md`](../../START-HERE.md) |
 | Authoritative Sources (`source`) | `component` | Hold SAD, decision, contract and runbook truth | Declared document role | [`docs/architecture/project/FRONTMATTER.md`](../FRONTMATTER.md) |
 | Documentation Gate (`gate`) | `component` | Enforce required sections, roles and navigation | Blocking CI findings | [`tests/gates/test_architecture_documentation_gate.py`](../../../../tests/gates/test_architecture_documentation_gate.py) |
 | Generated Model Companions (`models`) | `component` | Project semantic catalog content for navigation | Regenerated, never hand-divergent | [`tools/architecture_assurance/view_builder.py`](../../../../tools/architecture_assurance/view_builder.py) |
 | Link Audit (`links`) | `component` | Detect missing and stale references | Repository-relative target resolution | [`scripts/architecture_link_audit.py`](../../../../scripts/architecture_link_audit.py) |
 | MkDocs Projection (`site`) | `component` | Publish navigable documentation | mkdocs.yml navigation | [`mkdocs.yml`](../../../../mkdocs.yml) |
-| Draft (`draft`) | `state` | Accept author changes | Not yet trusted | [`docs/architecture/project/FRONTMATTER.md`](../FRONTMATTER.md) |
-| Published (`published`) | `state` | Appear in navigation and canon | Role and owner visible | [`mkdocs.yml`](../../../../mkdocs.yml) |
-| Stale (`stale`) | `state` | Record detected code or decision drift | Must be reconciled or archived | [`docs/architecture/DOC-HEALTH.md`](../../DOC-HEALTH.md) |
-| Validated (`validated`) | `state` | Pass structure, links and correspondence checks | No blocking finding | [`tests/gates/test_architecture_documentation_gate.py`](../../../../tests/gates/test_architecture_documentation_gate.py) |
-| Documentation Corpus (`docs`) | `system` | Expose current architecture, contracts and evidence | Navigable versioned Markdown | [`docs/architecture/README.md`](../../README.md) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -120,7 +115,7 @@ Authoritative: [UML documentation-supply-chain](../../../../UML/Project/document
 | Deterministic authoring-to-publication validation | `activity` | [Documentation Supply Chain - Publication Flow](../../../../UML/Project/documentation-supply-chain/activity/publication-flow.md) | 4 |
 | Draft, validated, published and stale documentation | `state` | [Documentation Supply Chain - Lifecycle](../../../../UML/Project/documentation-supply-chain/states/document-lifecycle.md) | 5 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

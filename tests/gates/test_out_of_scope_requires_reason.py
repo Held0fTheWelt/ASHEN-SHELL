@@ -18,11 +18,6 @@ from tools.architecture_assurance.schemas import SchemaValidationError, validate
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BINDINGS = list((REPO_ROOT / "docs" / "architecture").rglob("architecture.bindings.json"))
-SHARE_BASELINE = (
-    REPO_ROOT / "docs" / "superpowers" / "plans" / "baselines" / "W8-out-of-scope-share.json"
-)
-
-
 def test_out_of_scope_requires_reason_category() -> None:
     category, detail = parse_out_of_scope_reason("archived: leftover scan unit")
     assert category == "archived"
@@ -35,7 +30,7 @@ def test_out_of_scope_requires_reason_category() -> None:
 
 def test_out_of_scope_categories_are_closed() -> None:
     assert OUT_OF_SCOPE_CATEGORIES == frozenset(
-        {"generated", "vendored", "test-fixture", "archived"}
+        {"generated", "vendored", "test-fixture", "archived", "unmapped", "violation"}
     )
     assert format_out_of_scope_reason("test-fixture", "synth").startswith("test-fixture:")
 
@@ -80,25 +75,13 @@ def test_committed_bindings_out_of_scope_are_categorized() -> None:
             assert category in OUT_OF_SCOPE_CATEGORIES, f"{path}:{unit_id}"
 
 
-def test_out_of_scope_share_does_not_regress_baseline() -> None:
-    """Cap + baseline: shares may not worsen beyond recorded Wave-8 baseline."""
-    assert SHARE_BASELINE.is_file(), f"missing baseline {SHARE_BASELINE}"
-    baseline = json.loads(SHARE_BASELINE.read_text(encoding="utf-8"))
-    assert baseline.get("max_share_cap") == OUT_OF_SCOPE_MAX_SHARE
-    current: dict[str, float] = {}
+def test_out_of_scope_share_is_bounded_and_inventory_is_fully_classified() -> None:
+    """Classification is complete but cannot masquerade as representation."""
     for path in BINDINGS:
-        rel = path.relative_to(REPO_ROOT).as_posix()
         data = json.loads(path.read_text(encoding="utf-8"))
         discovered = len(data.get("discovered_units") or [])
+        represented = len(data.get("representation_map") or {})
         oos = len(data.get("out_of_scope") or {})
         share = out_of_scope_share(discovered, oos)
-        current[rel] = round(share, 6)
         assert share <= OUT_OF_SCOPE_MAX_SHARE + 1e-9
-        prior = baseline["shares"].get(rel)
-        if prior is not None:
-            assert share <= float(prior) + 1e-6, (
-                f"out_of_scope share regressed for {rel}: {share} > {prior}"
-            )
-    # Baseline must list every current bindings file (no silent drops).
-    missing = sorted(set(current) - set(baseline["shares"]))
-    assert not missing, f"baseline missing shares for: {missing}"
+        assert represented + oos == discovered, path

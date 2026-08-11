@@ -189,6 +189,9 @@ class LDSSInput:
     # scene blocks from the canonical step instead of returning a degraded notice.
     canonical_step_id: str | None = None
     canonical_path: Any | None = None  # ai_stack.story_runtime.canonical_path.canonical_path_resolver.CanonicalPath
+    narrative_mode: str = "reenactment"
+    canonical_path_role: str = "mandatory_spine"
+    visible_output_bundle: dict[str, Any] | None = None
 
     @property
     def human_actor_id(self) -> str:
@@ -587,6 +590,120 @@ def build_deterministic_ldss_output(ldss_input: LDSSInput) -> LDSSOutput:
 # Canonical-step LDSS output (Phase 5)
 # ---------------------------------------------------------------------------
 
+def build_visible_bundle_ldss_output(ldss_input: LDSSInput) -> LDSSOutput | None:
+    """Adapt an already validated runtime bundle without re-authoring its prose."""
+    bundle = ldss_input.visible_output_bundle
+    if not isinstance(bundle, dict):
+        return None
+    blocks: list[SceneBlock] = []
+    raw_scene_blocks = bundle.get("scene_blocks")
+    if isinstance(raw_scene_blocks, list) and raw_scene_blocks:
+        for index, raw in enumerate(raw_scene_blocks):
+            if not isinstance(raw, dict) or not str(raw.get("text") or "").strip():
+                continue
+            source_kind = str(
+                raw.get("block_type") or raw.get("type") or raw.get("kind") or "narrator"
+            ).strip()
+            block_type = {
+                "npc_speech": "actor_line",
+                "spoken_line": "actor_line",
+                "npc_action": "actor_action",
+                "action_line": "actor_action",
+                "environment": "environment_interaction",
+            }.get(source_kind, source_kind)
+            if block_type not in VALID_BLOCK_TYPES:
+                block_type = "narrator"
+            blocks.append(
+                SceneBlock(
+                    id=str(raw.get("id") or f"turn-{ldss_input.turn_number}-bundle-{index}"),
+                    block_type=block_type,
+                    text=str(raw.get("text") or "").strip(),
+                    speaker_label=str(raw.get("speaker_label") or raw.get("speaker_name") or ""),
+                    actor_id=str(raw.get("actor_id") or raw.get("speaker_id") or "").strip() or None,
+                    target_actor_id=str(raw.get("target_actor_id") or "").strip() or None,
+                )
+            )
+    else:
+        for index, text in enumerate(bundle.get("gm_narration") or []):
+            if str(text or "").strip():
+                blocks.append(
+                    SceneBlock(
+                        id=f"turn-{ldss_input.turn_number}-narrator-{index}",
+                        block_type="narrator",
+                        text=str(text).strip(),
+                        speaker_label="Narrator",
+                    )
+                )
+        for index, raw in enumerate(bundle.get("spoken_lines") or []):
+            if isinstance(raw, dict) and str(raw.get("text") or "").strip():
+                actor_id = str(raw.get("speaker_id") or raw.get("actor_id") or "").strip() or None
+                blocks.append(
+                    SceneBlock(
+                        id=str(raw.get("id") or f"turn-{ldss_input.turn_number}-line-{index}"),
+                        block_type="actor_line",
+                        text=str(raw.get("text") or "").strip(),
+                        speaker_label=str(raw.get("speaker_label") or raw.get("speaker_name") or actor_id or ""),
+                        actor_id=actor_id,
+                        target_actor_id=str(raw.get("target_actor_id") or "").strip() or None,
+                    )
+                )
+        for index, raw in enumerate(bundle.get("action_lines") or []):
+            if isinstance(raw, dict) and str(raw.get("text") or "").strip():
+                actor_id = str(raw.get("actor_id") or "").strip() or None
+                blocks.append(
+                    SceneBlock(
+                        id=str(raw.get("id") or f"turn-{ldss_input.turn_number}-action-{index}"),
+                        block_type="actor_action",
+                        text=str(raw.get("text") or "").strip(),
+                        speaker_label=str(raw.get("speaker_label") or raw.get("actor_name") or actor_id or ""),
+                        actor_id=actor_id,
+                        target_actor_id=str(raw.get("target_actor_id") or "").strip() or None,
+                    )
+                )
+    if not blocks:
+        return None
+
+    responder_ids: list[str] = []
+    for block in blocks:
+        if block.block_type in VISIBLE_NPC_BLOCK_TYPES and block.actor_id and block.actor_id not in responder_ids:
+            responder_ids.append(block.actor_id)
+    plan = None
+    if responder_ids:
+        plan = NPCAgencyPlan(
+            turn_number=ldss_input.turn_number,
+            primary_responder_id=responder_ids[0],
+            secondary_responder_ids=responder_ids[1:],
+            npc_initiatives=[
+                NPCInitiative(
+                    actor_id=actor_id,
+                    intent="realize_validated_runtime_bundle",
+                    allowed_block_types=["actor_line", "actor_action"],
+                )
+                for actor_id in responder_ids
+            ],
+        )
+    input_seed = f"bundle:{ldss_input.turn_number}:{ldss_input.player_input}"
+    output_seed = "|".join(block.text for block in blocks)
+    phase_cost = build_deterministic_phase_cost(
+        phase="ldss",
+        provider="world_engine",
+        model="ldss_validated_runtime_bundle",
+        status="approved",
+        scene_block_count=len(blocks),
+        visible_actor_response_present=bool(responder_ids),
+    )
+    return LDSSOutput(
+        visible_scene_output=VisibleSceneOutput(blocks=blocks),
+        npc_agency_plan=plan,
+        decision_count=len(blocks),
+        npc_agency_plan_count=1 if plan else 0,
+        visible_actor_response_present=bool(responder_ids),
+        scene_block_count=len(blocks),
+        input_hash=f"sha256:bundle-{hashlib.sha256(input_seed.encode()).hexdigest()[:16]}",
+        output_hash=f"sha256:bundle-{hashlib.sha256(output_seed.encode()).hexdigest()[:16]}",
+        phase_cost=phase_cost,
+    )
+
 def build_canonical_step_ldss_output(ldss_input: LDSSInput) -> LDSSOutput | None:
     """Render the active canonical step into a deterministic LDSSOutput.
 
@@ -716,6 +833,12 @@ def _update_ldss_approved_span(
 
 
 def _run_canonical_ldss_path(ldss_input: LDSSInput, ldss_span: Any | None) -> LDSSOutput | None:
+    if (
+        ldss_input.turn_number > 0
+        and ldss_input.narrative_mode == "bounded_emergence"
+        and ldss_input.canonical_path_role == "reference_arc"
+    ):
+        return None
     canonical_output = build_canonical_step_ldss_output(ldss_input)
     if canonical_output is None:
         return None
@@ -739,6 +862,34 @@ def _run_canonical_ldss_path(ldss_input: LDSSInput, ldss_span: Any | None) -> LD
         canonical_step_id=ldss_input.canonical_step_id,
     )
     return canonical_output
+
+
+def _run_visible_bundle_ldss_path(
+    ldss_input: LDSSInput,
+    ldss_span: Any | None,
+) -> LDSSOutput | None:
+    if not (
+        ldss_input.turn_number > 0
+        and ldss_input.narrative_mode == "bounded_emergence"
+        and ldss_input.canonical_path_role == "reference_arc"
+    ):
+        return None
+    bundle_output = build_visible_bundle_ldss_output(ldss_input)
+    if bundle_output is None:
+        return None
+    lane_result = validate_actor_lane_blocks(
+        bundle_output.visible_scene_output.blocks,
+        human_actor_id=ldss_input.human_actor_id,
+        ai_forbidden_actor_ids=ldss_input.ai_forbidden_actor_ids,
+    )
+    if not lane_result.approved:
+        return _build_rejected_ldss_output(
+            ldss_input=ldss_input,
+            error_code=lane_result.error_code or "actor_lane_validation_failed",
+            message=lane_result.message or "Actor lane validation rejected runtime bundle.",
+        )
+    _update_ldss_approved_span(ldss_span=ldss_span, ldss_output=bundle_output)
+    return bundle_output
 
 
 def _update_ldss_degraded_span(ldss_span: Any | None, ldss_output: LDSSOutput) -> None:
@@ -843,6 +994,9 @@ def run_ldss(ldss_input: LDSSInput) -> LDSSOutput:
     ldss_span = _start_ldss_span(adapter, ldss_input)
 
     try:
+        bundle_output = _run_visible_bundle_ldss_path(ldss_input, ldss_span)
+        if bundle_output is not None:
+            return bundle_output
         canonical_output = _run_canonical_ldss_path(ldss_input, ldss_span)
         if canonical_output is not None:
             return canonical_output
@@ -983,6 +1137,9 @@ def build_ldss_input_from_session(
     session_output_language: str = "de",
     canonical_step_id: str | None = None,
     canonical_path: Any | None = None,
+    narrative_mode: str = "reenactment",
+    canonical_path_role: str = "mandatory_spine",
+    visible_output_bundle: dict[str, Any] | None = None,
 ) -> LDSSInput:
     """Build LDSSInput from story session state fields."""
     story_session_state = {
@@ -1020,4 +1177,7 @@ def build_ldss_input_from_session(
         session_output_language=session_output_language,
         canonical_step_id=canonical_step_id,
         canonical_path=canonical_path,
+        narrative_mode=narrative_mode,
+        canonical_path_role=canonical_path_role,
+        visible_output_bundle=dict(visible_output_bundle) if isinstance(visible_output_bundle, dict) else None,
     )

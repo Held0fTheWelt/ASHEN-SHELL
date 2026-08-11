@@ -218,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
             "schema_version": "bt.architecture_audit_invocation.v1",
             "dry_run": args.dry_run,
             "status": report["gate"]["status"],
+            "architecture_posture": report["architecture_posture"],
             "rollup": report["corpus_rollup"],
             "failures": report["gate"]["failures"],
             "exports": exports,

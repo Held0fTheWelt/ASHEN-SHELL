@@ -21,6 +21,7 @@
 
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
+| Player | Experience Launch | starts bound experience | real browser/runtime entry path | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
 | Experience Launch | Player Semantics | opens interaction | bound role and session | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
 | Player Semantics | NPC Agency | triggers dramatic response | interpreted intent and context | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
 | NPC Agency | Authoritative Commit | proposes outcome | uncommitted candidate | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |

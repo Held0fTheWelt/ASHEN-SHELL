@@ -22,6 +22,7 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Operator | Administration Tool | opens workbench | authenticated browser navigation | [`administration-tool/route_registration_manage_sections.py`](../../../../administration-tool/route_registration_manage_sections.py) |
+| Administration Tool | Manage Route Catalog | dispatches manage pages | named manage route registration | [`administration-tool/route_registration_manage.py`](../../../../administration-tool/route_registration_manage.py) |
 | Manage Route Catalog | Security Routes | requires operator session | authorization before rendering or mutation | [`administration-tool/route_registration_security.py`](../../../../administration-tool/route_registration_security.py) |
 | Manage Route Catalog | Backend Proxy | submits requested operation | normalized proxy request | [`administration-tool/route_registration_proxy.py`](../../../../administration-tool/route_registration_proxy.py) |
 | Backend Proxy | Proxy Policy | classifies request | default-deny mutation policy | [`administration-tool/route_registration_proxy_policy.py`](../../../../administration-tool/route_registration_proxy_policy.py) |

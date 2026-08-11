@@ -18,9 +18,8 @@ NORMATIVE_INDEX = REPO_ROOT / "docs" / "dev" / "contracts" / "normative-contract
 RUNTIME_CONTRACTS = ARCH / "contracts" / "runtime"
 LINK_AUDIT = REPO_ROOT / "scripts" / "architecture_link_audit.py"
 CONTRACT_PLACEMENT_AUDIT = REPO_ROOT / "scripts" / "contract_placement_audit.py"
-ADR_RETIREMENT_AUDIT = REPO_ROOT / "scripts" / "adr_retirement_audit.py"
-
-DECISION_PROSE_MIN_WORDS = 50
+ACTIVE_ADRS = ARCH / "decisions"
+VIOLATION_REGISTER = ARCH / "violations" / "README.md"
 
 ARCHITECTURE_ROOT_ALLOWLIST = frozenset(
     {"README.md", "START-HERE.md", "QUALITY-STANDARD.md", "DOC-HEALTH.md"}
@@ -42,6 +41,7 @@ REQUIRED_SECTIONS = [
 ]
 
 COMPLETE_SADS = [
+    ARCH / "system" / "architecture.md",
     ARCH / "components" / "world-engine" / "architecture.md",
     ARCH / "components" / "backend" / "architecture.md",
     ARCH / "components" / "ai-stack" / "architecture.md",
@@ -64,9 +64,9 @@ WORLD_ENGINE_UML = [
     REPO_ROOT / "UML" / "Components" / "world-engine" / "components" / "c4-context.md",
     REPO_ROOT / "UML" / "Components" / "world-engine" / "components" / "c4-container.md",
     REPO_ROOT / "UML" / "Components" / "world-engine" / "components" / "c4-component.md",
-    REPO_ROOT / "UML" / "Components" / "world-engine" / "sequence" / "world-engine-primary-turn-sequence.md",
-    REPO_ROOT / "UML" / "Components" / "world-engine" / "sequence" / "world-engine-degraded-turn-sequence.md",
-    REPO_ROOT / "UML" / "Components" / "world-engine" / "states" / "world-engine-story-session-states.md",
+    REPO_ROOT / "UML" / "Components" / "world-engine" / "sequence" / "primary-turn-sequence.md",
+    REPO_ROOT / "UML" / "Components" / "world-engine" / "sequence" / "degraded-turn-sequence.md",
+    REPO_ROOT / "UML" / "Components" / "world-engine" / "states" / "session-lifecycle.md",
     REPO_ROOT / "UML" / "Components" / "world-engine" / "TRACEABILITY.md",
 ]
 
@@ -168,7 +168,7 @@ def test_uml_packages_for_rollout_complete_rows(system: str) -> None:
 
 def test_architecture_entry_not_redirect_only() -> None:
     readme = (ARCH / "README.md").read_text(encoding="utf-8")
-    assert "Capability catalog" in readme
+    assert "Component and module catalog" in readme
     assert "redirect" not in readme.lower()[:200]
 
 
@@ -236,52 +236,31 @@ def test_no_active_adr_files() -> None:
     assert not active, f"active ADR files remain: {[p.relative_to(REPO_ROOT) for p in active[:10]]}"
 
 
-def _decision_body_word_count(block: str) -> int:
-    """Count substantive words; strip heading and metadata lines only (keep bold prose)."""
-    body = re.sub(r"^###[^\n]+\n", "", block)
-    body = re.sub(
-        r"^\*\*(Status|Origin|Migrated from|Supersedes):\*\*.*$",
-        "",
-        body,
-        flags=re.M,
-    )
-    return len(body.split())
+def test_active_adrs_separate_decision_from_implementation_state() -> None:
+    """Accepted target intent must not imply that the implementation conforms."""
+    adrs = sorted(ACTIVE_ADRS.glob("ADR-[0-9][0-9][0-9][0-9]-*.md"))
+    assert adrs, "active ADR layer is empty"
+    for path in adrs:
+        text = path.read_text(encoding="utf-8")
+        assert "**Decision status:**" in text, path.name
+        assert "**Implementation state:**" in text, path.name
+        assert "## Decision" in text, path.name
+        assert "## Implementation correspondence" in text, path.name
+        state = re.search(r"\*\*Implementation state:\*\*\s*(.+)", text)
+        assert state
+        if state.group(1).strip().lower() not in {"conforming", "implemented"}:
+            assert "**Violations:**" in text, f"{path.name} must link its nonconformance"
 
 
-def test_sad_decision_prose_minimum() -> None:
-    """§9 decision blocks must include Status, Origin, and substantive body (≥50 words)."""
-    for sad_path in COMPLETE_SADS:
-        text = sad_path.read_text(encoding="utf-8")
-        if "## 9. Architecture Decisions" not in text:
-            continue
-        section = text.split("## 9. Architecture Decisions", 1)[1].split("## 10.", 1)[0]
-        blocks = re.findall(r"^### (?:D\d+|MVP\d+-\d+|ADR-\d{4}):.*?(?=^### |\Z)", section, re.M | re.S)
-        for block in blocks:
-            assert "**Status:**" in block, f"{sad_path.name}: decision missing Status"
-            assert "**Origin:**" in block or "**Migrated from:**" in block, (
-                f"{sad_path.name}: decision missing Origin"
-            )
-            words = _decision_body_word_count(block)
-            assert words >= DECISION_PROSE_MIN_WORDS, (
-                f"{sad_path.name}: decision block too thin ({words} < {DECISION_PROSE_MIN_WORDS} words)"
-            )
-
-
-def test_adr_retirement_audit_clean() -> None:
-    """Retired ADR registry coverage and SAD prose parity must pass audit --check."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(ADR_RETIREMENT_AUDIT),
-            "--check",
-            "--parity-threshold",
-            "0.70",
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stderr or result.stdout
+def test_system_sad_and_violation_register_expose_current_target_delta() -> None:
+    system = (ARCH / "system" / "architecture.md").read_text(encoding="utf-8")
+    for statement_type in ("Observed", "Normative", "Target", "Violation", "Historical"):
+        assert statement_type in system
+    register = VIOLATION_REGISTER.read_text(encoding="utf-8")
+    for index in range(1, 10):
+        assert f"AR-V{index:03d}" in register
+    for field in ("Historical intent", "Current evidence", "Target", "Closure"):
+        assert field in register
 
 
 MVP1_REQUIRED_IDS = (

@@ -125,18 +125,31 @@ def _building_block(
     sad_path: Path,
     repo_root: Path,
 ) -> str:
+    structural_views = [
+        view for view in model["views"]
+        if view["kind"] in {"container", "component"}
+    ]
+    selected = {
+        str(element_id)
+        for view in structural_views
+        for element_id in view["elements"]
+    }
     rows = [
-        "### Source-bound building-block catalog",
+        "### Source-bound structural decomposition",
         "",
-        "Each block has one stated responsibility, an interaction or ownership "
-        "contract, and a current source anchor. The list is individualized for "
-        "this scope; it is not derived from a fixed diagram count.",
+        "Only elements that participate in a container or component view are "
+        "listed as building blocks. Actors, runtime states, data types and "
+        "deployment nodes remain in their proper viewpoints instead of being "
+        "misrepresented as structural decomposition.",
         "",
         "| Block | Kind | Responsibility | Contract | Source |",
         "| --- | --- | --- | --- | --- |",
     ]
     for element_id, element in sorted(
-        model["elements"].items(),
+        (
+            (element_id, model["elements"][element_id])
+            for element_id in selected
+        ),
         key=lambda item: (
             str(item[1].get("type", "")),
             str(item[1].get("name", "")),
@@ -148,6 +161,12 @@ def _building_block(
             f"{_table(element['responsibility'])} | "
             f"{_table(element['contract'])} | "
             f"{_source(sad_path, str(element['anchor']), repo_root)} |"
+        )
+    if not selected:
+        rows.append(
+            "| Delegated structure | `delegated` | This scope introduces no "
+            "independent structural block. | The owning SAD defines the "
+            "boundary. | Parent architecture |"
         )
     return "\n".join(rows)
 
@@ -182,7 +201,9 @@ def _runtime_block(
         [
             "",
             "The ordered sequence/activity relationships and state transitions "
-            "are validated against the catalog. Generic arrows such as "
+            "are validated against the catalog. A sequence or activity view "
+            "must form one connected runtime path; a list of unrelated calls "
+            "does not qualify as an end-to-end scenario. Generic arrows such as "
             "\"evidence for boundary\" are not accepted as runtime semantics.",
         ]
     )

@@ -102,6 +102,11 @@ def render_claim_reconciliation(catalog: Mapping[str, Any]) -> str:
             ]
         )
         rows.extend(f"- {value}" for value in claim["historical_claims"])
+        rows.extend(["", "**Historical Git/source lineage**", ""])
+        rows.extend(
+            f"- `{value}` (historical source label; resolve through Git/AKDB lineage)"
+            for value in claim["historical_sources"]
+        )
         rows.extend(["", "**Current evidence**", ""])
         rows.extend(
             f"- [`{value}`](../../../{value})"

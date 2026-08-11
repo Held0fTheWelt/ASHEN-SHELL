@@ -24,3 +24,9 @@ def test_better_tomorrow_architecture_depth_gate_passes() -> None:
     assert report["gate"]["status"] == "PASS", report["gate"]["failures"]
     assert report["corpus_rollup"]["subsystems"] == 17
     assert report["corpus_rollup"]["view_counts"] == {"model": 94}
+    assert report["architecture_posture"]["status"] == "KNOWN_VIOLATIONS"
+    rollup = report["corpus_rollup"]
+    assert rollup["represented"] == rollup["classified"] == rollup["discovered"]
+    assert rollup["representation_coverage"] == 1.0
+    assert rollup["classification_coverage"] == 1.0
+    assert rollup["outside_representation"] == {}

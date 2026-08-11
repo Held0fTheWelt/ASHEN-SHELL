@@ -126,7 +126,8 @@
           "to": "manage",
           "label": "dispatches manage pages",
           "contract": "named manage route registration",
-          "anchor": "administration-tool/route_registration_manage.py"
+          "anchor": "administration-tool/route_registration_manage.py",
+          "order": 2
         },
         "manage_templates": {
           "from": "manage",
@@ -140,28 +141,32 @@
           "to": "security",
           "label": "requires operator session",
           "contract": "authorization before rendering or mutation",
-          "anchor": "administration-tool/route_registration_security.py"
+          "anchor": "administration-tool/route_registration_security.py",
+          "order": 3
         },
         "manage_proxy": {
           "from": "manage",
           "to": "proxy",
           "label": "submits requested operation",
           "contract": "normalized proxy request",
-          "anchor": "administration-tool/route_registration_proxy.py"
+          "anchor": "administration-tool/route_registration_proxy.py",
+          "order": 4
         },
         "proxy_policy": {
           "from": "proxy",
           "to": "policy",
           "label": "classifies request",
           "contract": "default-deny mutation policy",
-          "anchor": "administration-tool/route_registration_proxy_policy.py"
+          "anchor": "administration-tool/route_registration_proxy_policy.py",
+          "order": 5
         },
         "policy_backend": {
           "from": "policy",
           "to": "backend",
           "label": "forwards approved operation",
           "contract": "service key and operator evidence",
-          "anchor": "administration-tool/route_registration_proxy.py"
+          "anchor": "administration-tool/route_registration_proxy.py",
+          "order": 6
         },
         "operator_browser": {
           "from": "operator",
@@ -252,6 +257,7 @@
           ],
           "relationships": [
             "operator_admin",
+            "admin_manage",
             "manage_security",
             "manage_proxy",
             "proxy_policy",
@@ -505,7 +511,15 @@
           "label": "returns proposal and evidence",
           "contract": "uncommitted runtime package",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
-          "order": 9
+          "order": 12
+        },
+        "ai_executor": {
+          "from": "ai",
+          "to": "executor",
+          "label": "dispatches proposal run",
+          "contract": "one governed executor invocation per proposal request",
+          "anchor": "ai_stack/langgraph/runtime_executor/executor_run_finish.py",
+          "order": 2
         },
         "executor_ingress": {
           "from": "executor",
@@ -513,7 +527,7 @@
           "label": "interprets input",
           "contract": "semantic intent envelope",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py",
-          "order": 1
+          "order": 3
         },
         "ingress_retrieval": {
           "from": "ingress",
@@ -521,7 +535,7 @@
           "label": "queries grounded context",
           "contract": "bounded retrieval query",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py",
-          "order": 2
+          "order": 4
         },
         "retrieval_director": {
           "from": "retrieval",
@@ -529,7 +543,7 @@
           "label": "provides context pack",
           "contract": "citations and continuity facts",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_director_selection_context.py",
-          "order": 3
+          "order": 6
         },
         "director_capabilities": {
           "from": "director",
@@ -537,7 +551,7 @@
           "label": "requests capability plan",
           "contract": "evidence-gated selection",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_realization_capabilities.py",
-          "order": 4
+          "order": 7
         },
         "director_narrator": {
           "from": "director",
@@ -545,7 +559,7 @@
           "label": "requests realization",
           "contract": "scene plan and actor directives",
           "anchor": "ai_stack/story_runtime/director/director_realization_composer.py",
-          "order": 5
+          "order": 8
         },
         "narrator_validator": {
           "from": "narrator",
@@ -553,7 +567,7 @@
           "label": "submits proposal",
           "contract": "visible blocks plus proposed delta",
           "anchor": "ai_stack/langgraph/runtime_executor/executor_validation_commit.py",
-          "order": 6
+          "order": 9
         },
         "validator_ledger": {
           "from": "validator",
@@ -561,7 +575,7 @@
           "label": "records validation evidence",
           "contract": "typed aspect status",
           "anchor": "ai_stack/langgraph/validation/result.py",
-          "order": 7
+          "order": 10
         },
         "ledger_executor": {
           "from": "ledger",
@@ -569,14 +583,15 @@
           "label": "returns evidence projection",
           "contract": "proposal package metadata",
           "anchor": "ai_stack/story_runtime/runtime_aspect_ledger/runtime_intelligence_projection/builder.py",
-          "order": 8
+          "order": 11
         },
         "retrieval_context_pack": {
           "from": "retrieval",
           "to": "context_pack",
           "label": "builds",
           "contract": "ranked and budgeted context",
-          "anchor": "ai_stack/rag/rag_context_pack_assembler.py"
+          "anchor": "ai_stack/rag/rag_context_pack_assembler.py",
+          "order": 5
         },
         "director_plan": {
           "from": "director",
@@ -780,6 +795,7 @@
           ],
           "relationships": [
             "world_ai",
+            "ai_executor",
             "executor_ingress",
             "ingress_retrieval",
             "retrieval_director",
@@ -1142,6 +1158,14 @@
           "label": "delegates live operation",
           "contract": "proxy-only service seam",
           "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "order": 3
+        },
+        "backend_game_api": {
+          "from": "backend",
+          "to": "game_api",
+          "label": "routes authenticated player turn",
+          "contract": "validated game API request",
+          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
           "order": 2
         },
         "game_service_world": {
@@ -1150,14 +1174,23 @@
           "label": "calls story API",
           "contract": "ticketed HTTP request",
           "anchor": "backend/app/services/game/game_service.py",
-          "order": 3
+          "order": 4
+        },
+        "game_service_observability": {
+          "from": "game_service",
+          "to": "observability",
+          "label": "records proxy outcome",
+          "contract": "trace-correlated redacted evidence",
+          "anchor": "backend/app/services/game/game_service.py",
+          "order": 5
         },
         "governance_models": {
           "from": "governance",
           "to": "models",
           "label": "persists settings and audit",
           "contract": "validated governance transaction",
-          "anchor": "backend/app/services/governance/governance_runtime_service.py"
+          "anchor": "backend/app/services/governance/governance_runtime_service.py",
+          "order": 2
         },
         "content_models": {
           "from": "content_service",
@@ -1320,7 +1353,6 @@
           "elements": [
             "player",
             "backend",
-            "services",
             "game_api",
             "game_service",
             "world",
@@ -1328,9 +1360,10 @@
           ],
           "relationships": [
             "player_backend",
+            "backend_game_api",
             "game_game_service",
             "game_service_world",
-            "services_observability"
+            "game_service_observability"
           ],
           "decisions": [
             "D1"
@@ -1516,7 +1549,8 @@
           "to": "governance",
           "label": "configures routing",
           "contract": "platform intent",
-          "anchor": "backend/app/model_governance/__init__.py"
+          "anchor": "backend/app/model_governance/__init__.py",
+          "order": 1
         },
         "governance_world": {
           "from": "governance",
@@ -1531,7 +1565,7 @@
           "label": "selects adapter",
           "contract": "routing-only side effect",
           "anchor": "backend/app/model_governance/model_routing.py",
-          "order": 1
+          "order": 2
         },
         "routing_registry": {
           "from": "routing",
@@ -1539,7 +1573,7 @@
           "label": "resolves adapters",
           "contract": "registered adapters only",
           "anchor": "backend/app/model_governance/adapter_registry.py",
-          "order": 2
+          "order": 3
         },
         "routing_contracts": {
           "from": "routing",
@@ -1547,7 +1581,7 @@
           "label": "emits decision vocabulary",
           "contract": "stable contract types",
           "anchor": "backend/app/model_governance/model_routing_contracts.py",
-          "order": 3
+          "order": 4
         },
         "governance_session": {
           "from": "governance",
@@ -1555,7 +1589,7 @@
           "label": "persists governance snapshot",
           "contract": "non-authoritative snapshot",
           "anchor": "backend/app/model_governance/session/session_persistence.py",
-          "order": 4
+          "order": 5
         },
         "models_decision": {
           "from": "models",
@@ -2219,7 +2253,7 @@
           "label": "launches session",
           "contract": "validated launch payload",
           "anchor": "frontend/app/routes_play.py",
-          "order": 2
+          "order": 3
         },
         "bootstrap_stream": {
           "from": "bootstrap",
@@ -2227,7 +2261,7 @@
           "label": "opens event channel",
           "contract": "session ticket and cursor",
           "anchor": "frontend/static/play_runtime_bootstrap.js",
-          "order": 4
+          "order": 5
         },
         "stream_renderer": {
           "from": "stream",
@@ -2235,7 +2269,7 @@
           "label": "delivers typed block",
           "contract": "monotonic event order",
           "anchor": "frontend/static/play_narrative_stream.js",
-          "order": 5
+          "order": 6
         },
         "controls_play": {
           "from": "controls",
@@ -2243,7 +2277,23 @@
           "label": "submits semantic input",
           "contract": "one command per turn",
           "anchor": "frontend/static/play_controls.js",
+          "order": 2
+        },
+        "player_controls": {
+          "from": "player",
+          "to": "controls",
+          "label": "enters semantic intent",
+          "contract": "one explicit player command",
+          "anchor": "frontend/static/play_controls.js",
           "order": 1
+        },
+        "api_bootstrap": {
+          "from": "api_client",
+          "to": "bootstrap",
+          "label": "returns accepted session binding",
+          "contract": "session id, ticket and initial cursor",
+          "anchor": "frontend/static/play_runtime_bootstrap.js",
+          "order": 4
         },
         "initial_idle": {
           "from": "initial",
@@ -2358,8 +2408,10 @@
             "renderer"
           ],
           "relationships": [
+            "player_controls",
             "controls_play",
             "play_api",
+            "api_bootstrap",
             "bootstrap_stream",
             "stream_renderer"
           ],
@@ -2569,6 +2621,14 @@
           "anchor": "tools/mcp_server/tools_registry.py",
           "order": 4
         },
+        "server_registry": {
+          "from": "server",
+          "to": "registry",
+          "label": "resolves governed capability",
+          "contract": "registered schema-compatible tool",
+          "anchor": "tools/mcp_server/tools_registry.py",
+          "order": 2
+        },
         "handlers_limit": {
           "from": "handlers",
           "to": "rate_limit",
@@ -2589,6 +2649,14 @@
           "to": "backend_client",
           "label": "delegates remote operation",
           "contract": "normalized backend request",
+          "anchor": "tools/mcp_server/backend_client.py",
+          "order": 5
+        },
+        "backend_client_backend": {
+          "from": "backend_client",
+          "to": "backend",
+          "label": "submits governed backend request",
+          "contract": "backend remains mutation authority",
           "anchor": "tools/mcp_server/backend_client.py",
           "order": 6
         },
@@ -2713,9 +2781,10 @@
           ],
           "relationships": [
             "client_server",
+            "server_registry",
             "registry_handlers",
             "handlers_backend",
-            "server_backend",
+            "backend_client_backend",
             "handlers_trace"
           ],
           "decisions": [
@@ -2889,7 +2958,8 @@
           "to": "core",
           "label": "uses contracts",
           "contract": "host retains authority",
-          "anchor": "world-engine/world_engine/story_runtime/governed_runtime_adapters.py"
+          "anchor": "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
+          "order": 1
         },
         "ai_core": {
           "from": "ai",
@@ -2905,12 +2975,21 @@
           "contract": "stable public values",
           "anchor": "story_runtime_core/__init__.py"
         },
+        "core_adapters": {
+          "from": "core",
+          "to": "adapters",
+          "label": "selects explicit host adapter",
+          "contract": "portable contracts cross one anti-corruption seam",
+          "anchor": "story_runtime_core/adapters.py",
+          "order": 2
+        },
         "models_intent": {
           "from": "models",
           "to": "intent",
           "label": "constrains",
           "contract": "semantic action vocabulary",
-          "anchor": "story_runtime_core/player_input_intent_contract.py"
+          "anchor": "story_runtime_core/player_input_intent_contract.py",
+          "order": 4
         },
         "intent_truth": {
           "from": "intent",
@@ -2918,7 +2997,7 @@
           "label": "is evaluated against",
           "contract": "confirmed facts only",
           "anchor": "story_runtime_core/input_interpreter.py",
-          "order": 2
+          "order": 5
         },
         "truth_consequences": {
           "from": "truth",
@@ -2926,7 +3005,7 @@
           "label": "bounds cascade",
           "contract": "pure deterministic input",
           "anchor": "story_runtime_core/consequences/consequence_cascade.py",
-          "order": 3
+          "order": 6
         },
         "consequences_branching": {
           "from": "consequences",
@@ -2934,7 +3013,7 @@
           "label": "feeds alternatives",
           "contract": "hypothetical only",
           "anchor": "story_runtime_core/branching/forecast.py",
-          "order": 4
+          "order": 7
         },
         "branching_delivery": {
           "from": "branching",
@@ -2942,7 +3021,7 @@
           "label": "returns outcome",
           "contract": "host decides commit",
           "anchor": "story_runtime_core/runtime_delivery.py",
-          "order": 5
+          "order": 8
         },
         "adapters_models": {
           "from": "adapters",
@@ -2950,7 +3029,7 @@
           "label": "maps host values",
           "contract": "explicit anti-corruption layer",
           "anchor": "story_runtime_core/adapters.py",
-          "order": 1
+          "order": 3
         },
         "action_snapshot": {
           "from": "action",
@@ -3062,6 +3141,7 @@
           ],
           "relationships": [
             "world_core",
+            "core_adapters",
             "adapters_models",
             "models_intent",
             "intent_truth",
@@ -3418,6 +3498,14 @@
           "anchor": "world-engine/world_engine/story_runtime/canonical_turn_lifecycle.py",
           "order": 3
         },
+        "backend_turn": {
+          "from": "backend",
+          "to": "turn",
+          "label": "enters authoritative turn execution",
+          "contract": "signed request, session id, base revision and trace id",
+          "anchor": "world-engine/world_engine/api/http_routes/story_turn_routes.py",
+          "order": 2
+        },
         "lifecycle_governance": {
           "from": "lifecycle",
           "to": "governance",
@@ -3456,7 +3544,39 @@
           "label": "publishes committed result",
           "contract": "post-commit only",
           "anchor": "world-engine/world_engine/api/story_ws.py",
-          "order": 8
+          "order": 11
+        },
+        "delivery_backend": {
+          "from": "delivery",
+          "to": "backend",
+          "label": "returns committed turn envelope",
+          "contract": "accepted revision and typed player-visible blocks only",
+          "anchor": "world-engine/world_engine/api/http_routes/story_turn_routes.py",
+          "order": 9
+        },
+        "backend_player": {
+          "from": "backend",
+          "to": "player",
+          "label": "delivers committed result",
+          "contract": "HTTP response or ordered WebSocket projection",
+          "anchor": "backend/app/api/v1/game/player_turn_execution_and_flush.py",
+          "order": 10
+        },
+        "manager_turn": {
+          "from": "manager",
+          "to": "turn",
+          "label": "executes locked turn",
+          "contract": "one active turn per session revision",
+          "anchor": "world-engine/world_engine/story_runtime/manager/turn_execution.py",
+          "order": 1
+        },
+        "validation_observability": {
+          "from": "validation",
+          "to": "observability",
+          "label": "records rejected or degraded proposal",
+          "contract": "same revision, no speculative persistence",
+          "anchor": "world-engine/world_engine/observability/trace.py",
+          "order": 7
         },
         "session_proposal": {
           "from": "session",
@@ -3651,12 +3771,15 @@
           ],
           "relationships": [
             "player_backend",
+            "backend_turn",
             "turn_lifecycle",
             "lifecycle_governance",
             "governance_ai",
             "ai_validation",
             "validation_store",
-            "store_delivery"
+            "store_delivery",
+            "delivery_backend",
+            "backend_player"
           ],
           "decisions": [
             "D1",
@@ -3676,16 +3799,15 @@
             "governance",
             "ai_bridge",
             "validation",
-            "store",
             "observability"
           ],
           "relationships": [
+            "manager_turn",
             "turn_lifecycle",
             "lifecycle_governance",
             "governance_ai",
             "ai_validation",
-            "validation_store",
-            "manager_observability"
+            "validation_observability"
           ],
           "decisions": [
             "D5",
@@ -3978,7 +4100,8 @@
           "to": "assurance",
           "label": "authors intent and runs audit",
           "contract": "reviewed invocation",
-          "anchor": "tools/architecture_assurance/cli.py"
+          "anchor": "tools/architecture_assurance/cli.py",
+          "order": 1
         },
         "assurance_repo": {
           "from": "assurance",
@@ -4064,7 +4187,7 @@
           "label": "emits findings",
           "contract": "normalized result model",
           "anchor": "tools/architecture_assurance/reporters.py",
-          "order": 6
+          "order": 3
         },
         "reports_canon": {
           "from": "reports",
@@ -4072,7 +4195,23 @@
           "label": "joins canonical evidence",
           "contract": "accepted report state",
           "anchor": "tools/architecture_assurance/canon.py",
-          "order": 7
+          "order": 4
+        },
+        "assurance_audit": {
+          "from": "assurance",
+          "to": "audit",
+          "label": "evaluates current repository projection",
+          "contract": "complete deterministic audit report",
+          "anchor": "tools/architecture_assurance/audit.py",
+          "order": 2
+        },
+        "canon_akdb": {
+          "from": "canon",
+          "to": "akdb",
+          "label": "round-trips canonical export",
+          "contract": "pinned disposable AKDB validation",
+          "anchor": "tests/architecture_assurance/test_disposable_akdb_integration.py",
+          "order": 5
         },
         "declarations_bindings": {
           "from": "declarations",
@@ -4237,9 +4376,10 @@
           ],
           "relationships": [
             "architect_assurance",
+            "assurance_audit",
             "audit_reports",
             "reports_canon",
-            "assurance_akdb"
+            "canon_akdb"
           ],
           "decisions": [
             "D3",
@@ -5194,7 +5334,16 @@
           "from": "maintainer",
           "to": "governance",
           "label": "proposes and reviews",
-          "contract": "evidence-backed change"
+          "contract": "evidence-backed change",
+          "order": 1
+        },
+        "governance_sad": {
+          "from": "governance",
+          "to": "sad",
+          "label": "records accepted contextual decision",
+          "contract": "active ADR and affected SAD are updated together",
+          "anchor": "docs/architecture/decisions/README.md",
+          "order": 2
         },
         "registry_sad": {
           "from": "decision_registry",
@@ -5210,7 +5359,7 @@
           "label": "constrains implementation",
           "contract": "accepted policy semantics",
           "anchor": "backend/app/services/governance/governance_runtime_service.py",
-          "order": 2
+          "order": 3
         },
         "policy_audit": {
           "from": "runtime_policy",
@@ -5218,7 +5367,7 @@
           "label": "records mutation outcome",
           "contract": "actor and before/after evidence",
           "anchor": "backend/app/services/governance/observability_governance_service.py",
-          "order": 3
+          "order": 4
         },
         "audit_gates": {
           "from": "audit",
@@ -5226,7 +5375,7 @@
           "label": "supports verification",
           "contract": "machine-checkable evidence",
           "anchor": "tests/gates/test_adr_live_runtime_commit_semantics_gate.py",
-          "order": 4
+          "order": 5
         },
         "proposal_decision": {
           "from": "proposal",
@@ -5368,6 +5517,7 @@
           ],
           "relationships": [
             "maintainer_governance",
+            "governance_sad",
             "sad_policy",
             "policy_audit",
             "audit_gates"
@@ -5537,6 +5687,14 @@
           "label": "opens interaction",
           "contract": "bound role and session",
           "anchor": "frontend/static/play_session_start.js",
+          "order": 2
+        },
+        "player_launch": {
+          "from": "player",
+          "to": "launch",
+          "label": "starts bound experience",
+          "contract": "real browser/runtime entry path",
+          "anchor": "frontend/static/play_session_start.js",
           "order": 1
         },
         "semantics_agency": {
@@ -5545,7 +5703,7 @@
           "label": "triggers dramatic response",
           "contract": "interpreted intent and context",
           "anchor": "ai_stack/story_runtime/player_action_resolution.py",
-          "order": 2
+          "order": 3
         },
         "agency_commit": {
           "from": "agency",
@@ -5553,7 +5711,7 @@
           "label": "proposes outcome",
           "contract": "uncommitted candidate",
           "anchor": "world-engine/world_engine/story_runtime/governed_runtime_adapters.py",
-          "order": 3
+          "order": 4
         },
         "commit_render": {
           "from": "commit",
@@ -5561,7 +5719,7 @@
           "label": "publishes blocks",
           "contract": "accepted result only",
           "anchor": "world-engine/world_engine/api/story_ws.py",
-          "order": 4
+          "order": 5
         },
         "render_evidence": {
           "from": "render",
@@ -5569,7 +5727,7 @@
           "label": "is proven by",
           "contract": "observable assertion and trace",
           "anchor": "tests/e2e/test_final_goc_annette_alain_e2e.py",
-          "order": 5
+          "order": 6
         },
         "claim_proof": {
           "from": "claim",
@@ -5678,6 +5836,7 @@
             "evidence"
           ],
           "relationships": [
+            "player_launch",
             "launch_semantics",
             "semantics_agency",
             "agency_commit",
@@ -6639,7 +6798,16 @@
           "from": "operator",
           "to": "security",
           "label": "requests privileged mutation",
-          "contract": "role and CSRF checks"
+          "contract": "role and CSRF checks",
+          "order": 1
+        },
+        "security_frontend": {
+          "from": "security",
+          "to": "frontend",
+          "label": "accepts authenticated browser intent",
+          "contract": "frontend proves session and CSRF context only",
+          "anchor": "frontend/app/auth.py",
+          "order": 2
         },
         "frontend_routes": {
           "from": "frontend",
@@ -6647,7 +6815,7 @@
           "label": "submits authenticated intent",
           "contract": "session, CSRF and role",
           "anchor": "frontend/app/auth.py",
-          "order": 1
+          "order": 3
         },
         "routes_service": {
           "from": "routes",
@@ -6655,7 +6823,7 @@
           "label": "delegates authorized operation",
           "contract": "validated request",
           "anchor": "backend/app/api/v1/security_governance_routes.py",
-          "order": 2
+          "order": 4
         },
         "service_credentials": {
           "from": "service",
@@ -6663,7 +6831,7 @@
           "label": "seals or rotates credential",
           "contract": "plaintext ephemeral only",
           "anchor": "backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py",
-          "order": 3
+          "order": 5
         },
         "credentials_runtime": {
           "from": "credentials",
@@ -6679,7 +6847,7 @@
           "label": "records outcome",
           "contract": "redacted security event",
           "anchor": "backend/app/services/governance/observability_governance_service.py",
-          "order": 5
+          "order": 6
         },
         "mcp_routes": {
           "from": "mcp",
@@ -6828,6 +6996,7 @@
           ],
           "relationships": [
             "operator_security",
+            "security_frontend",
             "frontend_routes",
             "routes_service",
             "service_credentials",

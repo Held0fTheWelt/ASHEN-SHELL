@@ -55,19 +55,15 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Browser mutations | frontend |
 | MCP auth | mcp-server |
 | Provider credentials | backend + ai-stack |
+| Governed implementation surface | `backend/app/services/governance/`, `tools/mcp_server/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator (`operator`) | `actor` | Manage providers, policies and security settings | Privileged authenticated action | [`administration-tool/app.py`](../../../../administration-tool/app.py) |
-| Player (`player`) | `actor` | Authenticate and access owned sessions | Least-privilege user session | [`frontend/app/auth.py`](../../../../frontend/app/auth.py) |
-| Authorization Grant (`grant`) | `class` | Bind actor, scope and allowed operation | Least privilege and expiry | [`backend/app/services/governance/security_governance_service.py`](../../../../backend/app/services/governance/security_governance_service.py) |
-| Provider Secret (`secret`) | `class` | Represent encrypted provider credential material | Ciphertext at rest | [`backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py`](../../../../backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py) |
-| Security Audit Event (`event`) | `class` | Record safe mutation evidence | No secret payload | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
 | Frontend Auth (`frontend`) | `component` | Maintain browser session and CSRF policy | No credential authority | [`frontend/app/auth.py`](../../../../frontend/app/auth.py) |
 | MCP Boundary (`mcp`) | `component` | Validate local tool scope and delegate privileged operations | No direct credential mutation | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
 | Provider Credential Service (`credentials`) | `component` | Seal, rotate and resolve provider secrets | No plaintext persistence or response | [`backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py`](../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py) |
@@ -75,16 +71,6 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Security Audit (`audit`) | `component` | Record privileged action without secret content | Actor, scope and outcome | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
 | Security Governance API (`routes`) | `component` | Authenticate and authorize privileged requests | Role and CSRF guarded endpoints | [`backend/app/api/v1/security_governance_routes.py`](../../../../backend/app/api/v1/security_governance_routes.py) |
 | Security Governance Service (`service`) | `component` | Validate policy and credential operations | Fail-closed domain service | [`backend/app/services/governance/security_governance_service.py`](../../../../backend/app/services/governance/security_governance_service.py) |
-| Encrypted Governance Store (`store_node`) | `database` | Persist ciphertext and audit events | Encryption at rest | [`backend/app/extensions.py`](../../../../backend/app/extensions.py) |
-| Backend Security Boundary (`backend_node`) | `node` | Authorize and manage encrypted secrets | Private application process | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
-| Browser (`browser_node`) | `node` | Hold protected user session | Secure cookie and CSRF | [`frontend/app/auth.py`](../../../../frontend/app/auth.py) |
-| External Model Provider (`provider_node`) | `node` | Accept authenticated inference call | TLS and scoped provider key | [`backend/app/services/governance/governance_runtime/03_provider_contracts_remote_and_mock.py`](../../../../backend/app/services/governance/governance_runtime/03_provider_contracts_remote_and_mock.py) |
-| Absent (`absent`) | `state` | Represent unconfigured provider credential | Runtime not ready | [`backend/app/services/governance/governance_runtime/10_provider_listing_and_create.py`](../../../../backend/app/services/governance/governance_runtime/10_provider_listing_and_create.py) |
-| Active (`active`) | `state` | Permit scoped provider use | Health and policy valid | [`backend/app/services/governance/governance_runtime/12_provider_connection_health.py`](../../../../backend/app/services/governance/governance_runtime/12_provider_connection_health.py) |
-| Revoked (`revoked`) | `state` | Prevent further resolution | Audit retained | [`backend/app/services/governance/governance_runtime/14_model_update_delete_rebind.py`](../../../../backend/app/services/governance/governance_runtime/14_model_update_delete_rebind.py) |
-| Rotating (`rotating`) | `state` | Replace credential without plaintext exposure | Audited atomic replacement | [`backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py`](../../../../backend/app/services/governance/governance_runtime/11_provider_update_and_credentials.py) |
-| Sealed (`sealed`) | `state` | Store encrypted credential | Ciphertext only | [`backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py`](../../../../backend/app/services/governance/governance_runtime/04_provider_secret_and_model_helpers.py) |
-| Security Governance (`security`) | `system` | Authorize, protect and audit sensitive operations | Backend-owned policy boundary | [`backend/app/services/governance/security_governance_service.py`](../../../../backend/app/services/governance/security_governance_service.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -96,10 +82,10 @@ Security checks at API middleware and MCP tool authorization layers.
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| Privileged intent becomes encrypted state and redacted audit | `sequence` | [Security Governance - Credential Mutation](../../../../UML/Project/security-governance/sequence/credential-mutation.md) | 5 |
+| Privileged intent becomes encrypted state and redacted audit | `sequence` | [Security Governance - Credential Mutation](../../../../UML/Project/security-governance/sequence/credential-mutation.md) | 6 |
 | Absent, sealed, active, rotating and revoked provider credentials | `state` | [Security Governance - Credential Lifecycle](../../../../UML/Project/security-governance/states/credential-lifecycle.md) | 6 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

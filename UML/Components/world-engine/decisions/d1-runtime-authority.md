@@ -1,6 +1,6 @@
 # D1: Runtime authority in world-engine
 
-**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d1-runtime-authority-in-world-engine)
+**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d1-world-engine-owns-live-story-commit-authority)
 **Origin:** ADR-0001 (retired)
 **Status:** Accepted
 

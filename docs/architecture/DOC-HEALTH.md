@@ -1,25 +1,23 @@
-# Documentation health (architecture migration)
+# Architecture documentation health
 
-Last updated: 2026-06-23 (SAD restructure complete)
+**Reconciled:** 2026-08-11 at `a1b5db907b0484f8898f5caf3fdc57edd6efb46c`
+**Posture:** structurally operational; known product-architecture nonconformance remains open
 
-| Package | SAD | UML | Links | Gate |
-| --- | --- | --- | --- | --- |
-| world-engine | ok | ok | ok | ok |
-| project SADs (7) | ok | ok | ok | ok |
-| component SADs (8) | ok | ok | ok | ok |
-| contracts migration | ok | — | ok | ok |
-| SAD restructure | **complete** | decisions/ | ok | ok |
+| Concern | State | Evidence / gap |
+| --- | --- | --- |
+| Whole-system authority | Active | [System SAD](system/architecture.md) |
+| Current vs target separation | Active | statement types + [violation register](violations/README.md) |
+| Active decisions | Active | [ADR index](decisions/README.md) |
+| L3 runtime architecture | Active for canonical turn | [Canonical turn](scenarios/canonical-turn.md) |
+| Data ownership | Active | [Writer matrix](data/data-ownership.md) |
+| Git/AKDB lineage | Active and included in canon | [Lineage](evidence/architecture-lineage.md) |
+| Component SAD synthesis | In progress | World Engine complete; AI/governance/MVP portfolios still contain historical accumulation (`AR-V008`) |
+| UML single-source concerns | Resolved for World Engine | duplicate sequence/state projections removed (`AR-V007`) |
+| Direct architecture coverage | Operational and enforced | 7,500 / 7,500 discovered semantic units represented; 0 `unmapped` (`AR-V009` resolved) |
 
-Verification:
+The census counts discovered semantic units such as functions, routes, schema objects, content keys,
+web assets and deployment services. It is not a raw file count and may contain the same source unit
+in more than one project-level concern.
 
-```powershell
-python -m pytest tests/gates/test_architecture_documentation_gate.py -v --tb=short --no-cov
-python scripts/sad_section9_hygiene.py --check
-python scripts/rebuild_decision_registry.py --apply
-```
-
-Evidence:
-
-- [2026-06-23 SAD restructure complete](evidence/2026-06-23-sad-restructure-complete.md)
-- [2026-06-23 world-engine restructure](evidence/2026-06-23-world-engine-restructure.md)
-- [ADR retirement complete](evidence/2026-06-23-adr-retirement-complete.md)
+`Complete` is not used as a synonym for “files exist.” A scope becomes `Conforming` only when its
+normative decisions, implementation, runtime scenarios and closure evidence agree.

@@ -21,8 +21,10 @@
 
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
+| Player | Play Controls | enters semantic intent | one explicit player command | [`frontend/static/play_controls.js`](../../../../frontend/static/play_controls.js) |
 | Play Controls | Play Routes | submits semantic input | one command per turn | [`frontend/static/play_controls.js`](../../../../frontend/static/play_controls.js) |
 | Play Routes | Backend API Client | launches session | validated launch payload | [`frontend/app/routes_play.py`](../../../../frontend/app/routes_play.py) |
+| Backend API Client | Runtime Bootstrap | returns accepted session binding | session id, ticket and initial cursor | [`frontend/static/play_runtime_bootstrap.js`](../../../../frontend/static/play_runtime_bootstrap.js) |
 | Runtime Bootstrap | Narrative Stream | opens event channel | session ticket and cursor | [`frontend/static/play_runtime_bootstrap.js`](../../../../frontend/static/play_runtime_bootstrap.js) |
 | Narrative Stream | Block Renderer | delivers typed block | monotonic event order | [`frontend/static/play_narrative_stream.js`](../../../../frontend/static/play_narrative_stream.js) |
 

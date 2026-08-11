@@ -23,10 +23,11 @@ participant "Backend Client\nResponsibility: Delegate governed session and platf
 participant "Backend\nResponsibility: Authorize and execute platform mutations\nContract: Authenticated backend API\n[[../../../../backend/app/api/v1/__init__.py source]]" as backend
 participant "Langfuse Tracing\nResponsibility: Correlate MCP calls without leaking credentials\nContract: Redacted trace events\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]" as observability
 
-server -> backend : "delegates mutation\ncontract: backend authority and audit\n[[../../../../tools/mcp_server/backend_client.py source]]"
 client -> server : "invokes capability\ncontract: valid MCP JSON-RPC\n[[../../../../tools/mcp_server/server.py source]]"
+server -> registry : "resolves governed capability\ncontract: registered schema-compatible tool\n[[../../../../tools/mcp_server/tools_registry.py source]]"
 registry -> handlers : "binds handler\ncontract: schema-compatible callable\n[[../../../../tools/mcp_server/tools_registry.py source]]"
 handlers -> backend_client : "delegates remote operation\ncontract: normalized backend request\n[[../../../../tools/mcp_server/backend_client.py source]]"
+backend_client -> backend : "submits governed backend request\ncontract: backend remains mutation authority\n[[../../../../tools/mcp_server/backend_client.py source]]"
 handlers -> observability : "emits call evidence\ncontract: redacted trace\n[[../../../../tools/mcp_server/langfuse_tracing.py source]]"
 
 legend bottom

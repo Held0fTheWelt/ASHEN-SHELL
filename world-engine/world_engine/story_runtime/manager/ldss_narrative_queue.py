@@ -33,6 +33,19 @@ def _build_ldss_scene_envelope(
     if canonical_path is not None and not session.canonical_step_id:
         session.canonical_step_id = canonical_path.first_step_id()
 
+    try:
+        module_policy = load_module_runtime_policy(
+            module_id=session.module_id,
+            runtime_profile_id=str(_runtime_profile_id_from_projection(proj) or session.module_id),
+        ).to_dict()
+    except Exception:
+        module_policy = {}
+    narrative_governance = (
+        module_policy.get("narrative_governance_policy")
+        if isinstance(module_policy.get("narrative_governance_policy"), dict)
+        else {}
+    )
+
     ldss_input = build_ldss_input_from_session(
         session_id=session.session_id,
         module_id=session.module_id,
@@ -49,6 +62,13 @@ def _build_ldss_scene_envelope(
         session_output_language=getattr(session, "session_output_language", DEFAULT_SESSION_LANGUAGE) or DEFAULT_SESSION_LANGUAGE,
         canonical_step_id=session.canonical_step_id,
         canonical_path=canonical_path,
+        narrative_mode=str(narrative_governance.get("active_mode") or "reenactment"),
+        canonical_path_role=str(
+            narrative_governance.get("canonical_path_role") or "mandatory_spine"
+        ),
+        visible_output_bundle=graph_state.get("visible_output_bundle")
+        if isinstance(graph_state.get("visible_output_bundle"), dict)
+        else None,
     )
 
     ldss_output = run_ldss(ldss_input)
@@ -63,6 +83,7 @@ def _build_ldss_scene_envelope(
         and ldss_output.status == "approved"
         and ldss_output.visible_actor_response_present
         and not _turn_holds_canonical_path_for_free_player_action(graph_state)
+        and narrative_governance.get("canonical_path_role") != "reference_arc"
     ):
         nxt = canonical_path.next_step_id_after(session.canonical_step_id)
         if nxt:

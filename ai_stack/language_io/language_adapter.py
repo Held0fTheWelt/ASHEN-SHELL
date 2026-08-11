@@ -32,6 +32,7 @@ __all__ = [
     "greeting_imperative_visible_pair",
     "infer_verb_and_action_kind",
     "load_session_language_model_directive",
+    "load_module_language_policy",
     "prepare_player_input_semantic_resolution",
     "resolve_content_modules_root",
     "resolve_string",
@@ -94,6 +95,42 @@ def _language_code(value: str | None, *, fallback: str | None = None) -> str | N
     if not text:
         text = str(fallback or "").strip().lower()
     return text[:2] or None
+
+
+def load_module_language_policy(
+    module_id: str,
+    *,
+    content_modules_root: Path | None = None,
+) -> dict[str, Any]:
+    """Resolve the module-owned language boundary without locale lookup maps."""
+    root = resolve_content_modules_root(content_modules_root)
+    module_yaml = _read_yaml(root / str(module_id or "").strip() / "module.yaml")
+    declared = module_yaml.get("language")
+    declared = declared if isinstance(declared, dict) else {}
+    content = module_yaml.get("content")
+    content = content if isinstance(content, dict) else {}
+    authoring = _language_code(
+        declared.get("authoring_language"),
+        fallback=content.get("authoring_language") or "en",
+    ) or "en"
+    internal = _language_code(
+        declared.get("internal_resolution_language"),
+        fallback=authoring,
+    ) or authoring
+    default_output = _language_code(
+        declared.get("default_session_output_language"),
+        fallback=authoring,
+    ) or authoring
+    return {
+        "schema_version": "module_language_policy.v1",
+        "declaration_source": "module.yaml#language" if declared else "compatibility_default",
+        "authoring_language": authoring,
+        "internal_resolution_language": internal,
+        "default_session_output_language": default_output,
+        "input_translation": "translate_only_when_input_differs_from_internal",
+        "output_translation": "translate_only_when_source_differs_from_session_output",
+        "source_language_provenance_required": True,
+    }
 
 
 def _content_terms(identifier: str, row: dict[str, Any]) -> list[str]:
@@ -251,24 +288,33 @@ def build_semantic_resolution_contract(
     lang: str | None = None,
     session_input_language: str | None = None,
     session_output_language: str | None = None,
+    module_authoring_language: str | None = None,
+    internal_resolution_language: str | None = None,
 ) -> dict[str, Any]:
     """Return the AI contract for turning player language into grounded intent."""
     output_language = _language_code(session_output_language, fallback=lang)
     input_language = _language_code(session_input_language, fallback=output_language)
+    authoring_language = _language_code(module_authoring_language, fallback="en") or "en"
+    internal_language = _language_code(
+        internal_resolution_language,
+        fallback=authoring_language,
+    ) or authoring_language
+    translation_required = bool(input_language and input_language != internal_language)
     return {
-        "schema_version": "semantic_language_adapter.player_action_resolution.v1",
+        "schema_version": "semantic_language_adapter.player_action_resolution.v2",
         "policy": {
             "no_hardcoded_language_maps": True,
             "infer_meaning_from_player_utterance_and_content_catalog": True,
-            "translate_input_to_internal_english_before_grounding": True,
-            "internal_resolution_language": "en",
+            "translate_input_before_grounding": translation_required,
+            "internal_resolution_language": internal_language,
+            "module_authoring_language": authoring_language,
             "do_not_translate_by_lookup_table": True,
             "ground_targets_in_content_ids_when_possible": True,
             "infer_canon_safe_mundane_affordance_gaps_when_content_is_silent": True,
             "plausible_inference_is_not_a_new_content_database": True,
             "keep_player_local_context_separate_from_canonical_path_progress": True,
             "reject_or_clarify_canon_risky_hidden_or_load_bearing_inventions": True,
-            "ground_against_english_authored_content": True,
+            "ground_against_module_authored_content": True,
             "preserve_player_visible_language_for_echo": True,
             "preserve_uncertain_unknowns_as_clarification_requests": True,
         },
@@ -276,32 +322,35 @@ def build_semantic_resolution_contract(
             "raw_player_text": str(raw_text or ""),
             "session_input_language": input_language,
             "session_output_language": output_language,
-            "internal_resolution_language": "en",
+            "module_authoring_language": authoring_language,
+            "internal_resolution_language": internal_language,
+            "translation_required": translation_required,
         },
         "expected_ai_output": {
-            "normalized_english_text": "English translation/normalization of raw_player_text for internal grounding",
+            "normalized_internal_text": f"{internal_language} translation/normalization of raw_player_text for internal grounding",
+            "normalized_english_text": "compatibility alias only when internal_resolution_language is en",
             "player_input_kind": "speech|question|action|perception|mixed|object_interaction|social_nonverbal_action|physical_action|wait_or_observe|ambiguous|unclear",
-            "action_kind": "English semantic class inferred from meaning and grounded target role, not from a hardcoded phrase map",
-            "verb": "English semantic verb inferred from meaning; do not copy surface-language wording when a more general internal meaning is clear",
-            "target_query": "English target text span or null",
+            "action_kind": "Language-neutral semantic class inferred from meaning and grounded target role, not from a hardcoded phrase map",
+            "verb": "Language-neutral semantic verb inferred from meaning; do not copy surface-language wording when a more general internal meaning is clear",
+            "target_query": f"{internal_language} target text span or null",
             "resolved_target_id": "location/object/character id or null",
             "resolved_target_type": "location|object|actor|null",
-            "source_query": "optional English source/container text span or null",
+            "source_query": f"optional {internal_language} source/container text span or null",
             "resolved_source_id": "optional content id or null",
             "commit_policy": "commit_action|commit_speech|no_commit|needs_clarification|recover_or_reject",
             "inference_mode": "none|content_grounded|canon_safe_plausible_affordance|plausible_implied_object|plausible_implied_detail",
-            "inferred_target_id": "optional stable English id only when target is not in catalog but is mundane, local, reversible, and canon-safe",
+            "inferred_target_id": "optional stable content id only when target is not in catalog but is mundane, local, reversible, and canon-safe",
             "canon_safety": "canon_compatible|content_silent_mundane|contradicts_content|hidden_or_load_bearing_fact|uncertain",
             "canonical_risk": "low|medium|high",
             "canonical_path_effect": "optional value from module player_freedom_policy, e.g. hold_current_step for free local actions",
-            "inferred_affordance_summary": "short English description of the mundane inferred affordance, never final visible prose",
+            "inferred_affordance_summary": f"short {internal_language} description of the mundane inferred affordance, never final visible prose",
             "confidence": "high|medium|low",
-            "reasoning_summary": "short grounding explanation citing content ids/fields",
+            "reasoning_summary": f"short {internal_language} grounding explanation citing content ids/fields",
             "kanon_break": "true ONLY if the action makes continued play impossible (physically impossible like walking through walls or being a superhuman; criminal/evil like murder or sexual coercion; or irreversibly destroys the playable situation). Reversible local change is NOT a break, even if it disrupts the current scene's flow. Default false. Decide from the meaning of the player utterance, not from a verb or room list.",
-            "kanon_break_reason": "short English explanation when kanon_break is true; null otherwise",
+            "kanon_break_reason": f"short {internal_language} explanation when kanon_break is true; null otherwise",
         },
         "semantic_ontology_guidance": {
-            "use_internal_english_only": True,
+            "use_declared_internal_language_only": True,
             "location_relocation": {
                 "principle": "When the utterance means the player changes their own position toward a grounded location, express the internal meaning as spatial relocation rather than as a language-specific verb.",
             },
@@ -320,6 +369,10 @@ def build_semantic_resolution_contract(
 def _interaction_surface_cached(module_dir_s: str) -> dict[str, Any]:
     module_dir = Path(module_dir_s)
     module_id = module_dir.name
+    language_policy = load_module_language_policy(
+        module_id,
+        content_modules_root=module_dir.parent,
+    )
     layout, layout_rooms = _read_layout_rooms(module_dir)
     doc_locations = _read_location_documents(module_dir)
     player_freedom_payload = _read_yaml(module_dir / "knowledge" / "player_freedom_policy.yaml")
@@ -356,7 +409,10 @@ def _interaction_surface_cached(module_dir_s: str) -> dict[str, Any]:
                 "requires_ai_canon_safety_fields": True,
             },
         },
-        "semantic_resolution_contract": build_semantic_resolution_contract(),
+        "semantic_resolution_contract": build_semantic_resolution_contract(
+            module_authoring_language=language_policy["authoring_language"],
+            internal_resolution_language=language_policy["internal_resolution_language"],
+        ),
         "player_freedom_policy": player_freedom_policy,
         "locations": [
             _location_surface(module_dir, rid, row)
@@ -392,15 +448,22 @@ def prepare_player_input_semantic_resolution(
     raw_text: str,
     *,
     module_id: str,
-    lang_hint: str = "de",
+    lang_hint: str | None = None,
     session_input_language: str | None = None,
     session_output_language: str | None = None,
     content_modules_root: Path | None = None,
 ) -> dict[str, Any]:
     """Return an AI-required classification shell; no rule table is consulted."""
     surface = build_interaction_surface(module_id, content_modules_root=content_modules_root)
+    language_policy = load_module_language_policy(
+        module_id,
+        content_modules_root=content_modules_root,
+    )
     flags = default_commit_flags_for_player_input_kind("ambiguous")
-    output_language = _language_code(session_output_language, fallback=lang_hint) or "de"
+    output_language = _language_code(
+        session_output_language,
+        fallback=lang_hint or language_policy["default_session_output_language"],
+    ) or language_policy["default_session_output_language"]
     input_language = _language_code(session_input_language, fallback=output_language) or output_language
     return {
         "player_input_kind": "ambiguous",
@@ -414,7 +477,10 @@ def prepare_player_input_semantic_resolution(
             raw_text=raw_text,
             session_input_language=input_language,
             session_output_language=output_language,
+            module_authoring_language=language_policy["authoring_language"],
+            internal_resolution_language=language_policy["internal_resolution_language"],
         ),
+        "module_language_policy": language_policy,
         "semantic_catalog_available": bool(surface),
         "interaction_surface": surface,
         **flags,
@@ -502,13 +568,19 @@ def load_session_language_model_directive(
     session_input_language: str | None = None,
     content_modules_root: Path | None = None,
 ) -> str:
-    del module_id, content_modules_root
     output_language = _language_code(lang) or "the session output language"
     input_language = _language_code(session_input_language, fallback=output_language) or output_language
+    language_policy = load_module_language_policy(
+        module_id,
+        content_modules_root=content_modules_root,
+    )
+    internal_language = language_policy["internal_resolution_language"]
+    authoring_language = language_policy["authoring_language"]
     return (
         "Resolve player input semantically. The player input is written in "
-        f"session_input_language={input_language}; first translate/normalize it to English for "
-        "internal semantic grounding against the English-authored content catalog. Preserve "
+        f"session_input_language={input_language}; translate/normalize it to "
+        f"internal_resolution_language={internal_language} only when those languages differ, then ground it "
+        f"against the module content in authoring_language={authoring_language}. Preserve "
         f"session_output_language={output_language} as metadata for the output translation gateway. Do not use module "
         "language lookup files or engine lookup maps for meaning; infer intent from the utterance and "
         "grounded content catalog. If the catalog is silent but the requested affordance is mundane, "

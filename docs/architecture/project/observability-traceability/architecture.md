@@ -54,30 +54,21 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | Trace middleware | `world-engine/world_engine/middleware/trace_middleware.py` |
 | Langfuse adapters | `ai_stack/langfuse/` |
 | Evaluator catalog | `ai_stack/quality_lab/` |
+| Traceable runtime surface | `ai_stack/`, `backend/app/observability/`, `world-engine/world_engine/observability/` |
 | Turn cost ledger (Wave 0) | `story_runtime_core/model_call_accounting.py` — every `BaseModelAdapter.generate` is ledgered at the adapter seam (`CountingModelAdapter`); soft/hard turn-call budgets; `aggregate_phase_costs` exposes `call_count` / `attributed_call_count` / `unattributed_call_count`. UML: `UML/Project/architecture-drift/turn-cost-ledger.puml`. |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Operator (`operator`) | `actor` | Diagnose a player turn across services | Authorized redacted view | [`administration-tool/templates/manage/diagnosis.html`](../../../../administration-tool/templates/manage/diagnosis.html) |
-| DecisionEvidence (`decision`) | `class` | Explain validation, routing or commit outcome | Redacted inputs and explicit result | [`world-engine/world_engine/observability/audit_log.py`](../../../../world-engine/world_engine/observability/audit_log.py) |
-| SubsystemSpan (`span`) | `class` | Record bounded operation and ownership | Parent relation and timing | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
-| TurnTrace (`trace`) | `class` | Identify one end-to-end player turn | Globally propagated trace id | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | AI Langfuse Evidence (`ai`) | `component` | Record retrieval, planning, generation and validation spans | Proposal trace under parent turn | [`ai_stack/langfuse/langfuse_evidence.py`](../../../../ai_stack/langfuse/langfuse_evidence.py) |
 | Backend Trace Start (`backend`) | `component` | Create or propagate player request identity | Stable trace and request ids | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
 | MCP Trace Adapter (`mcp`) | `component` | Record tool execution with redaction | No secret payloads | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
 | Operator Projection (`projection`) | `component` | Present cross-service trace tree and diagnostics | Read-only evidence view | [`world-engine/world_engine/web/static/ui_traces.js`](../../../../world-engine/world_engine/web/static/ui_traces.js) |
 | World Runtime Trace (`world`) | `component` | Record authoritative lifecycle spans | Session and revision correlation | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
-| Complete (`complete`) | `state` | Close all required spans | Terminal outcome recorded | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
-| Partial (`partial`) | `state` | Retain useful evidence after telemetry failure | Domain flow not failed solely by telemetry | [`world-engine/world_engine/observability/langfuse_adapter.py`](../../../../world-engine/world_engine/observability/langfuse_adapter.py) |
-| Propagating (`propagating`) | `state` | Carry identity across service boundaries | Parent context retained | [`world-engine/world_engine/middleware/trace_middleware.py`](../../../../world-engine/world_engine/middleware/trace_middleware.py) |
-| Redacted (`redacted`) | `state` | Publish safe operator evidence | Secrets and sensitive text removed | [`world-engine/world_engine/web/static/ui_traces.js`](../../../../world-engine/world_engine/web/static/ui_traces.js) |
-| Started (`started`) | `state` | Establish trace identity | Trace id present | [`backend/app/api/v1/game/player_turn_trace_start.py`](../../../../backend/app/api/v1/game/player_turn_trace_start.py) |
-| Turn Observability (`trace_system`) | `system` | Correlate execution evidence without owning domain truth | Trace id and redaction policy | [`docs/architecture/project/observability-traceability/architecture.md`](architecture.md) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -92,7 +83,7 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Trace identity and evidence cross the canonical turn boundaries | `sequence` | [Observability - Turn Trace](../../../../UML/Project/observability-traceability/sequence/turn-trace.md) | 4 |
 | Complete and partial telemetry both disclose their evidence quality | `state` | [Observability - Trace Lifecycle](../../../../UML/Project/observability-traceability/states/trace-lifecycle.md) | 6 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
@@ -251,7 +242,7 @@ Player input observability fields on spans (ADR-0033 §13.6).
 
 **Consequences.** Clients and operators must see degradation reasons in diagnostics envelopes and UML degraded sequences.
 
-**Evidence.** [world-engine degraded sequence](../../../../UML/Components/world-engine/sequence/world-engine-degraded-turn-sequence.md).
+**Evidence.** [world-engine degraded sequence](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md).
 
 ### D5: Quality lab MCP diagnostics
 

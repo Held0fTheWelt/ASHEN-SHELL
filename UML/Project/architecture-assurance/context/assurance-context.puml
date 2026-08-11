@@ -17,9 +17,9 @@ rectangle "Architecture Assurance\nResponsibility: Discover, correlate, validate
 rectangle "Better Tomorrow Repository\nResponsibility: Provide current code, documents and Git history\nContract: Read-only discovery except generated architecture artifacts\n[[../../../../.git source]]" as repo
 rectangle "External AKDB\nResponsibility: Validate and export canonical architecture knowledge\nContract: Pinned disposable checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]" as akdb
 
-architect ..> assurance : "authors intent and runs audit\ncontract: reviewed invocation\n[[../../../../tools/architecture_assurance/cli.py source]]"
 assurance ..> akdb : "validates disposable export\ncontract: pinned external checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]"
 assurance ..> repo : "discovers and correlates\ncontract: source and Git evidence\n[[../../../../tools/architecture_assurance/discovery.py source]]"
+architect ..> assurance : "authors intent and runs audit\ncontract: reviewed invocation\n[[../../../../tools/architecture_assurance/cli.py source]]"
 
 legend bottom
 Viewpoint: context

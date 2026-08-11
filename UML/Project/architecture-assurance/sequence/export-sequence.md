@@ -21,8 +21,9 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Architect / Maintainer | Architecture Assurance | authors intent and runs audit | reviewed invocation | [`tools/architecture_assurance/cli.py`](../../../../tools/architecture_assurance/cli.py) |
+| Architecture Assurance | Audit Engine | evaluates current repository projection | complete deterministic audit report | [`tools/architecture_assurance/audit.py`](../../../../tools/architecture_assurance/audit.py) |
 | Audit Engine | Report Exporters | emits findings | normalized result model | [`tools/architecture_assurance/reporters.py`](../../../../tools/architecture_assurance/reporters.py) |
 | Report Exporters | Canon Exporter | joins canonical evidence | accepted report state | [`tools/architecture_assurance/canon.py`](../../../../tools/architecture_assurance/canon.py) |
-| Architecture Assurance | External AKDB | validates disposable export | pinned external checkout | [`tests/architecture_assurance/test_disposable_akdb_integration.py`](../../../../tests/architecture_assurance/test_disposable_akdb_integration.py) |
+| Canon Exporter | External AKDB | round-trips canonical export | pinned disposable AKDB validation | [`tests/architecture_assurance/test_disposable_akdb_integration.py`](../../../../tests/architecture_assurance/test_disposable_akdb_integration.py) |
 
 Generated deterministically from Better Tomorrow's semantic model catalog; edit the catalog, not this projection.

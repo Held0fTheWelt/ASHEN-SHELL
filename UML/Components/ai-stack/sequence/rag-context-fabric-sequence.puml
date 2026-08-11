@@ -19,9 +19,9 @@ participant "RAG Context Fabric\nResponsibility: Assemble governed continuity an
 participant "RetrievalContextBundle\nResponsibility: Carry bounded retrieval results\nContract: Provenance-preserving ranked context\n[[../../../../ai_stack/rag/retrieval_context_bundles.py source]]" as context_pack
 participant "Director\nResponsibility: Select dramatic direction and capability plan\nContract: Scene plan and ordered actor directives\n[[../../../../ai_stack/story_runtime/director/director_realization_composer.py source]]" as director
 
-retrieval -> context_pack : "builds\ncontract: ranked and budgeted context\n[[../../../../ai_stack/rag/rag_context_pack_assembler.py source]]"
 executor -> ingress : "interprets input\ncontract: semantic intent envelope\n[[../../../../ai_stack/langgraph/runtime_executor/executor_input_interpretation_semantics.py source]]"
 ingress -> retrieval : "queries grounded context\ncontract: bounded retrieval query\n[[../../../../ai_stack/langgraph/runtime_executor/executor_model_context_retrieval.py source]]"
+retrieval -> context_pack : "builds\ncontract: ranked and budgeted context\n[[../../../../ai_stack/rag/rag_context_pack_assembler.py source]]"
 retrieval -> director : "provides context pack\ncontract: citations and continuity facts\n[[../../../../ai_stack/langgraph/runtime_executor/executor_director_selection_context.py source]]"
 
 legend bottom

@@ -1,6 +1,6 @@
 # D6: W5 actor tracking
 
-**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d6-w5-actor-tracking)
+**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d6-actor-and-situation-changes-are-committed-data)
 **Origin:** ADR-0063 (retired)
 **Status:** Partially implemented
 

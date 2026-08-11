@@ -1,4 +1,4 @@
-"""Policy for architecture-assurance out_of_scope entries (Wave 8).
+"""Policy for architecture-assurance classification outside direct coverage.
 
 Reasons must start with a known category so coverage cannot hide units behind
 opaque free text. Categories are closed; detail text remains free-form.
@@ -14,15 +14,17 @@ OUT_OF_SCOPE_CATEGORIES: frozenset[str] = frozenset(
         "vendored",
         "test-fixture",
         "archived",
+        "unmapped",
+        "violation",
     }
 )
 
-# Soft product-wide ceiling while ownership mapping catches up (Wave 8).
-# Per-subsystem regression is gated via baselines/W8-out-of-scope-share.json.
+# Classification may temporarily cover an entire scan boundary. This ceiling is
+# not a coverage claim: direct representation is reported independently.
 OUT_OF_SCOPE_MAX_SHARE = 1.0
 
 _REASON_RE = re.compile(
-    r"^(?P<category>generated|vendored|test-fixture|archived):\s+(?P<detail>\S.*)$",
+    r"^(?P<category>generated|vendored|test-fixture|archived|unmapped|violation):\s+(?P<detail>\S.*)$",
     re.DOTALL,
 )
 

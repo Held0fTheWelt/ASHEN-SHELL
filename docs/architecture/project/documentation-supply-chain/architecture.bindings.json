@@ -64,6 +64,22 @@
     {
       "anchors": [
         {
+          "declared_path": "mkdocs.yml",
+          "file": "mkdocs.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "Site configuration",
+          "schema_version": "bt.source_anchor.v1"
+        }
+      ],
+      "id": "B-site-configuration",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Site configuration"
+    },
+    {
+      "anchors": [
+        {
           "declared_path": "docs/architecture/components/_template/architecture.template.md",
           "file": "docs/architecture/components/_template/architecture.template.md",
           "kind": "file",
@@ -281,18 +297,18 @@
   "lanes": [
     "content"
   ],
-  "out_of_scope": {
-    "content:mkdocs.yml#docs_dir": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#extra": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#markdown_extensions": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#nav": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#plugins": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#site_dir": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#site_name": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#theme": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "content:mkdocs.yml#validation": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  "out_of_scope": {},
+  "representation_map": {
+    "content:mkdocs.yml#docs_dir": "B-site-configuration",
+    "content:mkdocs.yml#extra": "B-site-configuration",
+    "content:mkdocs.yml#markdown_extensions": "B-site-configuration",
+    "content:mkdocs.yml#nav": "B-site-configuration",
+    "content:mkdocs.yml#plugins": "B-site-configuration",
+    "content:mkdocs.yml#site_dir": "B-site-configuration",
+    "content:mkdocs.yml#site_name": "B-site-configuration",
+    "content:mkdocs.yml#theme": "B-site-configuration",
+    "content:mkdocs.yml#validation": "B-site-configuration"
   },
-  "representation_map": {},
   "required_views": [
     {
       "anchors": [

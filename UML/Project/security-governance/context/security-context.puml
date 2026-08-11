@@ -15,8 +15,8 @@ actor "Player\nResponsibility: Authenticate and access owned sessions\nContract:
 actor "Operator\nResponsibility: Manage providers, policies and security settings\nContract: Privileged authenticated action\n[[../../../../administration-tool/app.py source]]" as operator
 rectangle "Security Governance\nResponsibility: Authorize, protect and audit sensitive operations\nContract: Backend-owned policy boundary\n[[../../../../backend/app/services/governance/security_governance_service.py source]]" as security
 
-operator ..> security : "requests privileged mutation\ncontract: role and CSRF checks"
 player ..> security : "authenticates\ncontract: user session"
+operator ..> security : "requests privileged mutation\ncontract: role and CSRF checks"
 
 legend bottom
 Viewpoint: context

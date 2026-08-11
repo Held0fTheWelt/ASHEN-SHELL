@@ -1,6 +1,6 @@
 # D4: Director realization thin path
 
-**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d4-director-realization-thin-path-resolver-director-narrator)
+**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d4-realization-is-subordinate-to-the-canonical-turn)
 **Origin:** ADR-0062 (retired)
 **Status:** Accepted
 
@@ -17,4 +17,4 @@ Resolver → Director → narrator realization is the default thin path for ordi
 | Kind | Link |
 | --- | --- |
 | Source | `ai_stack/story_runtime/director/` |
-| Sequence | [primary turn sequence](../sequence/world-engine-primary-turn-sequence.md) |
+| Sequence | [primary turn sequence](../sequence/primary-turn-sequence.md) |

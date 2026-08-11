@@ -99,22 +99,84 @@ def test_external_akdb_round_trip_is_strictly_disposable(tmp_path: Path) -> None
         capture_output=True,
         text=True,
     ).stdout.strip()
+    if revision != LOCK["commit"]:
+        source_root = akdb_root
+        akdb_root = tmp_path / "pinned-akdb"
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--quiet",
+                    "--no-hardlinks",
+                    "--no-checkout",
+                    str(source_root),
+                    str(akdb_root),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(akdb_root),
+                    "checkout",
+                    "--quiet",
+                    "--detach",
+                    LOCK["commit"],
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            pytest.skip(
+                "available AKDB repository cannot materialize pinned commit "
+                f"{LOCK['commit']}: {exc.stderr.strip()}"
+            )
+        revision = subprocess.run(
+            ["git", "-C", str(akdb_root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
     assert revision == LOCK["commit"]
     before_tree = _tree_state(akdb_root)
     before_tracked = _tracked_state(akdb_root)
     before_persistent = _persistent_state(akdb_root)
 
     source = tmp_path / "source"
-    architecture = source / "docs" / "architecture"
-    uml = source / "UML"
-    architecture.mkdir(parents=True)
-    uml.mkdir(parents=True)
-    (architecture / "START-HERE.md").write_text(
-        "# Disposable Better Tomorrow fixture\n", encoding="utf-8"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "tools.architecture_assurance",
+            "canon-export",
+            "--destination",
+            str(source),
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
     )
-    (uml / "context.puml").write_text(
-        "@startuml\nrectangle BetterTomorrow\n@enduml\n", encoding="utf-8"
-    )
+    assert (source / "docs" / "architecture" / "START-HERE.md").is_file()
+    assert (
+        source
+        / "docs"
+        / "architecture"
+        / "decisions"
+        / "ADR-0007-bounded-emergent-narration.md"
+    ).is_file()
+    assert (
+        source
+        / "docs"
+        / "architecture"
+        / "decisions"
+        / "ADR-0008-module-language-boundaries.md"
+    ).is_file()
 
     data_root = tmp_path / "akdb-data"
     environment = os.environ.copy()

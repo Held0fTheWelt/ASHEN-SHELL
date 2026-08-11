@@ -22,9 +22,10 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | MCP Client | MCP Server | invokes capability | valid MCP JSON-RPC | [`tools/mcp_server/server.py`](../../../../tools/mcp_server/server.py) |
+| MCP Server | Capability Registry | resolves governed capability | registered schema-compatible tool | [`tools/mcp_server/tools_registry.py`](../../../../tools/mcp_server/tools_registry.py) |
 | Capability Registry | Handler Families | binds handler | schema-compatible callable | [`tools/mcp_server/tools_registry.py`](../../../../tools/mcp_server/tools_registry.py) |
 | Handler Families | Backend Client | delegates remote operation | normalized backend request | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
-| MCP Server | Backend | delegates mutation | backend authority and audit | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
+| Backend Client | Backend | submits governed backend request | backend remains mutation authority | [`tools/mcp_server/backend_client.py`](../../../../tools/mcp_server/backend_client.py) |
 | Handler Families | Langfuse Tracing | emits call evidence | redacted trace | [`tools/mcp_server/langfuse_tracing.py`](../../../../tools/mcp_server/langfuse_tracing.py) |
 
 Generated deterministically from Better Tomorrow's semantic model catalog; edit the catalog, not this projection.

@@ -1,20 +1,21 @@
-# Project-wide SADs (arc42)
+# Crosscutting architecture portfolios
 
-Cross-cutting systems and processes at `project/<system>/architecture.md`.
+Files under `project/` describe crosscutting processes, assurance systems and evidence programs.
+They are not automatically independent product systems and do not override the
+[whole-system SAD](../system/architecture.md).
 
-## Lookup
+| Portfolio | Classification | Authority route |
+| --- | --- | --- |
+| ecosystem-topology | legacy whole-system decomposition, being absorbed | System SAD |
+| governance | crosscutting concept | active ADR lifecycle |
+| documentation-supply-chain | repository process | ADR-0006 |
+| quality-gates | verification concept/tooling | quality contracts |
+| observability-traceability | crosscutting concept | ADR-0005 |
+| security-governance | crosscutting concept | security decisions |
+| mvp-live-runtime-completion | evidence program/history | component SADs and active ADRs |
+| architecture-assurance | repository toolchain | ADR-0006 |
 
-1. [Architecture README](../README.md) capability catalog
-2. System SAD here
-3. Linked UML under `UML/Project/<system>/`
-4. [TRACEABILITY.md](TRACEABILITY.md) · [GLOSSARY.md](GLOSSARY.md) · [FRONTMATTER.md](FRONTMATTER.md)
+Every portfolio must state whether a claim is observed, normative, target or historical. Program
+completion labels are never architecture authority.
 
-For whole-system drift analysis, start with the
-[Ecosystem Topology SAD](ecosystem-topology/architecture.md), then inspect the
-[architecture archaeology model](../../../UML/Project/ecosystem-topology/components/architecture-archaeology.md)
-and [drift reconciliation](../evidence/architecture-drift-reconciliation.md).
-
-## Authoring
-
-Use [component template](../components/_template/architecture.template.md) adapted for project scope.
-Track progress in [ROLLOUT.md](ROLLOUT.md).
+[Portfolio rollout](ROLLOUT.md) · [Architecture lineage](../evidence/architecture-lineage.md)

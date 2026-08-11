@@ -17,8 +17,8 @@ participant "Governance Services\nResponsibility: Validate provider, route, secu
 participant "Persistence Models\nResponsibility: Represent backend and narrative-governance durable truth\nContract: SQLAlchemy models and Alembic schema\n[[../../../../backend/app/models/__init__.py source]]" as models
 participant "Observability\nResponsibility: Record platform traces, metrics and diagnostic evidence\nContract: Trace correlation with redaction\n[[../../../../backend/app/observability/__init__.py source]]" as observability
 
-governance -> models : "persists settings and audit\ncontract: validated governance transaction\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
 operator -> governance : "requests change\ncontract: authenticated intent\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]"
+governance -> models : "persists settings and audit\ncontract: validated governance transaction\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
 governance -> observability : "records decision\ncontract: auditable outcome\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
 
 legend bottom

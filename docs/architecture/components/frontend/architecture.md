@@ -49,15 +49,15 @@ retry guidance rather than silent fallback to stale state.
 | App routes | `frontend/app/` |
 | Block renderer | `frontend/static/`, `frontend/tests/test_block_renderer.js` |
 | Player backend bridge | `frontend/app/player_backend.py` |
+| Frontend application | `frontend/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Player (`player`) | `actor` | Launch and interact with a story session | Authenticated browser interaction | [`frontend/templates/session_shell.html`](../../../../frontend/templates/session_shell.html) |
 | Backend API Client (`api_client`) | `component` | Apply authentication and transport policy | Bounded HTTP client | [`frontend/app/api_client.py`](../../../../frontend/app/api_client.py) |
 | Block Renderer (`renderer`) | `component` | Render typed narrative blocks safely | Escaped block display model | [`frontend/static/play_block_renderer.js`](../../../../frontend/static/play_block_renderer.js) |
 | Narrative Stream (`stream`) | `component` | Receive ordered live events | Reconnect-aware WebSocket stream | [`frontend/static/play_narrative_stream.js`](../../../../frontend/static/play_narrative_stream.js) |
@@ -65,16 +65,6 @@ Each block has one stated responsibility, an interaction or ownership contract, 
 | Play Controls (`controls`) | `component` | Capture player intent and accessibility controls | Semantic input command | [`frontend/static/play_controls.js`](../../../../frontend/static/play_controls.js) |
 | Play Routes (`play_routes`) | `component` | Launch session and proxy play requests | No local narrative decisions | [`frontend/app/routes_play.py`](../../../../frontend/app/routes_play.py) |
 | Runtime Bootstrap (`bootstrap`) | `component` | Hydrate browser shell from launch payload | Validated bootstrap JSON | [`frontend/static/play_runtime_bootstrap.js`](../../../../frontend/static/play_runtime_bootstrap.js) |
-| Backend Process (`backend_node`) | `node` | Serve identity and play proxy | Internal/public HTTP | [`backend/Dockerfile`](../../../../backend/Dockerfile) |
-| Browser (`browser`) | `node` | Execute player shell | HTML/CSS/JavaScript | [`frontend/Dockerfile`](../../../../frontend/Dockerfile) |
-| Frontend Process (`frontend_node`) | `node` | Serve routes and assets | Flask HTTP | [`frontend/run.py`](../../../../frontend/run.py) |
-| Idle (`idle`) | `state` | Await session selection | No live binding | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
-| Launching (`launching`) | `state` | Obtain session and ticket | Single pending launch | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
-| Live (`live`) | `state` | Accept input and render stream | Bound session id | [`frontend/static/play_shell.js`](../../../../frontend/static/play_shell.js) |
-| Reconnecting (`reconnecting`) | `state` | Restore event stream without duplicate rendering | Resume cursor | [`frontend/static/play_live_ws.js`](../../../../frontend/static/play_live_ws.js) |
-| Backend (`backend`) | `system` | Own identity and proxy play operations | HTTP API | [`backend/app/api/v1/__init__.py`](../../../../backend/app/api/v1/__init__.py) |
-| Frontend (`frontend`) | `system` | Render platform pages and live play shell | Flask blueprint plus browser assets | [`frontend/app/__init__.py`](../../../../frontend/app/__init__.py) |
-| World Engine (`world`) | `system` | Stream authoritative session updates | Ticketed WebSocket/HTTP via backend | [`world-engine/world_engine/api/story_ws.py`](../../../../world-engine/world_engine/api/story_ws.py) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -86,10 +76,10 @@ A1 free-input path documented in [`a1_free_input_primary_runtime_path.md`](../..
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| Ordered input submission and streamed block rendering | `sequence` | [Frontend - Player Turn](../../../../UML/Components/frontend/sequence/player-turn-sequence.md) | 4 |
+| Ordered input submission and streamed block rendering | `sequence` | [Frontend - Player Turn](../../../../UML/Components/frontend/sequence/player-turn-sequence.md) | 6 |
 | Launch, live and reconnect behavior without local truth drift | `state` | [Frontend - Shell Lifecycle](../../../../UML/Components/frontend/states/shell-lifecycle.md) | 5 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

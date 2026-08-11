@@ -591,7 +591,9 @@ def _make_frame(
     source_resolution_source: str | None = None,
     validation_surface: str | None = None,
     projection_rule_id: str | None = None,
+    normalized_internal_text: str | None = None,
     normalized_english_text: str | None = None,
+    internal_resolution_language: str = "en",
     session_input_language: str | None = None,
     session_output_language: str | None = None,
     semantic_inference: dict[str, Any] | None = None,
@@ -615,8 +617,9 @@ def _make_frame(
         source_resolution_source=source_resolution_source,
         validation_surface=validation_surface,
         projection_rule_id=projection_rule_id,
+        normalized_internal_text=normalized_internal_text,
         normalized_english_text=normalized_english_text,
-        internal_resolution_language="en",
+        internal_resolution_language=internal_resolution_language,
         session_input_language=session_input_language,
         session_output_language=session_output_language,
         semantic_inference=semantic_inference if isinstance(semantic_inference, dict) else None,
@@ -828,6 +831,21 @@ def _speech_resolution_envelope(
     )
 
 
+def _internal_resolution_language(
+    semantic: dict[str, Any],
+    interpreted_input: dict[str, Any],
+) -> str:
+    contract = interpreted_input.get("semantic_resolution_contract")
+    contract = contract if isinstance(contract, dict) else {}
+    contract_input = contract.get("input")
+    contract_input = contract_input if isinstance(contract_input, dict) else {}
+    return str(
+        semantic.get("internal_resolution_language")
+        or contract_input.get("internal_resolution_language")
+        or "en"
+    ).strip().lower()[:2] or "en"
+
+
 def _semantic_action_fields(
     *,
     semantic: dict[str, Any],
@@ -842,12 +860,20 @@ def _semantic_action_fields(
             speech_text = str(captures.get("speech") or "").strip() or None
     return {
         "pik": resolved_pik,
+        "normalized_internal_text": str(
+            semantic.get("normalized_internal_text")
+            or semantic.get("normalized_english_text")
+            or semantic.get("english_text")
+            or semantic.get("internal_english_text")
+            or ""
+        ).strip() or None,
         "normalized_english_text": str(
             semantic.get("normalized_english_text")
             or semantic.get("english_text")
             or semantic.get("internal_english_text")
             or ""
         ).strip() or None,
+        "internal_resolution_language": _internal_resolution_language(semantic, interpreted_input),
         "action_kind": str(
             semantic.get("normalized_english_action_kind")
             or semantic.get("action_kind")
@@ -1120,7 +1146,9 @@ def _finalize_semantic_action_resolution(
         source_resolution_source=source_resolution_source,
         validation_surface="ai_semantic_resolution",
         projection_rule_id=_projection_rule_id(interpreted_input),
+        normalized_internal_text=fields["normalized_internal_text"],
         normalized_english_text=fields["normalized_english_text"],
+        internal_resolution_language=fields["internal_resolution_language"],
         session_input_language=session_input_language,
         session_output_language=session_output_language,
         semantic_inference=target["semantic_inference"],

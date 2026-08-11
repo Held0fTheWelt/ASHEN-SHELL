@@ -209,6 +209,64 @@ def validate_model_catalog(
                             "error": f"missing edge anchor: {anchor_value}",
                         }
                     )
+            if kind in {"sequence", "activity"} and element_ids:
+                adjacency = {element_id: set() for element_id in element_ids}
+                for relationship in view["relationships_resolved"]:
+                    source = str(relationship.get("from", ""))
+                    target = str(relationship.get("to", ""))
+                    if source in adjacency and target in adjacency:
+                        adjacency[source].add(target)
+                        adjacency[target].add(source)
+                reachable: set[str] = set()
+                frontier = [next(iter(element_ids))]
+                while frontier:
+                    current = frontier.pop()
+                    if current in reachable:
+                        continue
+                    reachable.add(current)
+                    frontier.extend(adjacency[current] - reachable)
+                disconnected = sorted(element_ids - reachable)
+                if disconnected:
+                    findings.append(
+                        {
+                            "subsystem": str(subsystem_id),
+                            "view": view_id,
+                            "error": (
+                                "runtime view is not one connected path; "
+                                "disconnected elements: " + ", ".join(disconnected)
+                            ),
+                        }
+                    )
+            if kind == "sequence":
+                orders = [
+                    relationship.get("order")
+                    for relationship in view["relationships_resolved"]
+                ]
+                if any(
+                    not isinstance(order, int) or order <= 0
+                    for order in orders
+                ):
+                    findings.append(
+                        {
+                            "subsystem": str(subsystem_id),
+                            "view": view_id,
+                            "error": (
+                                "sequence relationships require explicit "
+                                "positive integer order values"
+                            ),
+                        }
+                    )
+                elif len(set(orders)) != len(orders):
+                    findings.append(
+                        {
+                            "subsystem": str(subsystem_id),
+                            "view": view_id,
+                            "error": (
+                                "sequence relationship order values must be "
+                                "unique within the view"
+                            ),
+                        }
+                    )
     return sorted(
         findings,
         key=lambda item: (item["subsystem"], item["view"], item["error"]),

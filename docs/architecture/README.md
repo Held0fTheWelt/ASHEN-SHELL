@@ -1,80 +1,63 @@
-# Architecture Documentation
+# Architecture documentation
 
-Durable internal architecture surface for World of Shadows. Governed by
-[Quality Standard](QUALITY-STANDARD.md). Fast entry: [START-HERE.md](START-HERE.md).
+Internal architecture authority for Better Tomorrow / World of Shadows.
 
-## Lookup order
+## Canonical reading order
 
-0. [Quality Standard](QUALITY-STANDARD.md) for acceptance bar.
-1. [Component SAD](components/world-engine/architecture.md) or [project SAD](project/ecosystem-topology/architecture.md) for the owning system.
-2. SAD §9 for current decisions; ADRs only for history or open exceptions.
-3. [contracts/](contracts/README.md), [gates/](gates/README.md), [boundaries/](boundaries/README.md).
-4. [UML](../../UML/README.md) packages linked from the SAD.
-5. Tests, `tests/reports/`, and [evidence/](evidence/README.md).
+1. [System SAD](system/architecture.md) — one whole-system arc42 architecture.
+2. [Runtime scenarios](scenarios/README.md) — implementation-facing behavior and failures.
+3. Owning component SAD — local structure and code correspondence.
+4. [Active ADR](decisions/README.md) — target decision and trade-offs.
+5. [Violation register](violations/README.md) — known difference between code and target.
+6. [UML package](../../UML/README.md) and [data ownership](data/data-ownership.md).
+7. Tests, generated bindings and [evidence](evidence/README.md).
 
-## System landscape
+Historical ADRs, MVP packages and Git/AKDB snapshots explain origin. They do not override the
+system SAD or an active ADR.
 
-```mermaid
-flowchart TD
-  FE[frontend] --> BE[backend]
-  ADM[administration-tool] --> BE
-  BE --> WE[world-engine]
-  WE --> AI[ai-stack]
-  MCP[mcp-server] --> BE
-  CONTENT[content-authority] --> BE
-  WE --> SRC[story-runtime-core]
+## Architecture layers
+
+| Layer | Purpose | Authority |
+| --- | --- | --- |
+| `system/` | product boundary, quality goals, system decomposition and current/target posture | whole-system normative |
+| `components/` | deployable or explicitly owned implementation portfolio | local normative, subordinate to system |
+| `scenarios/` | L3 runtime paths, state, failure and data correspondence | normative scenario contract |
+| `data/` | data ownership, writer and deployment/trust topology | normative boundary contract |
+| `concepts/` | crosscutting routing to detailed portfolios | normative through linked ADR/SAD |
+| `decisions/` | active decisions with independent implementation state | normative target |
+| `violations/` | known nonconformance and repair evidence | current architecture state |
+| `contracts/` | versioned cross-service contracts | normative interface |
+| `project/` | detailed process, governance and evidence portfolios | supporting, not peer system SADs |
+| `evidence/` | generated provenance, drift and audit results | descriptive evidence |
+
+## Component and module catalog
+
+| Scope | Runtime kind | Architecture portfolio | UML |
+| --- | --- | --- | --- |
+| World Engine | deployable, live-story authority | [SAD](components/world-engine/architecture.md) | [models](../../UML/Components/world-engine/README.md) |
+| Backend | deployable platform/control plane | [SAD](components/backend/architecture.md) | [models](../../UML/Components/backend/README.md) |
+| Frontend | deployable player/public UI | [SAD](components/frontend/architecture.md) | [models](../../UML/Components/frontend/README.md) |
+| Administration Tool | deployable operator UI | [SAD](components/administration-tool/architecture.md) | [models](../../UML/Components/administration-tool/README.md) |
+| MCP Server | deployable/local adapter | [SAD](components/mcp-server/architecture.md) | [models](../../UML/Components/mcp-server/README.md) |
+| AI Stack | runtime collaborator/package | [SAD](components/ai-stack/architecture.md) | [models](../../UML/Components/ai-stack/README.md) |
+| Story Runtime Core | shared library | [SAD](components/story-runtime-core/architecture.md) | [models](../../UML/Components/story-runtime-core/README.md) |
+| Content Authority | authored data/compiler boundary | [SAD](components/content-authority/architecture.md) | [models](../../UML/Components/content-authority/README.md) |
+| Model Governance | backend module | [portfolio](components/model-governance/architecture.md) | [models](../../UML/Components/model-governance/README.md) |
+| Architecture Assurance | repository toolchain | [portfolio](project/architecture-assurance/architecture.md) | [models](../../UML/Project/architecture-assurance/README.md) |
+
+## Current posture
+
+The documentation and assurance pipelines are structurally operational, but the product
+architecture is not declared fully conforming. Known conflicts and proof gaps are listed in the
+[violation register](violations/README.md). `Accepted` decisions and green documentation gates must
+not be read as blanket implementation correctness.
+
+## Verification
+
+```powershell
+py -3.14 -m tools.architecture_assurance audit --dry-run
+py -3.14 -m pytest tests/gates/test_architecture_documentation_gate.py -q --no-cov
 ```
 
-## Capability catalog
-
-| Capability | Owning SAD | UML |
-| --- | --- | --- |
-| Live play / runtime authority | [world-engine](components/world-engine/architecture.md) | [UML](../../UML/Components/world-engine/README.md) |
-| Platform API & persistence | [backend](components/backend/architecture.md) | pending |
-| AI graph, RAG, aspects | [ai-stack](components/ai-stack/architecture.md) | pending |
-| Shared runtime models | [story-runtime-core](components/story-runtime-core/architecture.md) | pending |
-| Player UI | [frontend](components/frontend/architecture.md) | pending |
-| Admin UI | [administration-tool](components/administration-tool/architecture.md) | pending |
-| MCP tooling | [mcp-server](components/mcp-server/architecture.md) | pending |
-| Content modules | [content-authority](components/content-authority/architecture.md) | pending |
-| Ecosystem map | [ecosystem-topology](project/ecosystem-topology/architecture.md) | [UML](../../UML/Project/ecosystem-topology/README.md) |
-| Governance | [governance](project/governance/architecture.md) | — |
-| Documentation supply chain | [documentation-supply-chain](project/documentation-supply-chain/architecture.md) | [UML](../../UML/Project/documentation-supply-chain/README.md) |
-| Gates & CI | [quality-gates](project/quality-gates/architecture.md) | — |
-| Observability | [observability-traceability](project/observability-traceability/architecture.md) | pending |
-| Security | [security-governance](project/security-governance/architecture.md) | pending |
-| MVP live runtime program | [mvp-live-runtime-completion](project/mvp-live-runtime-completion/architecture.md) | [UML](../../UML/Project/mvp-live-runtime-completion/README.md) |
-
-## Target structure
-
-| Folder | Purpose |
-| --- | --- |
-| [components/](components/_template/architecture.template.md) | Per-deployable arc42 SADs |
-| [project/](project/README.md) | Cross-cutting process SADs |
-| [contracts/](contracts/README.md) | Normative cross-service contracts |
-| [gates/](gates/README.md) | Gate documentation |
-| [boundaries/](boundaries/README.md) | Ownership boundaries |
-| [integrations/](integrations/README.md) | Bootstrap and bridge notes |
-| [combinations/](combinations/README.md) | Multi-component solution slices |
-| [evidence/](evidence/README.md) | Migration and audit summaries |
-| [views/](views/README.md) | UML reading routes |
-
-## Normative contract exceptions (unchanged location)
-
-- [CANONICAL_TURN_CONTRACT_GOC](../MVPs/MVP_VSL_And_GoC_Contracts/CANONICAL_TURN_CONTRACT_GOC.md)
-- [VERTICAL_SLICE_CONTRACT_GOC](../MVPs/MVP_VSL_And_GoC_Contracts/VERTICAL_SLICE_CONTRACT_GOC.md)
-
-## Technical detail (transition)
-
-Deep runtime prose is being absorbed into SADs. Until stubs are complete, see
-[`docs/technical/`](../technical/README.md) for transitional pages.
-
-## UML entry point
-
-- [world-engine UML](../../UML/Components/world-engine/README.md)
-- [Turn execution (canonical)](../../UML/Project/turn-execution-canonical/README.md)
-- [Ecosystem topology](../../UML/Project/ecosystem-topology/README.md)
-
-## Rollout status
-
-[DOC-HEALTH.md](DOC-HEALTH.md) · [ROLLOUT.md](project/ROLLOUT.md)
+[Quality standard](QUALITY-STANDARD.md) · [Fast entry](START-HERE.md) ·
+[Health](DOC-HEALTH.md) · [Rollout](project/ROLLOUT.md)

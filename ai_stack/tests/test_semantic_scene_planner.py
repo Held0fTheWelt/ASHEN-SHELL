@@ -252,3 +252,38 @@ def test_scene_planner_builds_content_guided_dialogue_and_capability_gate() -> N
         assert path["terminal_node"] == "terminal"
         assert path["depth"] <= audit["max_path_depth"]
     assert "capability_manager:selective_capability_gate" in enrichment["planner_rationale_codes"]
+
+
+def test_bounded_emergence_keeps_canonical_step_as_reference_not_dialogue_obligation() -> None:
+    step_id = "opening_006_armed_vs_carrying"
+    enrichment = build_semantic_scene_plan_enrichment(
+        selected_scene_function="redirect_blame",
+        selected_responder_set=[{"actor_id": "alain_reille", "role": "primary_responder"}],
+        pacing_mode="standard",
+        silence_brevity_decision={"mode": "normal"},
+        semantic_move_record={"move_type": "direct_accusation", "scene_risk_band": "high"},
+        social_state_record={"social_risk_band": "high"},
+        character_mind_records=[],
+        scene_assessment={"canonical_path_step_id": step_id},
+        canonical_path=load_goc_canonical_path_yaml(),
+        character_documents={"alain": {"actor_id": "alain_reille"}},
+        actor_lane_context={"human_actor_id": "annette_reille", "ai_forbidden_actor_ids": ["annette_reille"]},
+        turn_input_class="player_input",
+        module_runtime_policy={
+            "narrative_governance_policy": {
+                "active_mode": "bounded_emergence",
+                "canonical_path_role": "reference_arc",
+                "mandatory_beats_role": "dramatic_opportunities",
+                "player_agency": "continuous",
+            }
+        },
+    )
+
+    frame = enrichment["content_frame"]
+    assert frame["canonical_path_step_id"] == step_id
+    assert frame["reference_dialogue_profile"]["speech_required"] is True
+    assert frame["dialogue_profile"] == {}
+    assert frame["player_windows"] == ["continuous_player_agency"]
+    assert frame["next_step_id"] is None
+    assert enrichment["speech_policy"]["speech_required"] is False
+    assert enrichment["dialogue_plan"] == []

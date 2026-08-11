@@ -57,30 +57,21 @@ Each MVP completes SOURCE_LOCATOR and OPERATIONAL_EVIDENCE artifacts before clos
 | MVP3 LDSS | ai-stack, world-engine |
 | MVP4 observability | observability-traceability |
 | MVP5 frontend blocks | frontend |
+| MVP integration surface | `ai_stack/`, `world-engine/world_engine/runtime/`, `frontend/app/` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Player (`player`) | `actor` | Launch and play the God of Carnage experience | Real browser/runtime path | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
-| Capability Claim (`claim`) | `class` | State user-observable outcome | Stable capability id | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
-| Capability Proof (`proof`) | `class` | Bind code, test, trace and demonstration | Production-path evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
-| Residual Gap (`gap`) | `class` | Explain incomplete cross-link or degraded behavior | Owner and closure criterion | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
 | Authoritative Commit (`commit`) | `component` | Apply accepted dramatic outcome to live truth | World-engine-only commit | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Experience Launch (`launch`) | `component` | Bind module, role, run and session | Correct experience identity | [`frontend/static/play_session_start.js`](../../../../frontend/static/play_session_start.js) |
 | NPC Agency (`agency`) | `component` | Produce motivated autonomous reactions | Character knowledge and goal bounds | [`ai_stack/story_runtime/npc_agency/npc_agency_planner.py`](../../../../ai_stack/story_runtime/npc_agency/npc_agency_planner.py) |
 | Operational Evidence (`evidence`) | `component` | Prove the same path through tests and trace artifacts | Reproducible source-located evidence | [`tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md`](../../../../tests/reports/MVP_Live_Runtime_Completion/MVP5_OPERATIONAL_EVIDENCE.md) |
 | Player Rendering (`render`) | `component` | Expose speaker, action and dramatic blocks | Committed typed blocks | [`frontend/static/play_block_renderer.js`](../../../../frontend/static/play_block_renderer.js) |
 | Player Semantics (`semantics`) | `component` | Preserve free player intent beyond canned choices | Semantic action intent | [`ai_stack/story_runtime/player_action_resolution.py`](../../../../ai_stack/story_runtime/player_action_resolution.py) |
-| Implemented (`implemented`) | `state` | Provide production code path | Source-located behavior | [`docs/architecture/project/mvp-live-runtime-completion/evidence-matrix.md`](evidence-matrix.md) |
-| Integrated (`integrated`) | `state` | Survive all authority boundaries | End-to-end path | [`tests/integration/test_story_runtime_experience.py`](../../../../tests/integration/test_story_runtime_experience.py) |
-| Proposed (`proposed`) | `state` | Define capability and acceptance | No completion claim | [`docs/architecture/project/mvp-live-runtime-completion/architecture.md`](architecture.md) |
-| Proven (`proven`) | `state` | Pass user-visible and operational evidence | Repeatable acceptance | [`tests/e2e/test_final_goc_annette_alain_e2e.py`](../../../../tests/e2e/test_final_goc_annette_alain_e2e.py) |
-| Regressed (`regressed`) | `state` | Record later drift from proven behavior | Finding and reproduction | [`docs/architecture/project/mvp-live-runtime-completion/mechanism-catalog.md`](mechanism-catalog.md) |
-| Live Dramatic Experience (`experience`) | `system` | Deliver a responsive, stateful, role-sensitive scene | End-to-end acceptance contract | [`docs/architecture/project/mvp-live-runtime-completion/architecture.md`](architecture.md) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -92,10 +83,10 @@ See [mvp-live-runtime-completion UML](../../../../UML/Project/mvp-live-runtime-c
 
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
-| One real turn preserves semantics and evidence to the player surface | `sequence` | [MVP Completion - End-to-End Turn](../../../../UML/Project/mvp-live-runtime-completion/sequence/end-to-end-turn.md) | 5 |
+| One real turn preserves semantics and evidence to the player surface | `sequence` | [MVP Completion - End-to-End Turn](../../../../UML/Project/mvp-live-runtime-completion/sequence/end-to-end-turn.md) | 6 |
 | Implementation is not completion until integrated and proven | `state` | [MVP Completion - Capability Lifecycle](../../../../UML/Project/mvp-live-runtime-completion/states/capability-lifecycle.md) | 5 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

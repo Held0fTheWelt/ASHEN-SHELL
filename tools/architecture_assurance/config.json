@@ -15,9 +15,20 @@
     ".gitignore",
     "docs/architecture/AKDB-AUTHORITY.md",
     "docs/architecture/AKDB-MIGRATION.md",
+    "docs/architecture/README.md",
+    "docs/architecture/QUALITY-STANDARD.md",
+    "docs/architecture/DOC-HEALTH.md",
     "docs/architecture/akdb-project.yaml",
     "docs/architecture/START-HERE.md",
+    "docs/architecture/system/*.md",
+    "docs/architecture/scenarios/*.md",
+    "docs/architecture/data/*.md",
+    "docs/architecture/concepts/*.md",
+    "docs/architecture/decisions/*.md",
+    "docs/architecture/violations/*.md",
+    "docs/architecture/project/ROLLOUT.md",
     "docs/architecture/evidence/README.md",
+    "docs/architecture/evidence/architecture-lineage.md",
     "docs/architecture/project/README.md",
     "docs/architecture/evidence/2026-07-30-legacy-akdb-retirement-manifest.json",
     "UML/README.md",
@@ -26,7 +37,10 @@
     "ArchitecturalKnowledgeDB/README.md",
     ".github/workflows/architecture-assurance.yml",
     "tests/architecture_assurance/*.py",
+    "tests/gates/test_architecture_documentation_gate.py",
+    "tests/gates/test_out_of_scope_requires_reason.py",
     "tests/gates/test_better_tomorrow_architecture_assurance.py",
+    "scripts/architecture_link_audit.py",
     "tools/architecture_assurance/*.py",
     "tools/architecture_assurance/*.json",
     "docs/architecture/evidence/architecture-drift-baseline.json",
@@ -39,18 +53,20 @@
       "subsystems": 17,
       "critical_subsystems": 17,
       "structure_complete": 17,
-      "declared": 200,
-      "bound": 200,
-      "accepted_declared": 177,
-      "accepted_bound": 177,
+      "declared": 195,
+      "bound": 195,
+      "accepted_declared": 174,
+      "accepted_bound": 174,
       "discovered": 7500,
       "represented": 7500,
+      "classified": 7500,
       "views": 89
     },
     "critical_floor": {
       "structure_complete": true,
       "accepted_binding_coverage": 1.0,
       "representation_coverage": 1.0,
+      "classification_coverage": 1.0,
       "view_model_coverage": 1.0,
       "correspondence_consistency": true,
       "lane_reach": true
@@ -349,6 +365,9 @@
         ],
         "B-tests-gates": [
           "tests/gates/test_architecture_documentation_gate.py"
+        ],
+        "B-tools-architecture-assurance-config-json": [
+          "tools/architecture_assurance/config.json"
         ]
       }
     },

@@ -67,28 +67,20 @@ Historical MVP and work-order material is classified evidence, not an authority 
 | `docs/archive/adr-retired-2026/` | Historical ADR files (read-only) |
 | `tests/gates/` | Architecture enforcement |
 | `docs/governance/` | Oracle inventory, audit programs |
+| `tools/architecture_assurance/config.json` | Executable architecture-governance policy |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Maintainer (`maintainer`) | `actor` | Propose, review and accept architecture decisions | Evidence-backed review | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
-| Accepted Decision (`decision`) | `class` | State selected option and consequences | Stable id and acceptance date | [`docs/architecture/project/ADR_ABSORPTION_MATRIX.md`](../ADR_ABSORPTION_MATRIX.md) |
-| Decision Proposal (`proposal`) | `class` | Frame problem, options and evidence | Owner and affected scopes | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
-| Governed Exception (`exception`) | `class` | Bound temporary deviation | Expiry, owner and compensating control | [`docs/architecture/project/governance/mechanism-catalog.md`](mechanism-catalog.md) |
 | Decision Registry (`decision_registry`) | `component` | Index accepted and retired decisions | Stable identifiers and status | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
 | Governance Evidence (`audit`) | `component` | Record actor, before/after and outcome | Immutable audit event | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
 | Policy Gates (`gates`) | `component` | Block invalid authority and decision drift | Executable CI checks | [`tests/gates/test_adr_live_runtime_commit_semantics_gate.py`](../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py) |
 | Runtime Governance Services (`runtime_policy`) | `component` | Validate and apply operational policy | Authorized audited mutation | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
 | SAD Decision Sections (`sad`) | `component` | Explain decisions in architecture context | Traceable rationale and consequences | [`docs/architecture/project/ecosystem-topology/architecture.md`](../ecosystem-topology/architecture.md) |
-| Accepted (`accepted`) | `state` | Govern implementation and models | Decision registry entry | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
-| Draft (`draft`) | `state` | Collect problem and options | No authority yet | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
-| Proposed (`proposed`) | `state` | Expose reviewable evidence | Owner and scope complete | [`docs/architecture/project/DECISION_REGISTRY.md`](../DECISION_REGISTRY.md) |
-| Superseded (`superseded`) | `state` | Retain lineage without current authority | Replacement decision linked | [`docs/adr/legacy/README.md`](../../../adr/legacy/README.md) |
-| Governance System (`governance`) | `system` | Control decision lifecycle and runtime policy changes | Recorded decision and audit evidence | [`docs/architecture/project/governance/architecture.md`](architecture.md) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
 ## 6. Runtime View
@@ -101,9 +93,9 @@ Not a runtime system—governance applies at PR/CI time via pytest gates and hum
 | Runtime concern | Viewpoint | Model | Modeled interactions |
 | --- | --- | --- | ---: |
 | Draft, proposal, acceptance and supersession with preserved lineage | `state` | [Architecture Governance - Decision Lifecycle](../../../../UML/Project/governance/states/decision-lifecycle.md) | 4 |
-| Accepted policy becomes audited runtime configuration and gate evidence | `sequence` | [Architecture Governance - Runtime Policy Change](../../../../UML/Project/governance/sequence/runtime-policy-change.md) | 4 |
+| Accepted policy becomes audited runtime configuration and gate evidence | `sequence` | [Architecture Governance - Runtime Policy Change](../../../../UML/Project/governance/sequence/runtime-policy-change.md) | 5 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View

@@ -25,13 +25,13 @@ component "Backend Proxy\nResponsibility: Forward allow-listed reads and mutatio
 component "Proxy Policy\nResponsibility: Classify mutation endpoints and confirmation requirements\nContract: Default-deny unsafe or undeclared proxy operations\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]" as policy
 rectangle "Backend Admin API\nResponsibility: Authorize and execute governed mutations\nContract: HTTP /api/v1/admin and operator endpoints\n[[../../../../backend/app/api/v1/security_governance_routes.py source]]" as backend
 
-admin ..> manage : "dispatches manage pages\ncontract: named manage route registration\n[[../../../../administration-tool/route_registration_manage.py source]]"
 admin ..> pages : "dispatches public pages\ncontract: page route registration\n[[../../../../administration-tool/route_registration.py source]]"
-manage ..> proxy : "submits requested operation\ncontract: normalized proxy request\n[[../../../../administration-tool/route_registration_proxy.py source]]"
-manage ..> security : "requires operator session\ncontract: authorization before rendering or mutation\n[[../../../../administration-tool/route_registration_security.py source]]"
 manage ..> templates : "renders workbench\ncontract: template plus backend read model\n[[../../../../administration-tool/route_registration_manage_sections.py source]]"
-policy ..> backend : "forwards approved operation\ncontract: service key and operator evidence\n[[../../../../administration-tool/route_registration_proxy.py source]]"
+admin ..> manage : "dispatches manage pages\ncontract: named manage route registration\n[[../../../../administration-tool/route_registration_manage.py source]]"
+manage ..> security : "requires operator session\ncontract: authorization before rendering or mutation\n[[../../../../administration-tool/route_registration_security.py source]]"
+manage ..> proxy : "submits requested operation\ncontract: normalized proxy request\n[[../../../../administration-tool/route_registration_proxy.py source]]"
 proxy ..> policy : "classifies request\ncontract: default-deny mutation policy\n[[../../../../administration-tool/route_registration_proxy_policy.py source]]"
+policy ..> backend : "forwards approved operation\ncontract: service key and operator evidence\n[[../../../../administration-tool/route_registration_proxy.py source]]"
 
 legend bottom
 Viewpoint: component

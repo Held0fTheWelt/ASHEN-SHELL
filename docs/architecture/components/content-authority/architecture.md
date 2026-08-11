@@ -46,26 +46,20 @@ Module.yaml + canonical_path + locations/characters/objects/knowledge/direction 
 | Module root | `content/modules/god_of_carnage/module.yaml` |
 | Canonical path | `canonical_path/*.yaml` |
 | Template | `content/modules/_template/` |
+| Authored content repository | `content/` |
+| Content compiler adapters | `backend/app/content/`, `story_runtime_core/builtin_experience_templates.py` |
 
 <!-- BEGIN BT-SEMANTIC-DEPTH:5 -->
-### Source-bound building-block catalog
+### Source-bound structural decomposition
 
-Each block has one stated responsibility, an interaction or ownership contract, and a current source anchor. The list is individualized for this scope; it is not derived from a fixed diagram count.
+Only elements that participate in a container or component view are listed as building blocks. Actors, runtime states, data types and deployment nodes remain in their proper viewpoints instead of being misrepresented as structural decomposition.
 
 | Block | Kind | Responsibility | Contract | Source |
 | --- | --- | --- | --- | --- |
-| Content Author (`author`) | `actor` | Define experience facts, locations, objects and dramatic policy | Schema-conforming module changes | [`content/modules/_template/README.md`](../../../../content/modules/_template/README.md) |
-| Canonical Path (`canonical_path`) | `class` | Express authored dramatic invariants without scripting player choice | Schema-governed beats and alternatives | [`content/modules/god_of_carnage/canonical_path/_schema.yaml`](../../../../content/modules/god_of_carnage/canonical_path/_schema.yaml) |
-| Narrative Policies (`policies`) | `class` | Bound memory, aspects, beats and phase behavior | Declarative policy YAML | [`content/modules/god_of_carnage/narrative_aspect_policy.yaml`](../../../../content/modules/god_of_carnage/narrative_aspect_policy.yaml) |
-| Scene Graph (`scene_graph`) | `class` | Describe spaces, actors, objects and connections | Stable identifiers and references | [`content/modules/god_of_carnage/scene_graph.yaml`](../../../../content/modules/god_of_carnage/scene_graph.yaml) |
 | AI Content Adapter (`ai_adapter`) | `component` | Translate canonical content into proposal context | Provenance-preserving read model | [`ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py`](../../../../ai_stack/story_runtime/god_of_carnage/god_of_carnage_yaml_authority.py) |
 | Backend Module Compiler (`compiler`) | `component` | Load, validate and normalize authored documents | Deterministic module model or diagnostics | [`backend/app/content/module_loader.py`](../../../../backend/app/content/module_loader.py) |
 | Module Validator (`validator`) | `component` | Enforce schemas and cross-document references | Fail-closed validation findings | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
 | World Content Loader (`world_loader`) | `component` | Materialize published content for live sessions | Read-only runtime projection | [`world-engine/world_engine/content/backend_loader.py`](../../../../world-engine/world_engine/content/backend_loader.py) |
-| Draft (`draft`) | `state` | Accept author changes | Not runtime-consumable | [`backend/app/content/module_models.py`](../../../../backend/app/content/module_models.py) |
-| Published (`published`) | `state` | Expose immutable content version | Active version pointer | [`backend/app/content/module_service.py`](../../../../backend/app/content/module_service.py) |
-| Runtime Projection (`consumed`) | `state` | Serve content to a bound session | No mutation of authored truth | [`world-engine/world_engine/content/backend_source.py`](../../../../world-engine/world_engine/content/backend_source.py) |
-| Validated (`validated`) | `state` | Record successful structural checks | All references resolve | [`backend/app/content/module_validator.py`](../../../../backend/app/content/module_validator.py) |
 | Authored Module (`module`) | `system` | Hold canonical versioned content truth | module.yaml plus referenced YAML documents | [`content/modules/god_of_carnage/module.yaml`](../../../../content/modules/god_of_carnage/module.yaml) |
 <!-- END BT-SEMANTIC-DEPTH:5 -->
 
@@ -81,7 +75,7 @@ Publish/compile pipeline (backend) → runtime projection loaded by world-engine
 | Fail-closed path from author change to runtime-readable version | `activity` | [Content Authority - Publication Flow](../../../../UML/Components/content-authority/activity/content-publication-flow.md) | 4 |
 | Validation, publication and runtime binding states | `state` | [Content Authority - Lifecycle](../../../../UML/Components/content-authority/states/content-lifecycle.md) | 6 |
 
-The ordered sequence/activity relationships and state transitions are validated against the catalog. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
+The ordered sequence/activity relationships and state transitions are validated against the catalog. A sequence or activity view must form one connected runtime path; a list of unrelated calls does not qualify as an end-to-end scenario. Generic arrows such as "evidence for boundary" are not accepted as runtime semantics.
 <!-- END BT-SEMANTIC-DEPTH:6 -->
 
 ## 7. Deployment View
@@ -126,6 +120,7 @@ Writers-room drafts are not production truth.
 | D1 | Canonical authored content model | Accepted | ADR-0025 |
 | D2 | Canonical content authority (MVP) | Accepted | MVP1-005 |
 | D3 | Content locale removal / language boundaries | Accepted | ADR-0037-CONTENT |
+| D4 | Narrative governance modes | Accepted; Partial | ADR-0007 |
 
 ### D1: Canonical Authored Content Model
 
@@ -203,11 +198,10 @@ the engine.
    remains a compatibility import only.
 3. Player input is labeled with `session_input_language`. Player-visible output
    is governed separately by `session_output_language`.
-4. The AI normalizes player input into the module's declared authoring language
-   for internal grounding when the player language differs. If player language
-   and module language already match, the language pipeline is a no-op diagnostic
-   boundary, not a translation call. Visible narration is produced in the
-   requested output language.
+4. The AI normalizes player input into the module's declared internal resolution
+   language for grounding when the player language differs. The authoring and
+   internal languages may be equal but are separate declarations. Visible output
+   is translated from its source language only when source and requested output differ.
 5. Thin deterministic interpreters may recognize structural control surfaces
    such as empty input, punctuation-only input, slash commands, meta control,
    and quoted speech previews. They must not decide natural-language actions,
@@ -235,7 +229,16 @@ the engine.
 
 **Evidence.** `docs/architecture/components/backend/architecture.md#d3-test-suite-split-in-orchestrator` (archived — see `docs/archive/adr-retired-2026/`)
 
- Quality Requirements
+### D4: Module-declared narrative governance
+
+**Status:** Accepted; production scenario proof remains open
+**Origin:** [ADR-0007](../../decisions/ADR-0007-bounded-emergent-narration.md)
+
+Modules declare supported narrative modes and the role of their canonical path. Runtime profiles
+select a supported mode. The generic engine consumes roles such as `mandatory_spine`,
+`reference_arc` and `optional_reference`; it must not special-case module IDs, actors or lines.
+
+Quality Requirements
 
 `tests/smoke/test_goc_module_structure_smoke.py`, content validators, GoC gate tests.
 

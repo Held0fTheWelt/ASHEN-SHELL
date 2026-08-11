@@ -21,6 +21,7 @@
 | From | To | Semantics | Contract | Source |
 | --- | --- | --- | --- | --- |
 | Maintainer | Governance System | proposes and reviews | evidence-backed change | catalog contract |
+| Governance System | SAD Decision Sections | records accepted contextual decision | active ADR and affected SAD are updated together | [`docs/architecture/decisions/README.md`](../../../../docs/architecture/decisions/README.md) |
 | SAD Decision Sections | Runtime Governance Services | constrains implementation | accepted policy semantics | [`backend/app/services/governance/governance_runtime_service.py`](../../../../backend/app/services/governance/governance_runtime_service.py) |
 | Runtime Governance Services | Governance Evidence | records mutation outcome | actor and before/after evidence | [`backend/app/services/governance/observability_governance_service.py`](../../../../backend/app/services/governance/observability_governance_service.py) |
 | Governance Evidence | Policy Gates | supports verification | machine-checkable evidence | [`tests/gates/test_adr_live_runtime_commit_semantics_gate.py`](../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py) |

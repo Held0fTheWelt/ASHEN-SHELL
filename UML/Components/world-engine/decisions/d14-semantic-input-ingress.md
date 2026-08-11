@@ -1,6 +1,6 @@
 # D14: Semantic player input translation ingress
 
-**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d14-semantic-player-input-translation-ingress)
+**Owner SAD:** [world-engine SAD](../../../../docs/architecture/components/world-engine/architecture.md#d14-semantic-player-input-enters-once)
 **Origin:** ADR-0055 (retired)
 **Status:** Accepted
 

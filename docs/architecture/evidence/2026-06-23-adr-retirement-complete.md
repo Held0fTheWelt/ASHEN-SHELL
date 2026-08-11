@@ -33,7 +33,7 @@ Link audit: `python scripts/architecture_link_audit.py --check` → OK.
 - Decisions: `docs/architecture/**/architecture.md` §9
 - Index: `docs/architecture/project/DECISION_REGISTRY.md`
 - Archive: `docs/archive/adr-retired-2026/manifest.json`
-- Stub: [ADR README](../../../ADR/README.md) → START-HERE + DECISION_REGISTRY
+- Stub: [ADR README](../../ADR/README.md) → START-HERE + DECISION_REGISTRY
 
 ## Open exceptions (Not Finished / Proposed)
 

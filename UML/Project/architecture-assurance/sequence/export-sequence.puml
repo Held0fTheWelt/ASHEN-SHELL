@@ -22,9 +22,10 @@ participant "Canon Exporter\nResponsibility: Create idempotent AKDB source proje
 participant "External AKDB\nResponsibility: Validate and export canonical architecture knowledge\nContract: Pinned disposable checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]" as akdb
 
 architect -> assurance : "authors intent and runs audit\ncontract: reviewed invocation\n[[../../../../tools/architecture_assurance/cli.py source]]"
-assurance -> akdb : "validates disposable export\ncontract: pinned external checkout\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]"
+assurance -> audit : "evaluates current repository projection\ncontract: complete deterministic audit report\n[[../../../../tools/architecture_assurance/audit.py source]]"
 audit -> reports : "emits findings\ncontract: normalized result model\n[[../../../../tools/architecture_assurance/reporters.py source]]"
 reports -> canon : "joins canonical evidence\ncontract: accepted report state\n[[../../../../tools/architecture_assurance/canon.py source]]"
+canon -> akdb : "round-trips canonical export\ncontract: pinned disposable AKDB validation\n[[../../../../tests/architecture_assurance/test_disposable_akdb_integration.py source]]"
 
 legend bottom
 Viewpoint: sequence

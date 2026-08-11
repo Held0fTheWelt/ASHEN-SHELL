@@ -1,6 +1,6 @@
 # Language resolution chain (story-runtime-core ↔ ai_stack ↔ LangGraph)
 
-Normative session language: [world-engine SAD D10](../../../../docs/architecture/components/world-engine/architecture.md#d10-player-session-output-language-launch-time-selection), [D14 ingress](../../../../docs/architecture/components/world-engine/architecture.md#d14-semantic-player-input-translation-ingress).
+Normative session language: [world-engine session language](../../../../docs/architecture/components/world-engine/architecture.md#session-language), [D14 ingress](../../../../docs/architecture/components/world-engine/architecture.md#d14-semantic-player-input-enters-once).
 
 ```mermaid
 sequenceDiagram

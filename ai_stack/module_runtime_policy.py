@@ -41,7 +41,10 @@ from ai_stack.contracts.symbolic_object_resonance_contracts import (
 )
 from ai_stack.contracts.temporal_control_contracts import normalize_temporal_control_policy
 from ai_stack.contracts.tonal_consistency_contracts import normalize_tonal_consistency_policy
-from ai_stack.language_io.language_adapter import build_interaction_surface
+from ai_stack.language_io.language_adapter import (
+    build_interaction_surface,
+    load_module_language_policy,
+)
 
 
 MODULE_RUNTIME_POLICY_SCHEMA_VERSION = "module_runtime_policy.v1"
@@ -390,11 +393,50 @@ def _continuity_governance(continuity: dict[str, Any]) -> dict[str, Any]:
     return {"hooks": _json_safe(hooks)}
 
 
-def _runtime_governance_policy(module_yaml: dict[str, Any]) -> dict[str, Any]:
+def _narrative_governance_policy(
+    module_yaml: dict[str, Any],
+    runtime_profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    runtime_intelligence = module_yaml.get("runtime_intelligence")
+    runtime_intelligence = runtime_intelligence if isinstance(runtime_intelligence, dict) else {}
+    raw = runtime_intelligence.get("narrative_governance")
+    raw = raw if isinstance(raw, dict) else {}
+    modes = raw.get("modes") if isinstance(raw.get("modes"), dict) else {}
+    supported = [
+        str(value).strip()
+        for value in (raw.get("supported_modes") or ["reenactment"])
+        if str(value).strip()
+    ]
+    default_mode = str(raw.get("default_mode") or "reenactment").strip() or "reenactment"
+    profile = runtime_profile if isinstance(runtime_profile, dict) else {}
+    active_mode = str(profile.get("narrative_mode") or default_mode).strip() or default_mode
+    if active_mode not in supported:
+        active_mode = default_mode
+    active = modes.get(active_mode) if isinstance(modes.get(active_mode), dict) else {}
+    return {
+        "schema_version": "narrative_governance_policy.v1",
+        "default_mode": default_mode,
+        "active_mode": active_mode,
+        "supported_modes": supported,
+        "canonical_path_role": str(active.get("canonical_path_role") or "mandatory_spine").strip(),
+        "progression_authority": str(active.get("progression_authority") or "canonical_step").strip(),
+        "off_path_policy": str(active.get("off_path_policy") or "hold_or_reject").strip(),
+        "mandatory_beats_role": str(active.get("mandatory_beats_role") or "required_output").strip(),
+        "player_agency": str(active.get("player_agency") or "declared_windows").strip(),
+        "world_engine_authority": "validate_and_commit_state_not_author_prose",
+        "mode_policy": _json_safe(active),
+    }
+
+
+def _runtime_governance_policy(
+    module_yaml: dict[str, Any],
+    runtime_profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     raw = module_yaml.get("runtime_intelligence")
     raw = raw if isinstance(raw, dict) else {}
 
     return {
+        "narrative_governance": _narrative_governance_policy(module_yaml, runtime_profile),
         "action_resolution_short_path": _action_resolution_governance(
             _runtime_intelligence_section(raw, "action_resolution_short_path")
         ),
@@ -480,6 +522,7 @@ class ModuleRuntimePolicy:
     hard_forbidden_policy: dict[str, Any] = field(default_factory=dict)
     opening_policy: dict[str, Any] = field(default_factory=dict)
     language_policy: dict[str, Any] = field(default_factory=dict)
+    narrative_governance_policy: dict[str, Any] = field(default_factory=dict)
     narrative_aspect_policy: dict[str, Any] = field(default_factory=dict)
     information_disclosure_policy: dict[str, Any] = field(default_factory=dict)
     memory_policy: dict[str, Any] = field(default_factory=dict)
@@ -498,11 +541,19 @@ class ModuleRuntimePolicy:
         return _json_safe(asdict(self))
 
 
-def _load_module_policy_sources(module_dir: Path, module_id: str, root: Path) -> dict[str, Any]:
+def _load_module_policy_sources(
+    module_dir: Path,
+    module_id: str,
+    root: Path,
+    runtime_profile_id: str | None = None,
+) -> dict[str, Any]:
     module_yaml = _read_yaml(module_dir / "module.yaml")
     character_documents = _read_character_documents(module_dir)
     return {
         "module_yaml": module_yaml,
+        "runtime_profile": _read_yaml(
+            module_dir / "runtime_profiles" / f"{str(runtime_profile_id or '').strip()}.yaml"
+        ) if runtime_profile_id else {},
         "character_documents": character_documents,
         "characters": character_documents
         or _read_first_yaml(
@@ -663,19 +714,20 @@ def load_module_runtime_policy(
     mid = str(module_id or "").strip()
     root = Path(content_modules_root) if content_modules_root else _repo_root() / "content" / "modules"
     module_dir = root / mid
-    sources = _load_module_policy_sources(module_dir, mid, root)
+    sources = _load_module_policy_sources(module_dir, mid, root, runtime_profile_id)
     policies = _normalized_policy_documents(module_dir, sources["module_yaml"])
 
     actor_roster = _actors_from_characters(sources["characters"])
     playable_roles = _playable_roles_from_opening(sources["opening_policy"])
     language_policy = {
+        **load_module_language_policy(mid, content_modules_root=root),
         "interaction_surface": sources["scene_affordances"],
         "adapter": {
             "id": "universal_language_adapter",
             "module_language_lookup_files_required": False,
             "engine_maps_allowed": False,
             "player_input_resolution_source": "ai_semantic_resolution",
-            "visible_language_source": "ai_semantic_generation",
+            "visible_language_source": "source_aware_output_translation",
         },
     }
 
@@ -705,6 +757,9 @@ def load_module_runtime_policy(
         hard_forbidden_policy=sources["hard_forbidden"],
         opening_policy=sources["opening_policy"],
         language_policy=language_policy,
+        narrative_governance_policy=_narrative_governance_policy(
+            sources["module_yaml"], sources["runtime_profile"]
+        ),
         narrative_aspect_policy=policies["narrative_aspect_policy"],
         information_disclosure_policy=policies["information_disclosure_policy"],
         memory_policy=policies["memory_policy"],
@@ -716,7 +771,9 @@ def load_module_runtime_policy(
         expectation_variation_policy=policies["expectation_variation_policy"],
         narrative_momentum_policy=policies["narrative_momentum_policy"],
         meta_narrative_awareness_policy=policies["meta_narrative_awareness_policy"],
-        runtime_governance_policy=_runtime_governance_policy(sources["module_yaml"]),
+        runtime_governance_policy=_runtime_governance_policy(
+            sources["module_yaml"], sources["runtime_profile"]
+        ),
         content_sources=_module_policy_content_sources(sources, policies),
     )
 

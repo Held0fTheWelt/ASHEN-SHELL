@@ -434,6 +434,8 @@ def _semantic_translation_prompt(
     module_id: str,
     session_input_language: str,
     session_output_language: str,
+    module_authoring_language: str,
+    internal_resolution_language: str,
     contract: dict[str, Any],
 ) -> str:
     catalog = _compact_semantic_catalog(module_id)
@@ -443,8 +445,8 @@ def _semantic_translation_prompt(
             "Resolve the player input before any story turn processing.",
             f"session_input_language={session_input_language}",
             f"session_output_language={session_output_language}",
-            "First translate or normalize the player input to English.",
-            "Then ground the English meaning against the English-authored content catalog.",
+            f"Translate or normalize the player input to {internal_resolution_language} only when needed.",
+            f"Then ground that meaning against the module catalog authored in {module_authoring_language}.",
             "Do not use lookup tables, phrase maps, verb maps, actor alias maps, or locale files.",
             "If a target is present in the catalog, prefer the catalog id.",
             "If the catalog is silent, follow content_catalog.player_freedom_policy.semantic_resolution_requirements; only mark an inferred target when that policy is satisfied by the meaning of the input and the English content context.",
@@ -476,6 +478,7 @@ def _semantic_payloads_from_translation_output(parsed: dict[str, Any]) -> tuple[
                 break
     if not isinstance(action, dict):
         action_keys = {
+            "normalized_internal_text",
             "normalized_english_text",
             "player_input_kind",
             "action_kind",
@@ -4463,6 +4466,8 @@ class RuntimeTurnGraphExecutor:
             initial_state["prior_planner_truth"] = dict(prior_planner_truth)
         if hierarchical_memory_context:
             initial_state["hierarchical_memory_context"] = dict(hierarchical_memory_context)
+        # The host owns the session-language default. Module language controls
+        # semantic grounding and source provenance, not the player's UI locale.
         sol = str(session_output_language or "de").strip().lower()[:2] or "de"
         sil = str(session_input_language or sol).strip().lower()[:2] or sol
         initial_state["session_input_language"] = sil
@@ -4501,7 +4506,12 @@ class RuntimeTurnGraphExecutor:
         """Prepare or perform semantic input translation before interpretation."""
         update = _track(state, node_name="translate_player_input")
         raw_pi = str(state.get("player_input") or "").strip()
-        output_lang = str(state.get("session_output_language") or "de").strip().lower()[:2] or "de"
+        module_policy = state.get("module_runtime_policy") if isinstance(state.get("module_runtime_policy"), dict) else {}
+        language_policy = module_policy.get("language_policy") if isinstance(module_policy.get("language_policy"), dict) else {}
+        internal_lang = str(language_policy.get("internal_resolution_language") or "en").strip().lower()[:2] or "en"
+        authoring_lang = str(language_policy.get("authoring_language") or internal_lang).strip().lower()[:2] or internal_lang
+        default_output_lang = str(language_policy.get("default_session_output_language") or authoring_lang).strip().lower()[:2] or authoring_lang
+        output_lang = str(state.get("session_output_language") or default_output_lang).strip().lower()[:2] or default_output_lang
         input_lang = str(state.get("session_input_language") or output_lang).strip().lower()[:2] or output_lang
         module_id = str(state.get("module_id") or "").strip() or GOC_MODULE_ID
 
@@ -4521,7 +4531,8 @@ class RuntimeTurnGraphExecutor:
             "module_id": module_id,
             "session_input_language": input_lang,
             "session_output_language": output_lang,
-            "internal_resolution_language": "en",
+            "module_authoring_language": authoring_lang,
+            "internal_resolution_language": internal_lang,
             "raw_player_text_sha256": hashlib.sha256(raw_pi.encode("utf-8", errors="replace")).hexdigest()
             if raw_pi
             else "",
@@ -4543,10 +4554,12 @@ class RuntimeTurnGraphExecutor:
             update["semantic_resolution_contract"] = contract
             return update
 
-        if input_lang == "en":
+        if input_lang == internal_lang:
             translation["status"] = "skipped_same_language"
             translation["semantic_resolution_required"] = False
-            translation["normalized_english_text"] = raw_pi
+            translation["normalized_internal_text"] = raw_pi
+            if internal_lang == "en":
+                translation["normalized_english_text"] = raw_pi
             update["input_translation"] = translation
             update["semantic_resolution_contract"] = contract
             return update
@@ -4564,6 +4577,8 @@ class RuntimeTurnGraphExecutor:
             module_id=module_id,
             session_input_language=input_lang,
             session_output_language=output_lang,
+            module_authoring_language=authoring_lang,
+            internal_resolution_language=internal_lang,
             contract=contract,
         )
         translation.update(
@@ -4633,17 +4648,26 @@ class RuntimeTurnGraphExecutor:
             translation["semantic_resolution_required"] = False
             translation["semantic_action"] = semantic_action
             normalized = str(
-                semantic_action.get("normalized_english_text")
+                semantic_action.get("normalized_internal_text")
+                or semantic_action.get("normalized_english_text")
                 or semantic_action.get("english_text")
                 or semantic_action.get("internal_english_text")
                 or ""
             ).strip()
             if normalized:
-                translation["normalized_english_text"] = normalized
+                translation["normalized_internal_text"] = normalized
+                if internal_lang == "en":
+                    translation["normalized_english_text"] = normalized
         else:
-            normalized_top = str(parsed.get("normalized_english_text") or "").strip()
+            normalized_top = str(
+                parsed.get("normalized_internal_text")
+                or parsed.get("normalized_english_text")
+                or ""
+            ).strip()
             if normalized_top:
-                translation["normalized_english_text"] = normalized_top
+                translation["normalized_internal_text"] = normalized_top
+                if internal_lang == "en":
+                    translation["normalized_english_text"] = normalized_top
             translation["status"] = "model_missing_semantic_action_contract_only"
         if semantic_move:
             translation["semantic_move"] = semantic_move
@@ -4764,7 +4788,9 @@ class RuntimeTurnGraphExecutor:
         )
         raw_pi = str(state.get("player_input") or "").strip()
         normalized_english_text = str(
-            translation.get("normalized_english_text")
+            translation.get("normalized_internal_text")
+            or translation.get("normalized_english_text")
+            or semantic_action.get("normalized_internal_text")
             or semantic_action.get("normalized_english_text")
             or semantic_action.get("english_text")
             or semantic_action.get("internal_english_text")
@@ -4824,6 +4850,7 @@ class RuntimeTurnGraphExecutor:
             intent_fields["session_output_language"] = session_output_lang
             intent_fields["input_translation_status"] = translation.get("status")
             if normalized_english_text:
+                intent_fields["normalized_internal_text"] = normalized_english_text
                 intent_fields["normalized_english_text"] = normalized_english_text
                 intent_fields["input_translation_applied"] = True
         else:
@@ -4884,6 +4911,7 @@ class RuntimeTurnGraphExecutor:
                 intent_fields["session_output_language"] = session_output_lang
                 intent_fields["input_translation_status"] = translation.get("status")
                 if normalized_english_text:
+                    intent_fields["normalized_internal_text"] = normalized_english_text
                     intent_fields["normalized_english_text"] = normalized_english_text
                     intent_fields["input_translation_applied"] = True
                 interp_dict["kind"] = json_kind
@@ -4936,6 +4964,7 @@ class RuntimeTurnGraphExecutor:
                 intent_fields["session_output_language"] = session_output_lang
                 intent_fields["input_translation_status"] = translation.get("status")
                 if normalized_english_text:
+                    intent_fields["normalized_internal_text"] = normalized_english_text
                     intent_fields["normalized_english_text"] = normalized_english_text
                     intent_fields["input_translation_applied"] = True
                 if silence_negative_space_active:
@@ -4970,6 +4999,7 @@ class RuntimeTurnGraphExecutor:
         if isinstance(interp_dict.get("semantic_move"), dict):
             interpreted_move_payload["semantic_move"] = dict(interp_dict["semantic_move"])
         if normalized_english_text:
+            interpreted_move_payload["normalized_internal_text"] = normalized_english_text
             interpreted_move_payload["normalized_english_text"] = normalized_english_text
         update["interpreted_move"] = interpreted_move_payload
         update["task_type"] = task_type
@@ -6629,6 +6659,9 @@ class RuntimeTurnGraphExecutor:
             else None,
             environment_state=state.get("environment_state")
             if isinstance(state.get("environment_state"), dict)
+            else None,
+            module_runtime_policy=state.get("module_runtime_policy")
+            if isinstance(state.get("module_runtime_policy"), dict)
             else None,
         )
         for code in semantic_scene_plan.get("planner_rationale_codes") or []:
@@ -9633,6 +9666,14 @@ class RuntimeTurnGraphExecutor:
                 **_compute_reaction_order_divergence_for_render(state),
             },
         )
+        if isinstance(bundle, dict) and not bundle.get("source_language"):
+            module_policy = state.get("module_runtime_policy")
+            module_policy = module_policy if isinstance(module_policy, dict) else {}
+            language_policy = module_policy.get("language_policy")
+            language_policy = language_policy if isinstance(language_policy, dict) else {}
+            bundle["source_language"] = str(
+                language_policy.get("internal_resolution_language") or "en"
+            ).strip().lower()[:2] or "en"
         update["generation"] = generation
         update["visible_output_bundle"] = bundle
         update["visibility_class_markers"] = vis_markers
@@ -9723,10 +9764,25 @@ class RuntimeTurnGraphExecutor:
     def _translate_output(self, state: RuntimeTurnState) -> RuntimeTurnState:
         """Translate visible_output_bundle text fields to session_output_language."""
         update = _track(state, node_name="translate_output")
-        output_lang = str(state.get("session_output_language") or "de").strip().lower()[:2] or "de"
+        module_policy = state.get("module_runtime_policy") if isinstance(state.get("module_runtime_policy"), dict) else {}
+        language_policy = module_policy.get("language_policy") if isinstance(module_policy.get("language_policy"), dict) else {}
+        bundle_state = state.get("visible_output_bundle") if isinstance(state.get("visible_output_bundle"), dict) else {}
+        source_lang = str(bundle_state.get("source_language") or "").strip().lower()[:2]
+        source_lang = source_lang or str(
+            language_policy.get("internal_resolution_language") or "en"
+        ).strip().lower()[:2] or "en"
+        output_lang = str(
+            state.get("session_output_language")
+            or language_policy.get("default_session_output_language")
+            or source_lang
+        ).strip().lower()[:2] or source_lang
 
-        if output_lang == "en":
-            update["output_translation"] = {"status": "skipped_same_language"}
+        if output_lang == source_lang:
+            update["output_translation"] = {
+                "status": "skipped_same_language",
+                "source_language": source_lang,
+                "target_language": output_lang,
+            }
             return update
 
         bundle = dict(state.get("visible_output_bundle") or {})
@@ -9762,11 +9818,13 @@ class RuntimeTurnGraphExecutor:
             update["output_translation"] = {"status": "adapter_unavailable"}
             return update
 
-        _lang_label = {"de": "German", "fr": "French", "it": "Italian"}.get(output_lang, output_lang)
+        language_labels = {"de": "German", "en": "English", "fr": "French", "it": "Italian"}
+        _source_label = language_labels.get(source_lang, source_lang)
+        _lang_label = language_labels.get(output_lang, output_lang)
         numbered = "\n".join(f"{i}: {t}" for i, t in enumerate(texts))
         prompt = (
             "Return valid JSON only. No markdown, no explanation.\n"
-            f"Translate each numbered text from English to {_lang_label}.\n"
+            f"Translate each numbered text from {_source_label} to {_lang_label}.\n"
             "Preserve any quoted speech marks exactly as they appear.\n"
             "Return exactly: {\"translated\": [\"<text0>\", \"<text1>\", ...]}\n"
             f"texts:\n{numbered}"
@@ -9814,10 +9872,17 @@ class RuntimeTurnGraphExecutor:
         bundle["gm_narration"] = new_gm
         bundle["spoken_lines"] = new_spoken
         bundle["action_lines"] = new_action
+        bundle["source_language"] = output_lang
+        bundle["translation_provenance"] = {
+            "source_language": source_lang,
+            "target_language": output_lang,
+            "mode": "structured_visible_fields",
+        }
         update["visible_output_bundle"] = bundle
         update["output_translation"] = {
             "status": "translated",
             "language": output_lang,
+            "source_language": source_lang,
             "count": len(texts),
             "adapter_model_id": model_id or None,
             "adapter_provider": provider or None,

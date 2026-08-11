@@ -148,6 +148,7 @@ class PlayerActionFrameContract:
     source_resolution_source: str | None = None
     validation_surface: str | None = None
     projection_rule_id: str | None = None
+    normalized_internal_text: str | None = None
     normalized_english_text: str | None = None
     internal_resolution_language: str = "en"
     session_input_language: str | None = None
@@ -186,6 +187,7 @@ class PlayerActionFrameContract:
             "affordance_resolution": aff,
             "validation_surface": self.validation_surface,
             "projection_rule_id": self.projection_rule_id,
+            "normalized_internal_text": self.normalized_internal_text,
             "normalized_english_text": self.normalized_english_text,
             "internal_resolution_language": self.internal_resolution_language,
             "session_input_language": self.session_input_language,

@@ -49,6 +49,8 @@ def _assert_module_policy_surfaces(policy: dict) -> None:
     assert policy["object_model"]["objects"]["coffee_table"]["portable"] is False
     assert policy["phase_policy"]["phases"]
     assert policy["language_policy"]["adapter"]["engine_maps_allowed"] is False
+    assert policy["language_policy"]["authoring_language"] == "en"
+    assert policy["language_policy"]["internal_resolution_language"] == "en"
     assert policy["language_policy"]["interaction_surface"]["semantic_resolution_contract"]
     assert policy["narrative_aspect_policy"]["aspects"]
     assert policy["information_disclosure_policy"]["enabled"] is True
@@ -60,6 +62,8 @@ def _assert_module_policy_surfaces(policy: dict) -> None:
     assert policy["dramatic_irony_policy"]["require_structured_realization"] is True
     assert policy["runtime_governance_policy"]["dramatic_irony"]["enabled"] is True
     assert policy["runtime_governance_policy"]["dramatic_irony"]["hidden_fact_echo_check"] is True
+    assert policy["narrative_governance_policy"]["active_mode"] == "bounded_emergence"
+    assert policy["narrative_governance_policy"]["canonical_path_role"] == "reference_arc"
 
 
 def _assert_callback_cascade_and_timing_policy(policy: dict) -> None:
@@ -455,7 +459,7 @@ def test_generic_runtime_intelligence_modules_do_not_embed_goc_literals() -> Non
         repo / "ai_stack" / "story_runtime" / "runtime_aspect_ledger" / "__init__.py",
         repo / "ai_stack" / "capabilities" / "runtime_dramatic_capabilities.py",
         repo / "ai_stack" / "langgraph" / "langgraph_runtime_executor.py",
-        repo / "world-engine" / "app" / "story_runtime" / "manager" / "__init__.py",
+        repo / "world-engine" / "world_engine" / "story_runtime" / "manager" / "__init__.py",
         repo / "tools" / "mcp_server" / "handlers" / "langfuse_verify",
     ]
     forbidden = (

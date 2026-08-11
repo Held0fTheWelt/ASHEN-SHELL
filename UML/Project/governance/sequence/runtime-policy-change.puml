@@ -22,6 +22,7 @@ participant "Governance Evidence\nResponsibility: Record actor, before/after and
 participant "Policy Gates\nResponsibility: Block invalid authority and decision drift\nContract: Executable CI checks\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]" as gates
 
 maintainer -> governance : "proposes and reviews\ncontract: evidence-backed change"
+governance -> sad : "records accepted contextual decision\ncontract: active ADR and affected SAD are updated together\n[[../../../../docs/architecture/decisions/README.md source]]"
 sad -> runtime_policy : "constrains implementation\ncontract: accepted policy semantics\n[[../../../../backend/app/services/governance/governance_runtime_service.py source]]"
 runtime_policy -> audit : "records mutation outcome\ncontract: actor and before/after evidence\n[[../../../../backend/app/services/governance/observability_governance_service.py source]]"
 audit -> gates : "supports verification\ncontract: machine-checkable evidence\n[[../../../../tests/gates/test_adr_live_runtime_commit_semantics_gate.py source]]"

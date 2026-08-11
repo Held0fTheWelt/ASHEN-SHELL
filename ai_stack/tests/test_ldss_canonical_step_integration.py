@@ -94,3 +94,33 @@ def test_canonical_step_branch_skipped_when_input_lacks_canonical_fields():
     # No canonical fields → previous degraded-notice fallback path is preserved.
     assert ldss_output.status == "degraded_error"
     assert ldss_output.error_code == "ldss_no_live_visible_generation"
+
+
+def test_bounded_emergence_uses_validated_runtime_bundle_instead_of_canonical_renderer():
+    canonical = load_canonical_path(_goc_module_root())
+    ldss_input = build_ldss_input_from_session(
+        session_id="test-bounded-emergence",
+        module_id="god_of_carnage",
+        turn_number=3,
+        selected_player_role="annette",
+        human_actor_id="annette",
+        npc_actor_ids=["alain", "veronique", "michel"],
+        player_input="I put the glass down and wait.",
+        canonical_step_id="opening_005_statement_reading",
+        canonical_path=canonical,
+        narrative_mode="bounded_emergence",
+        canonical_path_role="reference_arc",
+        visible_output_bundle={
+            "gm_narration": ["The glass settles on the table; nobody returns to the statement."],
+            "spoken_lines": [{"speaker_id": "michel", "text": "Michel says, 'So we wait.'"}],
+            "action_lines": [],
+        },
+    )
+
+    ldss_output = run_ldss(ldss_input)
+
+    assert ldss_output.status == "approved"
+    assert ldss_output.phase_cost["model"] == "ldss_validated_runtime_bundle"
+    texts = [block.text for block in ldss_output.visible_scene_output.blocks]
+    assert any("nobody returns to the statement" in text for text in texts)
+    assert not any("armed" in text.lower() for text in texts)

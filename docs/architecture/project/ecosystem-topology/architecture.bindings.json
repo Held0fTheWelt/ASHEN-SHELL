@@ -67,6 +67,30 @@
     {
       "anchors": [
         {
+          "declared_path": "docker-compose.yml",
+          "file": "docker-compose.yml",
+          "kind": "content",
+          "line": 1,
+          "object": "Local composition",
+          "schema_version": "bt.source_anchor.v1"
+        },
+        {
+          "declared_path": "docker-up.py",
+          "file": "docker-up.py",
+          "kind": "python",
+          "line": 1,
+          "schema_version": "bt.source_anchor.v1",
+          "symbol": "Local composition"
+        }
+      ],
+      "id": "B-local-composition",
+      "state": "bound",
+      "status": "Implemented",
+      "title": "Local composition"
+    },
+    {
+      "anchors": [
+        {
           "declared_path": "tools/mcp_server/",
           "file": "tools/mcp_server/__init__.py",
           "kind": "python",
@@ -484,30 +508,30 @@
     "deployment",
     "python"
   ],
-  "out_of_scope": {
-    "deployment:docker-compose.yml:administration-tool": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "deployment:docker-compose.yml:backend": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "deployment:docker-compose.yml:frontend": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "deployment:docker-compose.yml:play-service": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "deployment:docker-compose.yml:redis": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_build": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_default": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_down": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_ensure_env": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_gate": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_init_env": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_init_production_redis": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_langfuse_up": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_production_redis_up": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_reset": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_restart": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_stop": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_up": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:cmd_validate_production_redis": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:main": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item.",
-    "python:docker-up:shlex_quote": "archived: Discovered inside the subsystem scan boundary but no declared building block owns its path; retained as an explicit architecture backlog item."
+  "out_of_scope": {},
+  "representation_map": {
+    "deployment:docker-compose.yml:administration-tool": "B-local-composition",
+    "deployment:docker-compose.yml:backend": "B-local-composition",
+    "deployment:docker-compose.yml:frontend": "B-local-composition",
+    "deployment:docker-compose.yml:play-service": "B-local-composition",
+    "deployment:docker-compose.yml:redis": "B-local-composition",
+    "python:docker-up:cmd_build": "B-local-composition",
+    "python:docker-up:cmd_default": "B-local-composition",
+    "python:docker-up:cmd_down": "B-local-composition",
+    "python:docker-up:cmd_ensure_env": "B-local-composition",
+    "python:docker-up:cmd_gate": "B-local-composition",
+    "python:docker-up:cmd_init_env": "B-local-composition",
+    "python:docker-up:cmd_init_production_redis": "B-local-composition",
+    "python:docker-up:cmd_langfuse_up": "B-local-composition",
+    "python:docker-up:cmd_production_redis_up": "B-local-composition",
+    "python:docker-up:cmd_reset": "B-local-composition",
+    "python:docker-up:cmd_restart": "B-local-composition",
+    "python:docker-up:cmd_stop": "B-local-composition",
+    "python:docker-up:cmd_up": "B-local-composition",
+    "python:docker-up:cmd_validate_production_redis": "B-local-composition",
+    "python:docker-up:main": "B-local-composition",
+    "python:docker-up:shlex_quote": "B-local-composition"
   },
-  "representation_map": {},
   "required_views": [
     {
       "anchors": [

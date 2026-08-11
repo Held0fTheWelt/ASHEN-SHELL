@@ -7,6 +7,7 @@ profile_id: god_of_carnage_solo
 content_module_id: god_of_carnage
 title: God of Carnage
 kind: solo_story
+narrative_mode: bounded_emergence
 join_policy: owner_only
 max_humans: 1
 initial_beat_id: ""
