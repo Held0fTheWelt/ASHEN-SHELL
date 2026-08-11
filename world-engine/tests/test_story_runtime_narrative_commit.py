@@ -361,7 +361,7 @@ def test_history_holds_authoritative_commit_diagnostics_hold_envelope(manager: S
         module_id="m",
         runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
     )
-    manager.execute_turn(session_id=session.session_id, player_input="Hi")
+    turn = manager.execute_turn(session_id=session.session_id, player_input="Hi")
     hist = manager.get_session(session.session_id).history[-1]
     diag = manager.get_session(session.session_id).diagnostics[-1]
     assert "narrative_commit" in hist
@@ -375,6 +375,9 @@ def test_history_holds_authoritative_commit_diagnostics_hold_envelope(manager: S
     assert "retrieval" in diag
     assert "interpreted_input" in diag
     assert diag.get("lifecycle_state") == "observed"
+    assert turn["persistence_outcome"]["kind"] == "no_store"
+    assert hist["persistence_outcome"] == turn["persistence_outcome"]
+    assert diag["persistence_outcome"] == turn["persistence_outcome"]
     authority = hist["committed_turn_authority"]
     assert authority["authority_record_version"] == "committed_turn_authority.v1"
     assert authority["narrative_commit"] == hist["narrative_commit"]

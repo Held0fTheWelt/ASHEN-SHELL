@@ -30,6 +30,7 @@ ADRs and executable closure evidence.
 | `AR-V009` | `resolved` | High | Aggregate coverage counted unmapped code as represented | ADR-0006 | DRIFT-012 |
 | `AR-V010` | `proof-gap` | High | Bounded emergence is repaired, but full live-model replay evidence is still incomplete | ADR-0007 | DRIFT-003, DRIFT-005 |
 | `AR-V011` | `proof-gap` | High | Neutral language consumers are repaired; non-English live replay remains unproven | ADR-0008 | DRIFT-004 |
+| `AR-V012` | `nonconforming` | High | Durable persistence is confirmed after pre-persist side effects and a divergent lifecycle order | ADR-0001, ADR-0002 | DRIFT-006 |
 
 ## Detailed violations
 
@@ -99,7 +100,9 @@ ADRs and executable closure evidence.
 - **Repair slice implemented:** log-ready model, validation, commit, and retrieval evidence is now
   derived by the pure `commit_evidence_projection.py` component. Characterization covers malformed
   optional evidence, source immutability, the public manager injection seam, and the runtime audit
-  event. The finalizer remains oversized, so this is progress evidence rather than closure.
+  event. `PersistOutcome` is now exposed by canonical and recoverable turn results, and an in-memory
+  revision advances only after the session sink accepts the write. The finalizer remains oversized,
+  so this is progress evidence rather than closure.
 - **Closure:** behavior-equivalence tests and no additional sink callsite.
 
 ### AR-V006 — Fragmented cross-service trace
@@ -179,6 +182,26 @@ ADRs and executable closure evidence.
 - **Target:** [ADR-0008](../decisions/ADR-0008-module-language-boundaries.md).
 - **Closure:** retain the neutral-consumer and compatibility tests, then add the non-English module
   end-to-end replay fixture.
+
+### AR-V012 — Persistence and lifecycle order diverge
+
+- **Historical cause:** `PersistOutcome` began in Git commit `7959c848`, but callers discarded the
+  result while the unsharded finalizer retained pre-existing hook order.
+- **Current evidence:** `commit_finalization.py` and `player_visible_persistence.py` construct player
+  projection, refresh callback/consequence sidecars, and emit observability before `_persist_session`
+  confirms the authoritative session write. `canonical_turn_lifecycle.py` encodes
+  `projected → persisted`, while the normative canonical-turn scenario requires durable acceptance
+  before success delivery/projection is claimed.
+- **Repair now present:** turn results carry a versioned `story_persist_outcome.v1`; store failure no
+  longer advances the in-memory revision; lifecycle tracking marks `persisted` only after the store
+  call returns.
+- **Remaining conflict:** sidecar/observability effects still precede durable confirmation, opening
+  creation ignores its returned outcome, and post-write outcome evidence is not part of the same
+  durable session payload.
+- **Target:** one atomic session write produces the authoritative revision and explicit outcome;
+  only idempotent post-commit hooks and delivery run afterward.
+- **Closure:** fault-injected store tests prove no revision, success envelope, callback, cascade or
+  success trace escapes a failed write; replay exposes the same persistence identity as the response.
 
 ## Provenance
 

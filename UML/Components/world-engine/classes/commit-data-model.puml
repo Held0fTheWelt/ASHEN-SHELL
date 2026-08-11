@@ -10,6 +10,7 @@ skinparam maxMessageSize 180
 ' bt-element-id: session
 ' bt-element-id: proposal
 ' bt-element-id: commit
+' bt-element-id: persistence_result
 
 class "StorySession\nResponsibility: Aggregate live story truth and bindings\nContract: Monotonic revision and bound content\n[[../../../../world-engine/world_engine/story_runtime/manager/session/session_payloads.py source]]" as session {
   session_id
@@ -29,14 +30,21 @@ class "CommitDecision\nResponsibility: Explain accepted or rejected mutation\nCo
   findings
   revision
 }
+class "PersistOutcome\nResponsibility: Report whether the authoritative session sink accepted or skipped a write\nContract: Versioned persisted, skipped-simulation or no-store result\n[[../../../../world-engine/world_engine/story_runtime/persist_outcome.py source]]" as persistence_result {
+  schema_version
+  kind
+  reason
+  revision
+}
 
-commit ..> session : "advances when accepted\ncontract: monotonic revision\n[[../../../../world-engine/world_engine/story_runtime/story_session_store.py source]]"
+commit ..> persistence_result : "requests authoritative write\ncontract: one explicit persistence result\n[[../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py source]]"
+persistence_result ..> session : "confirms durable revision\ncontract: in-memory revision advances only after sink success\n[[../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py source]]"
 proposal ..> commit : "is resolved as\ncontract: validation evidence\n[[../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py source]]"
 session ..> proposal : "bounds evaluation\ncontract: base revision\n[[../../../../world-engine/world_engine/story_runtime/commit_models.py source]]"
 
 legend bottom
 Viewpoint: class
-Concern: Session truth, uncommitted proposal and explicit commit decision
+Concern: Session truth, uncommitted proposal, commit decision and explicit persistence outcome
 Elements expose responsibility, contract and source anchor.
 Edges name the interaction or dependency contract.
 endlegend

@@ -4746,6 +4746,18 @@
     },
     {
       "anchor": {
+        "file": "world-engine/world_engine/story_runtime/persist_outcome.py",
+        "kind": "python",
+        "line": 37,
+        "module": "world-engine.world_engine.story_runtime.persist_outcome",
+        "schema_version": "bt.source_anchor.v1",
+        "symbol": "persist_outcome_payload"
+      },
+      "id": "python:world-engine.world_engine.story_runtime.persist_outcome:persist_outcome_payload",
+      "kind": "python"
+    },
+    {
+      "anchor": {
         "file": "world-engine/world_engine/story_runtime/planner_truth_projection.py",
         "kind": "python",
         "line": 618,
@@ -5331,6 +5343,7 @@
     "python:world-engine.world_engine.story_runtime.persist_outcome:Persisted": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.persist_outcome:SkippedSimulation": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.persist_outcome:persist_outcome_kind": "B-engine-application",
+    "python:world-engine.world_engine.story_runtime.persist_outcome:persist_outcome_payload": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.planner_truth_projection:build_planner_truth_payload": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.runtime_world:initialize_runtime_world": "B-engine-application",
     "python:world-engine.world_engine.story_runtime.runtime_world:runtime_world_session_diagnostic": "B-engine-application",
@@ -5527,21 +5540,23 @@
       "anchors": [
         "world-engine/world_engine/story_runtime/commit_models.py",
         "world-engine/world_engine/story_runtime/manager/commit_finalization.py",
+        "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py",
         "world-engine/world_engine/story_runtime/manager/session/session_payloads.py",
         "world-engine/world_engine/story_runtime/narrative_commit_resolution.py",
-        "world-engine/world_engine/story_runtime/story_session_store.py"
+        "world-engine/world_engine/story_runtime/persist_outcome.py"
       ],
-      "concern": "Session truth, uncommitted proposal and explicit commit decision",
+      "concern": "Session truth, uncommitted proposal, commit decision and explicit persistence outcome",
       "decisions": [
         "D1",
-        "D4"
+        "D4",
+        "D5"
       ],
-      "element_count": 3,
+      "element_count": 4,
       "id": "commit-data-model",
       "kind": "class",
       "level": "class",
       "path": "UML/Components/world-engine/classes/commit-data-model.puml",
-      "relationship_count": 3,
+      "relationship_count": 4,
       "schema_version": "bt.semantic_view_requirement.v1"
     },
     {

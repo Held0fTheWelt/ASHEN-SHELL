@@ -221,12 +221,13 @@ and the current product-specific implementation debt remains tracked by
 | AI Proposal Bridge | Commit Resolution | returns candidate | proposal plus evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Story API | Story Runtime Manager | delegates story operation | validated command | [`world-engine/world_engine/api/http_routes/story_turn_routes.py`](../../../../world-engine/world_engine/api/http_routes/story_turn_routes.py) |
 | Commit Evidence Projection | Runtime Observability | projects turn audit fields | trace-ready evidence derived from committed turn state | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
-| CommitDecision | StorySession | advances when accepted | monotonic revision | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
+| CommitDecision | PersistOutcome | requests authoritative write | one explicit persistence result | [`world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py`](../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py) |
 | Live Governance | AI Proposal Bridge | requests bounded proposal | proposal-only | [`world-engine/world_engine/story_runtime/governed_runtime_adapters.py`](../../../../world-engine/world_engine/story_runtime/governed_runtime_adapters.py) |
 | Live Governance | Visible Projection Policy Resolver | supplies bound projection policy | visible_projection_policy.v1 or closed generic default | [`world-engine/world_engine/story_runtime/manager/visible_projection_policy.py`](../../../../world-engine/world_engine/story_runtime/manager/visible_projection_policy.py) |
 | Canonical Turn Lifecycle | Live Governance | checks authority and policy | fail closed | [`world-engine/world_engine/story_runtime/live_governance.py`](../../../../world-engine/world_engine/story_runtime/live_governance.py) |
 | Story Runtime Manager | Runtime Observability | emits lifecycle evidence | trace-correlated spans | [`world-engine/world_engine/observability/trace.py`](../../../../world-engine/world_engine/observability/trace.py) |
 | Story Runtime Manager | Session Stores | loads and stores session | revision-safe transaction | [`world-engine/world_engine/story_runtime/story_session_store.py`](../../../../world-engine/world_engine/story_runtime/story_session_store.py) |
+| PersistOutcome | StorySession | confirms durable revision | in-memory revision advances only after sink success | [`world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py`](../../../../world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py) |
 | Visible Projection Policy Resolver | Delivery Surfaces | selects projection adapter | configured capabilities without module-ID dispatch | [`world-engine/world_engine/story_runtime/manager/commit_finalization.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_finalization.py) |
 | NarrativeProposal | CommitDecision | is resolved as | validation evidence | [`world-engine/world_engine/story_runtime/narrative_commit_resolution.py`](../../../../world-engine/world_engine/story_runtime/narrative_commit_resolution.py) |
 | Compatibility Runtime | Story Runtime Manager | adapts supported legacy paths | explicit compatibility seam | [`world-engine/world_engine/runtime/manager.py`](../../../../world-engine/world_engine/runtime/manager.py) |
@@ -267,7 +268,7 @@ Retrieval, Director planning, narrator realization, and validation execute insid
 **Status:** Accepted; refactoring in progress
 **Origin:** `7959c848` PersistOutcome and manager unsharding
 
-Every live story command follows the lifecycle documented in §6. Compatibility paths must delegate to it or be explicitly retired. `_finalize_committed_turn` is currently too broad; its first extracted phase is the pure [`commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py), which derives audit fields without mutating graph or session state. [AR-V005](../../violations/README.md#ar-v005-oversized-finalization-seam) records the remaining persistence-outcome and post-commit splits plus the proof needed for closure.
+Every live story command follows the lifecycle documented in §6. Compatibility paths must delegate to it or be explicitly retired. `_finalize_committed_turn` is currently too broad; its extracted pure [`commit_evidence_projection.py`](../../../../world-engine/world_engine/story_runtime/manager/commit_evidence_projection.py) derives audit fields without mutating graph or session state, and `PersistOutcome` is now returned as versioned turn evidence. [AR-V005](../../violations/README.md#ar-v005-oversized-finalization-seam) records the remaining structural split; [AR-V012](../../violations/README.md#ar-v012--persistence-and-lifecycle-order-diverge) records the still-nonconforming durable-write and post-commit order.
 
 ### D6: Actor and situation changes are committed data
 
@@ -307,7 +308,7 @@ open until they are migrated behind neutral adapters.
 | `D5`, `D14` | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](../../../../UML/Components/world-engine/sequence/degraded-turn-sequence.md) |
 | `D1`, `D4`, `D6` | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](../../../../UML/Components/world-engine/activity/canonical-turn-activity.md) |
 | `D5`, `D6` | Session creation, serialized turns, degradation, recovery and closure | `state` | [World Engine - Session Lifecycle](../../../../UML/Components/world-engine/states/session-lifecycle.md) |
-| `D1`, `D4` | Session truth, uncommitted proposal and explicit commit decision | `class` | [World Engine - Commit Data Model](../../../../UML/Components/world-engine/classes/commit-data-model.md) |
+| `D1`, `D4`, `D5` | Session truth, uncommitted proposal, commit decision and explicit persistence outcome | `class` | [World Engine - Commit Data Model](../../../../UML/Components/world-engine/classes/commit-data-model.md) |
 | `D1`, `D5` | Client boundary, authoritative service, AI collaborator and session persistence | `deployment` | [World Engine - Deployment](../../../../UML/Components/world-engine/deployment/world-engine-deployment.md) |
 
 The correspondence is intentionally many-to-many: one decision may require structural, dynamic, data and deployment evidence, and one model may make several decisions analyzable together.
@@ -335,6 +336,7 @@ The authoritative register is [Architecture violations](../../violations/README.
 - **AR-V005:** `_finalize_committed_turn` concentrates validation, mutation, persistence, and projection concerns.
 - **AR-V006:** trace identity is not yet uniformly propagated.
 - **AR-V007:** duplicate historical UML files can create parallel truths until removed.
+- **AR-V012:** projection/sidecar effects still precede confirmed durable persistence.
 
 These are current-state defects with target and closure criteria. Their presence does not invalidate source evidence; it invalidates a claim that observed implementation already conforms to the target architecture.
 

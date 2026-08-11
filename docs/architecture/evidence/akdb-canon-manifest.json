@@ -526,14 +526,14 @@
       "sha256": "827e94dc846b3d7d5d65efe5f8e491713609b912e29854825b2ce9cc39b28313"
     },
     {
-      "bytes": 2203,
+      "bytes": 2228,
       "path": "UML/Components/world-engine/README.md",
-      "sha256": "58c363d91d170b02520aead6331c923ece3b1441f987a6296f1cccfaa8f43909"
+      "sha256": "9f09a8b08b802d08b1f9a413a4f8b680bccb79295ecb3dff972694128d476975"
     },
     {
-      "bytes": 5232,
+      "bytes": 5323,
       "path": "UML/Components/world-engine/TRACEABILITY.md",
-      "sha256": "120cde063c37e67729ccdfea379450c31836a1032724d59973e87b244f3cb95b"
+      "sha256": "48aa8087bcca4df5ad30843869dbf5ae77a41e9e3fed9334c30ed51702d61dd1"
     },
     {
       "bytes": 3651,
@@ -546,14 +546,14 @@
       "sha256": "95076784d09d3076d4a4dfa159d61c6d0b3d1518188984349f368fdf832c5504"
     },
     {
-      "bytes": 1916,
+      "bytes": 2612,
       "path": "UML/Components/world-engine/classes/commit-data-model.md",
-      "sha256": "91433a76f66d805dc92169168aa0440c9319769d842e18b9f04cf1291350b4f4"
+      "sha256": "eeb1a0e525c5539af2b57aae914cf6dbd993b1d6eadaaf0e64ff45b37d2c2eae"
     },
     {
-      "bytes": 1840,
+      "bytes": 2525,
       "path": "UML/Components/world-engine/classes/commit-data-model.puml",
-      "sha256": "ab477932c939efe8d8a43654ef8446b622cc0a33d7ba12e09c3f1d08f8fe61b7"
+      "sha256": "384f677c627241aabdb709d056beaff6f4559c8f25a8ccbbbc74ff86bfe63a9c"
     },
     {
       "bytes": 5769,
@@ -1261,14 +1261,14 @@
       "sha256": "9b56d15792eda0253e2e64ad531740d6197c8e68783016e0076ee60b76cb7fdd"
     },
     {
-      "bytes": 243237,
+      "bytes": 243944,
       "path": "docs/architecture/components/world-engine/architecture.bindings.json",
-      "sha256": "76be2dd534c18d510a566757c4c9c2758f8ea56dc829620a1ae7958623443c56"
+      "sha256": "5f2e085c94cd3f86b52e2f703e5cfdeca6ebb7694f2271bf64dd3c2796b80447"
     },
     {
-      "bytes": 35362,
+      "bytes": 35993,
       "path": "docs/architecture/components/world-engine/architecture.md",
-      "sha256": "8f7f8f342f630abfe1991ace616020bbf4d3daf45c1e71d096ea7cc67ec54779"
+      "sha256": "8583266e7ef9949bf13eb38d7a1ef473c97c2ca56f993e19bb4419227c5548f3"
     },
     {
       "bytes": 1292,
@@ -1461,9 +1461,9 @@
       "sha256": "543e4a707db4573b53790b1a7e8aecd9a9f8d7ef1bd8e30f80e29ea8f8338f65"
     },
     {
-      "bytes": 8051,
+      "bytes": 8073,
       "path": "docs/architecture/scenarios/canonical-turn.md",
-      "sha256": "2298bda9edc8f88390ecd80333e743d60e0e0765050728f1c1a4b7ffdaa7db35"
+      "sha256": "3e60f46e7d97e26afdcb519c0817149659df135641e80315a1b544dcb1c38c04"
     },
     {
       "bytes": 791,
@@ -1476,9 +1476,9 @@
       "sha256": "42560e20f1ce76216cbe2d0e79ff938038d6ad141fa93342aa70ce898a194a6e"
     },
     {
-      "bytes": 12249,
+      "bytes": 14051,
       "path": "docs/architecture/violations/README.md",
-      "sha256": "0acfeab3d987cef3f4b27ab630acb08552d2f2778ae388cffd97b90900f19bd7"
+      "sha256": "1566008f6bb2a318fac53a04f68c11a88891eaafd5cfcbdff08798be9120fdac"
     },
     {
       "bytes": 4825,
@@ -1626,9 +1626,9 @@
       "sha256": "5b043744c6001ba9ae6fc8d2d95c5e686b4309eb9e0c94b953dcd24146f70108"
     },
     {
-      "bytes": 256688,
+      "bytes": 258008,
       "path": "tools/architecture_assurance/model_catalog.json",
-      "sha256": "c6af8ba715203ef104aa8623cf16ebe2c35ff3d84276c4e0126df68a03d5743d"
+      "sha256": "76fa435b3335fe2eba49299271a90fd1689d50451c1a54f2233677ebe5278187"
     },
     {
       "bytes": 1974,

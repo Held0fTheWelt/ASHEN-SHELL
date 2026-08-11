@@ -8,6 +8,7 @@ import pytest
 
 from world_engine.story_runtime import StoryRuntimeManager
 from world_engine.story_runtime.manager import _recoverable_narrator_visible_output_bundle
+from world_engine.story_runtime.story_session_store import JsonStorySessionStore
 
 
 class _FakeTurnGraph:
@@ -81,6 +82,7 @@ def test_validation_recoverable_matches_canonical_narrator_bundle(manager: Story
     manager.turn_graph = _FakeTurnGraph(payload)  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="Gehe ins Bad")
     assert turn.get("observability_path_summary") is not None
+    assert turn["persistence_outcome"]["kind"] == "no_store"
     msg = turn["player_visible_message"]
     ref = _recoverable_narrator_visible_output_bundle(message=msg)
     assert turn["visible_output_bundle"] == ref
@@ -95,9 +97,37 @@ def test_graph_exception_recoverable_matches_canonical_narrator_bundle(manager: 
     manager.turn_graph = _ExplodingTurnGraph()  # type: ignore[assignment]
     turn = manager.execute_turn(session_id=session.session_id, player_input="anything")
     assert turn.get("observability_path_summary") is not None
+    assert turn["persistence_outcome"]["kind"] == "no_store"
     msg = turn["player_visible_message"]
     ref = _recoverable_narrator_visible_output_bundle(message=msg)
     assert turn["visible_output_bundle"] == ref
     assert turn["turn_kind"] == "player_graph_exception_playable"
     hist = manager.get_session(session.session_id).history[-1]
     assert hist.get("lifecycle_state") == "observed"
+
+
+def test_canonical_turn_reports_the_revision_accepted_by_the_session_store(tmp_path) -> None:
+    store = JsonStorySessionStore(tmp_path / "sessions")
+    manager = StoryRuntimeManager(session_store=store)
+    manager.turn_graph = _FakeTurnGraph(_opening_envelope("scene_1"))  # type: ignore[assignment]
+    session = manager.create_session(
+        module_id="m",
+        runtime_projection={"start_scene_id": "scene_1", "scenes": [{"id": "scene_1"}]},
+    )
+    manager.turn_graph = _FakeTurnGraph(  # type: ignore[assignment]
+        _envelope(
+            interpreted_input={"kind": "speech", "confidence": 0.9},
+            generation={"success": True, "metadata": {}},
+        )
+    )
+
+    turn = manager.execute_turn(session_id=session.session_id, player_input="Hallo")
+    persisted = store.load_all_raw()[session.session_id]
+
+    assert turn["persistence_outcome"] == {
+        "schema_version": "story_persist_outcome.v1",
+        "kind": "persisted",
+        "reason": "committed",
+        "revision": session.revision,
+    }
+    assert persisted["revision"] == session.revision

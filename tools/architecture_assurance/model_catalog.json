@@ -3459,6 +3459,19 @@
             "revision"
           ]
         },
+        "persistence_result": {
+          "type": "class",
+          "name": "PersistOutcome",
+          "responsibility": "Report whether the authoritative session sink accepted or skipped a write",
+          "contract": "Versioned persisted, skipped-simulation or no-store result",
+          "anchor": "world-engine/world_engine/story_runtime/persist_outcome.py",
+          "members": [
+            "schema_version",
+            "kind",
+            "reason",
+            "revision"
+          ]
+        },
         "new": {
           "type": "state",
           "name": "New",
@@ -3720,6 +3733,20 @@
           "label": "advances when accepted",
           "contract": "monotonic revision",
           "anchor": "world-engine/world_engine/story_runtime/story_session_store.py"
+        },
+        "commit_persistence_result": {
+          "from": "commit",
+          "to": "persistence_result",
+          "label": "requests authoritative write",
+          "contract": "one explicit persistence result",
+          "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py"
+        },
+        "persistence_result_session": {
+          "from": "persistence_result",
+          "to": "session",
+          "label": "confirms durable revision",
+          "contract": "in-memory revision advances only after sink success",
+          "anchor": "world-engine/world_engine/story_runtime/manager/session/manager_init_and_persistence.py"
         },
         "initial_new": {
           "from": "initial",
@@ -4007,20 +4034,23 @@
           "kind": "class",
           "path": "UML/Components/world-engine/classes/commit-data-model.puml",
           "title": "World Engine - Commit Data Model",
-          "concern": "Session truth, uncommitted proposal and explicit commit decision",
+          "concern": "Session truth, uncommitted proposal, commit decision and explicit persistence outcome",
           "elements": [
             "session",
             "proposal",
-            "commit"
+            "commit",
+            "persistence_result"
           ],
           "relationships": [
             "session_proposal",
             "proposal_commit",
-            "commit_session"
+            "commit_persistence_result",
+            "persistence_result_session"
           ],
           "decisions": [
             "D1",
-            "D4"
+            "D4",
+            "D5"
           ]
         },
         {

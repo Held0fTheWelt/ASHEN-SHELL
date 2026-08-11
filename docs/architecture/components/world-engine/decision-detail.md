@@ -87,7 +87,11 @@ Rules: no `projected`/`observed` without `committed` on the canonical player pat
 | B — `lifecycle_state` on envelope | `canonical_turn_lifecycle.py`, manager finalize | Implemented |
 | C — Short-path convergence | recoverable + graph-rescue share persist helpers | Implemented |
 
-Code note: durable append may advance `projected` before `persisted`; invariant is **no projection without commit**.
+Observed deviation: `canonical_turn_lifecycle.py` and the manager currently build projection before
+the durable write (`projected → persisted`). The store result is now explicit and `persisted` is no
+longer marked before the call returns, but sidecar effects still run too early. This is tracked as
+[AR-V012](../../violations/README.md#ar-v012--persistence-and-lifecycle-order-diverge), not accepted
+as an alternative lifecycle.
 
 Evidence: `world-engine/tests/test_canonical_turn_lifecycle.py`, `tests/gates/test_canonical_turn_lifecycle_gate.py`, [UML d5](../../../../UML/Components/world-engine/decisions/d5-canonical-turn-lifecycle.md).
 

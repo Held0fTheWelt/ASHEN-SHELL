@@ -272,9 +272,14 @@ class _ManagerInitAndPersistenceMixin:
             return SkippedSimulation()
         if self._session_store is None:
             return NoStoreConfigured()
-        session.revision = int(getattr(session, "revision", 0) or 0) + 1
-        self._session_store.save(session.session_id, story_session_to_payload(session))
-        return Persisted(revision=session.revision, reason=reason)
+        next_revision = int(getattr(session, "revision", 0) or 0) + 1
+        payload = story_session_to_payload(session)
+        payload["revision"] = next_revision
+        self._session_store.save(session.session_id, payload)
+        # Publish the revision in memory only after the durable sink accepted
+        # the payload. A failed save must not leave a false committed revision.
+        session.revision = next_revision
+        return Persisted(revision=next_revision, reason=reason)
 
     def _persist_branching_tree_record(self, record: dict[str, Any]) -> dict[str, Any]:
         tree_id = str(record.get("tree_id") or "").strip()

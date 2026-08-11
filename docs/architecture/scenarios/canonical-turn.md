@@ -8,7 +8,7 @@
 [ADR-0004](../decisions/ADR-0004-player-visible-block-envelope.md),
 [ADR-0007](../decisions/ADR-0007-bounded-emergent-narration.md),
 [ADR-0008](../decisions/ADR-0008-module-language-boundaries.md)
-**Implementation posture:** partial; see `AR-V001`, `AR-V002`, `AR-V004`, `AR-V010`, `AR-V011`
+**Implementation posture:** partial; see `AR-V001`, `AR-V002`, `AR-V004`, `AR-V005`, `AR-V010`, `AR-V011`, `AR-V012`
 
 ## 1. Preconditions
 

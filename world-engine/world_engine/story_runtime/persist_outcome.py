@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +34,19 @@ def persist_outcome_kind(outcome: PersistOutcome) -> PersistKind:
     return "no_store"
 
 
+def persist_outcome_payload(outcome: PersistOutcome) -> dict[str, Any]:
+    """Return the stable caller-facing representation of a persistence result."""
+
+    payload: dict[str, Any] = {
+        "schema_version": "story_persist_outcome.v1",
+        "kind": persist_outcome_kind(outcome),
+        "reason": outcome.reason,
+    }
+    if isinstance(outcome, Persisted):
+        payload["revision"] = outcome.revision
+    return payload
+
+
 __all__ = [
     "NoStoreConfigured",
     "PersistKind",
@@ -41,4 +54,5 @@ __all__ = [
     "Persisted",
     "SkippedSimulation",
     "persist_outcome_kind",
+    "persist_outcome_payload",
 ]

@@ -15,7 +15,7 @@ Authoritative live story runtime coordinating sessions, content, AI proposals, v
 | Provider or validation failure preserves committed truth | `sequence` | [World Engine - Degraded Turn](sequence/degraded-turn-sequence.md) | D5, D14 |
 | Decision points between proposal, rejection, commit and delivery | `activity` | [World Engine - Canonical Turn Activity](activity/canonical-turn-activity.md) | D1, D4, D6 |
 | Session creation, serialized turns, degradation, recovery and closure | `state` | [World Engine - Session Lifecycle](states/session-lifecycle.md) | D5, D6 |
-| Session truth, uncommitted proposal and explicit commit decision | `class` | [World Engine - Commit Data Model](classes/commit-data-model.md) | D1, D4 |
+| Session truth, uncommitted proposal, commit decision and explicit persistence outcome | `class` | [World Engine - Commit Data Model](classes/commit-data-model.md) | D1, D4, D5 |
 | Client boundary, authoritative service, AI collaborator and session persistence | `deployment` | [World Engine - Deployment](deployment/world-engine-deployment.md) | D1, D5 |
 
 ## Drift focus

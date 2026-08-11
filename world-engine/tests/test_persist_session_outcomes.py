@@ -1,12 +1,12 @@
 """Wave 2: PersistOutcome and session.revision contract tests."""
 from __future__ import annotations
 
-from types import SimpleNamespace
-
+import pytest
 from world_engine.story_runtime.persist_outcome import (
     NoStoreConfigured,
     Persisted,
     SkippedSimulation,
+    persist_outcome_payload,
 )
 from world_engine.story_runtime.manager.session.session_payloads import (
     StorySession,
@@ -30,6 +30,11 @@ class _Host(_ManagerInitAndPersistenceMixin):
     def __init__(self) -> None:
         self._branching_simulation_session_ids = set()
         self._session_store = _Store()
+
+
+class _FailingStore:
+    def save(self, session_id: str, payload: dict) -> None:
+        raise OSError("disk unavailable")
 
 
 def test_persist_session_returns_explicit_outcome() -> None:
@@ -58,6 +63,31 @@ def test_simulation_session_never_writes() -> None:
     host._persist_session(session)
     assert host._session_store.saved == []
     assert session.revision == 0
+
+
+def test_failed_store_does_not_publish_a_new_in_memory_revision() -> None:
+    host = _Host()
+    host._session_store = _FailingStore()
+    session = StorySession(session_id="s1", module_id="m", runtime_projection={}, revision=4)
+
+    with pytest.raises(OSError, match="disk unavailable"):
+        host._persist_session(session)
+
+    assert session.revision == 4
+
+
+def test_persist_outcome_payload_is_versioned_and_explicit() -> None:
+    assert persist_outcome_payload(Persisted(revision=5)) == {
+        "schema_version": "story_persist_outcome.v1",
+        "kind": "persisted",
+        "reason": "committed",
+        "revision": 5,
+    }
+    assert persist_outcome_payload(NoStoreConfigured()) == {
+        "schema_version": "story_persist_outcome.v1",
+        "kind": "no_store",
+        "reason": "session_store_missing",
+    }
 
 
 def test_revision_round_trips_with_legacy_default_zero() -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from ._deps import *
 from .commit_evidence_projection import build_commit_evidence_projection
+from world_engine.story_runtime.persist_outcome import persist_outcome_payload
 from .visible_projection_policy import (
     resolve_visible_projection_policy,
     rich_scene_projection_enabled,
@@ -1235,7 +1236,6 @@ class _CommitFinalizationMixin:
         }
         if isinstance(event.get("narrator_streaming"), dict):
             committed_record["narrator_streaming"] = event["narrator_streaming"]
-        turn_lc.advance("persisted")
         committed_record["lifecycle_state"] = "observed"
         event["lifecycle_state"] = "observed"
         session.history.append(committed_record)
@@ -1251,7 +1251,6 @@ class _CommitFinalizationMixin:
         )
         self._emit_observability_path_for_event(session=session, graph_state=graph_state, event=event)
         session.diagnostics.append(event)
-        turn_lc.advance("observed")
         # ADR-0063: W5 Actor Situation Tracker shadow extraction (Phase 1).
         # Best-effort; never fails the turn. No consumer reads w5_history yet.
         self._w5_shadow_extract_after_commit(
@@ -1259,7 +1258,12 @@ class _CommitFinalizationMixin:
             graph_state=graph_state if isinstance(graph_state, dict) else {},
             event=event,
         )
-        self._persist_session(session)
+        persistence_outcome = self._persist_session(session)
+        turn_lc.advance("persisted")
+        persistence_evidence = persist_outcome_payload(persistence_outcome)
+        event["persistence_outcome"] = persistence_evidence
+        committed_record["persistence_outcome"] = persistence_evidence
+        turn_lc.advance("observed")
         return event
 
 
